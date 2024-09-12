@@ -1,8 +1,10 @@
+import React, { useState } from 'react';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import { useState } from 'react';
-import { Dimensions } from 'react-native';
-import { Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Dimensions, StyleSheet, Text, View, Button, TouchableOpacity } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+
+// Get screen dimensions
+const { height, width } = Dimensions.get('window');
 
 export default function CameraComp() {
   const [facing, setFacing] = useState<CameraType>('back');
@@ -18,7 +20,7 @@ export default function CameraComp() {
     return (
       <View style={styles.container}>
         <Text style={styles.message}>We need your permission to show the camera</Text>
-        <Button onPress={requestPermission} title="grant permission" />
+        <Button onPress={requestPermission} title="Grant Permission" />
       </View>
     );
   }
@@ -35,11 +37,11 @@ export default function CameraComp() {
     <View style={styles.container}>
       <CameraView style={styles.camera} facing={facing}>
         <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.captureButton} onPress={capturePhoto}>
-            <MaterialCommunityIcons name="camera" size={40} color="white" />
+          <TouchableOpacity style={styles.captureButton} onPress={capturePhoto}>
+            <MaterialCommunityIcons name="camera" size={width * 0.15} color="white" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.flipButton} onPress={toggleCameraFacing}>
-            <MaterialCommunityIcons name="camera-switch" size={36} color="white" />
+            <MaterialCommunityIcons name="camera-switch" size={width * 0.1} color="white" />
           </TouchableOpacity>
         </View>
       </CameraView>
@@ -47,43 +49,47 @@ export default function CameraComp() {
   );
 }
 
-const { height, width } = Dimensions.get("window"); // Add this line to define 'height' and 'width'
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
   },
   message: {
     textAlign: 'center',
     paddingBottom: 10,
+    fontSize: width * 0.05,
   },
   camera: {
     flex: 1,
+    width: '100%',
+    height: '100%',
   },
   buttonContainer: {
     position: 'absolute',
-    bottom: height * 0.1, 
-    left: width * 0.3,
-    right: 0,
-    flexDirection: "row",
-    justifyContent: "center", 
-    alignItems: "center", 
+    bottom: height * 0.1,
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   captureButton: {
-    width: 70,
-    height: 70,
-    marginRight: width * 0.1,
-    borderRadius: 35,
+    width: width * 0.2, 
+    height: width * 0.2, 
+    borderRadius: (width * 0.2) / 2,
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
+    marginHorizontal: width * 0.1,
+    borderWidth: 1,
+    borderColor: 'white',
   },
   flipButton: {
-    marginLeft: width * 0.1,
+    position: 'absolute',
+    right: width * 0.05, 
+    bottom: height * 0.01,
   },
   text: {
-    fontSize: 24,
+    fontSize: width * 0.06,
     fontWeight: 'bold',
     color: 'white',
   },

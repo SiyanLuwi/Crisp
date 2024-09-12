@@ -1,8 +1,10 @@
-import { StyleSheet, Text, View, Image, Button, Dimensions, Touchable, TouchableOpacity } from 'react-native';
 import React from 'react';
-
+import { StyleSheet, Text, View, Image, Dimensions, TouchableOpacity } from 'react-native';
 import bgImage from "@/assets/images/landing_page.png";
 import { router } from 'expo-router';
+
+// Get screen dimensions
+const { width, height } = Dimensions.get('window');
 
 export default function Index() {
   return (
@@ -24,64 +26,65 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'center', 
+    position: 'relative',
   },
   bgImage: {
     position: 'absolute',
-    width: "100%",
-    height: "100%",
+    width: '100%',
+    height: '100%',
     resizeMode: 'cover',
   },
   loginContainer: {
     position: 'absolute',
-    bottom: 120, 
+    bottom: height * 0.2, 
     alignSelf: 'center',
     backgroundColor: '#0C3B2D',
     borderColor: '#8BC34A',
-    borderWidth: 1, 
+    borderWidth: 1,
     paddingVertical: 10,
-    paddingHorizontal: 50,
+    paddingHorizontal: width * 0.1, 
     borderRadius: 30,
     zIndex: 1,
   },
-  loginText:{
+  loginText: {
     color: '#ffffff',
-    fontSize: 20,
+    fontSize: width * 0.05,
     fontFamily: 'Roboto',
     fontWeight: 'bold',
   },
   registerContainer: {
     position: 'absolute',
-    bottom: 50, 
+    bottom: height * 0.1,
     alignSelf: 'center',
     backgroundColor: '#8BC34A',
     paddingVertical: 10,
-    paddingHorizontal: 50,
+    paddingHorizontal: width * 0.1, 
     borderRadius: 30,
     zIndex: 1,
   },
-  regText:{
+  regText: {
     color: '#000000',
-    fontSize: 20,
+    fontSize: width * 0.05,
     fontFamily: 'Roboto',
     fontWeight: 'bold',
   },
-  context:{
+  context: {
     position: 'absolute',
-    bottom: 220,
+    left: width * 0.1, 
+    bottom: height * 0.3,
     color: '#ffffff',
-    right: 140,
-    fontSize: 20,
+    fontSize: width * 0.06,
     fontFamily: 'Roboto',
     fontWeight: 'bold',
     textAlign: 'left',
   },
   Title: {
     position: 'absolute',
-    bottom: 260,
-    right: 160,
+    left: width * 0.1,
+    bottom: height * 0.35,
     color: '#ffffff',
-    fontSize: 80,
+    fontSize: width * 0.2,
     fontFamily: 'Roboto',
     fontWeight: 'bold',
     textAlign: 'left',

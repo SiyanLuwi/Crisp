@@ -1,5 +1,8 @@
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import React from "react";
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+
+// Get screen dimensions
+const { width } = Dimensions.get('window');
 
 const TabBar = ({ state, descriptors, navigation }: { state: any, descriptors: any, navigation: any }) => {
   return (
@@ -17,7 +20,7 @@ const TabBar = ({ state, descriptors, navigation }: { state: any, descriptors: a
 
         const onPress = () => {
           const event = navigation.emit({
-            type: "tabPress",
+            type: 'tabPress',
             target: route.key,
             canPreventDefault: true,
           });
@@ -29,13 +32,13 @@ const TabBar = ({ state, descriptors, navigation }: { state: any, descriptors: a
 
         const onLongPress = () => {
           navigation.emit({
-            type: "tabLongPress",
+            type: 'tabLongPress',
             target: route.key,
           });
         };
 
         // Render icon if available
-        const renderIcon = options.tabBarIcon ? options.tabBarIcon({ color: isFocused ? "green" : "#000000", focused: isFocused }) : null;
+        const renderIcon = options.tabBarIcon ? options.tabBarIcon({ color: isFocused ? 'green' : '#000000', focused: isFocused }) : null;
 
         return (
           <TouchableOpacity
@@ -49,7 +52,7 @@ const TabBar = ({ state, descriptors, navigation }: { state: any, descriptors: a
             onLongPress={onLongPress}
           >
             {renderIcon}
-            <Text style={[styles.tabBarText, { color: isFocused ? "green" : "#000000" }]}>
+            <Text style={[styles.tabBarText, { color: isFocused ? 'green' : '#000000' }]}>
               {label}
             </Text>
           </TouchableOpacity>
@@ -67,21 +70,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'center',
     backgroundColor: '#F0F4C3',
-    marginHorizontal: 5,
-    paddingVertical: 10,
-    borderRadius: 25,
+    marginHorizontal: width * 0.02,
+    paddingVertical: width * 0.02, 
+    borderRadius: width * 0.1, 
     shadowColor: 'black',
     shadowOffset: { width: 0, height: 10 },
     shadowRadius: 10,
     shadowOpacity: 0.1,
   },
   tabBarItem: {
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     flex: 1,
   },
   tabBarText: {
-    fontSize: 16,
+    fontSize: width * 0.04, 
   },
 });
 

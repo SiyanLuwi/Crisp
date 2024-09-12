@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 const { height, width } = Dimensions.get("window");
 
 const posts = Array.from({ length: 10 }, (_, index) => ({
@@ -20,10 +21,8 @@ const posts = Array.from({ length: 10 }, (_, index) => ({
 
 export default function Reports() {
   return (
-    <View style={styles.container}>
-      <SafeAreaView />
+    <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Reports</Text>
-      <SafeAreaView />
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id}
@@ -33,7 +32,7 @@ export default function Reports() {
           <View style={styles.postContainer}>
             <MaterialCommunityIcons
               name="account-circle"
-              size={40}
+              size={width * 0.1} // Responsive icon size
               color="#000"
               style={styles.profileIcon}
             />
@@ -44,14 +43,14 @@ export default function Reports() {
               <TouchableOpacity style={styles.voteButton}>
                 <MaterialCommunityIcons
                   name="thumb-up"
-                  size={24}
+                  size={width * 0.08} // Responsive icon size
                   color="#007BFF"
                 />
               </TouchableOpacity>
               <TouchableOpacity style={styles.voteButton}>
                 <MaterialCommunityIcons
                   name="thumb-down"
-                  size={24}
+                  size={width * 0.08} // Responsive icon size
                   color="#FF5722"
                 />
               </TouchableOpacity>
@@ -59,7 +58,7 @@ export default function Reports() {
           </View>
         )}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -67,52 +66,58 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#0C3B2D",
-    justifyContent: "center",
-    alignItems: "center",
+    alignItems: "center", 
   },
-  listContent: {},
+  listContent: {
+    paddingVertical: height * 0.01, 
+  },
   title: {
     color: "#ffffff",
-    fontSize: 40,
+    fontSize: width * 0.1, 
     fontFamily: "Roboto",
     fontWeight: "bold",
+    marginVertical: height * 0.02, 
   },
   postContainer: {
     width: width * 0.9,
-    height: height * 0.75,
     backgroundColor: "#F0F4C3",
     borderRadius: 20,
     alignItems: "center",
-    padding: 10,
-    justifyContent: "space-between",
-    marginVertical: 10,
+    padding: width * 0.05, 
+    marginVertical: height * 0.01, 
+    marginBottom: height * 0.02,
   },
   profileIcon: {
-
+    marginVertical: height * 0.01, 
   },
-  profileName:{
-
+  profileName: {
+    fontSize: width * 0.05, 
+    color: "#000000",
+    marginVertical: height * 0.01,
   },
   image: {
     width: "100%",
-    height: "80%",
+    height: width * 0.6, 
     borderRadius: 10,
+    marginVertical: height * 0.01,
   },
   imageText: {
     color: "#000000",
     textAlign: "center",
-    marginVertical: 5,
+    fontSize: width * 0.04, 
+    marginVertical: height * 0.01, 
   },
   voteContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     width: "100%",
+    paddingVertical: height * 0.02, 
   },
   voteButton: {
-    padding: 10,
+    padding: width * 0.02, 
   },
   text: {
     fontFamily: "Roboto",
-    fontSize: 24,
+    fontSize: width * 0.06, 
   },
 });

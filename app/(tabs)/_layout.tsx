@@ -1,17 +1,23 @@
-import { Tabs } from "expo-router";
-import React from "react";
-import { TabBarIcon } from "@/components/navigation/TabBarIcon";
-import { Colors } from "@/constants/Colors";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import TabBar from "@/components/TabBar";
+import React from 'react';
+import { Tabs } from 'expo-router';
+import { TabBarIcon } from '@/components/navigation/TabBarIcon';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import TabBar from '@/components/TabBar';
+import { Dimensions } from 'react-native';
 
-export default function navLayout() {
+// Get screen width
+const { width } = Dimensions.get('window');
+
+// Define a responsive icon size
+const ICON_SIZE = width * 0.08 
+export default function NavLayout() {
   const colorScheme = useColorScheme();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
+        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
       }}
       tabBar={(props) => <TabBar {...props} />}
@@ -19,12 +25,12 @@ export default function navLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: "Home",
+          title: 'Home',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
-              name={focused ? "home" : "home-outline"}
+              name={focused ? 'home' : 'home-outline'}
               color={color}
-              style={{}}
+              size={ICON_SIZE}
             />
           ),
         }}
@@ -32,11 +38,12 @@ export default function navLayout() {
       <Tabs.Screen
         name="reports"
         options={{
-          title: "Reports",
+          title: 'Reports',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
-              name={focused ? "document-text" : "document-text-outline"}
+              name={focused ? 'document-text' : 'document-text-outline'}
               color={color}
+              size={ICON_SIZE}
             />
           ),
         }}
@@ -44,11 +51,12 @@ export default function navLayout() {
       <Tabs.Screen
         name="camera"
         options={{
-          title: "Camera",
+          title: 'Camera',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
-              name={focused ? "camera" : "camera-outline"}
+              name={focused ? 'camera' : 'camera-outline'}
               color={color}
+              size={ICON_SIZE}
             />
           ),
         }}
@@ -56,11 +64,12 @@ export default function navLayout() {
       <Tabs.Screen
         name="manage"
         options={{
-          title: "Manage",
+          title: 'Manage',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
-              name={focused ? "file-tray-full" : "file-tray-full-outline"}
+              name={focused ? 'file-tray-full' : 'file-tray-full-outline'}
               color={color}
+              size={ICON_SIZE}
             />
           ),
         }}
@@ -68,11 +77,12 @@ export default function navLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
+          title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
-              name={focused ? "person" : "person-outline"}
+              name={focused ? 'person' : 'person-outline'}
               color={color}
+              size={ICON_SIZE}
             />
           ),
         }}
