@@ -1,34 +1,37 @@
-import { StyleSheet, View, Text, TextInput, Image, TouchableOpacity } from "react-native";
+import React from 'react';
+import { StyleSheet, View, Text, TextInput, Image, TouchableOpacity, Dimensions } from 'react-native';
 import bgImage from "@/assets/images/landing_page.png";
-import React from "react";
-import { router } from "expo-router";
+import { router } from 'expo-router';
+
+// Get screen dimensions
+const { width, height } = Dimensions.get('window');
 
 export default function Login() {
   return (
     <View style={styles.container}>
       <Image source={bgImage} style={styles.bgImage} />
       <View style={styles.loginContainer}>
-      <Text style={styles.text}>Welcome Back!</Text>
-      <TextInput
-        style={styles.username}
-        placeholder="Enter your username"
-        placeholderTextColor="#888"
-      />
-      <TextInput
-        style={styles.password}
-        placeholder="Enter your password"
-        placeholderTextColor="#888"
-        secureTextEntry={true}
-      />
-      <TouchableOpacity style={styles.forgot}>
-        <Text style={styles.forgotPass}>Forgot Password?</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.enterLogin}>
-        <Text style={styles.enter} onPress={() => router.push(`/(tabs)/home`)}>LOGIN</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.forgot}>
-        <Text style={styles.already}>Don't have an account? Register</Text>
-      </TouchableOpacity>
+        <Text style={styles.text}>Welcome Back!</Text>
+        <TextInput
+          style={styles.username}
+          placeholder="Enter your username"
+          placeholderTextColor="#888"
+        />
+        <TextInput
+          style={styles.password}
+          placeholder="Enter your password"
+          placeholderTextColor="#888"
+          secureTextEntry={true}
+        />
+        <TouchableOpacity style={styles.forgot}>
+          <Text style={styles.forgotPass}>Forgot Password?</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.enterLogin} onPress={() => router.push(`/(tabs)/home`)}>
+          <Text style={styles.enter}>LOGIN</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.register}>
+          <Text style={styles.already}>Don't have an account? Register</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -37,83 +40,76 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loginContainer: {
-    position: "absolute",
-    bottom: 0,
-    paddingVertical: 100,
-    backgroundColor: "#F0F4C3",
-    width: "100%",
-    height: "60%", 
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
   },
   bgImage: {
     position: 'absolute',
-    width: "100%",
-    height: "100%",
+    width: '100%',
+    height: '100%',
     resizeMode: 'cover',
   },
+  loginContainer: {
+    position: 'absolute',
+    bottom: 0,
+    paddingVertical: height * 0.05,
+    backgroundColor: '#F0F4C3',
+    width: '100%',
+    height: height * 0.6, 
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 30,
+  },
   text: {
-    color: "#0C3B2D",
-    top: -100,
-    fontWeight: "bold",
-    fontFamily: "Roboto",
-    fontSize: 50,
-    zIndex: 1,
+    color: '#0C3B2D',
+    fontWeight: 'bold',
+    fontFamily: 'Roboto',
+    fontSize: width * 0.1, 
+    marginBottom: height * 0.02, 
   },
   username: {
-    backgroundColor: "#ffffff",
-    width: "80%",
-    fontSize: 20,
-    top: -80,
+    backgroundColor: '#ffffff',
+    width: '80%',
+    fontSize: width * 0.05,
     padding: 10,
     borderRadius: 10,
-    margin: 10,
-    zIndex: 1, 
+    marginBottom: 20,
   },
   password: {
-    backgroundColor: "#ffffff",
-    width: "80%",
-    fontSize: 20,
-    top: -80,
+    backgroundColor: '#ffffff',
+    width: '80%',
+    fontSize: width * 0.05,
     padding: 10,
     borderRadius: 10,
-    margin: 20,
-    zIndex: 1, 
+    marginBottom: 20,
   },
   forgot: {
-    top: -80,
-    zIndex: 1,
-    left: 80,
+    marginBottom: 20,
   },
   forgotPass: {
-    fontSize: 17,
-    color: "#0C3B2D"
+    fontSize: width * 0.04, 
+    color: '#0C3B2D',
   },
   enterLogin: {
-    position: "absolute",
-    backgroundColor: "#0C3B2D",
-    width: "50%",
-    padding: 10,
+    backgroundColor: '#0C3B2D',
+    width: '50%',
+    padding: 15,
     borderRadius: 20,
-    bottom: 120,
-    zIndex: 1,
+    marginBottom: height * 0.05, 
   },
   enter: {
-    fontSize: 20,
-    color: "#F0F4C3",
-    fontWeight: "bold",
-    textAlign: "center",
+    fontSize: width * 0.05,
+    color: '#F0F4C3',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  register: {
+    marginTop: height * 0.03,
   },
   already: {
-    position: "absolute",
-    top: 120,
-    right: 0,
-    zIndex: 1,
-    alignItems: "center",
+    fontSize: width * 0.04, 
+    color: '#0C3B2D',
+    textAlign: 'center',
   },
 });
