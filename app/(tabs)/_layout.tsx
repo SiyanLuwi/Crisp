@@ -17,7 +17,7 @@ export default function navLayout() {
       tabBar={(props) => <TabBar {...props} />}
     >
       <Tabs.Screen
-        name="index"
+        name="home"
         options={{
           title: "Home",
           tabBarIcon: ({ color, focused }) => (
@@ -54,12 +54,12 @@ export default function navLayout() {
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="manage"
         options={{
-          title: "Explore",
+          title: "Manage",
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
-              name={focused ? "code-slash" : "code-slash-outline"}
+              name={focused ? "file-tray-full" : "file-tray-full-outline"}
               color={color}
             />
           ),
