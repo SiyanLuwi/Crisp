@@ -10,7 +10,8 @@ import { Dimensions } from 'react-native';
 const { width } = Dimensions.get('window');
 
 // Define a responsive icon size
-const ICON_SIZE = width * 0.08 
+const ICON_SIZE = width * 0.1;
+
 export default function NavLayout() {
   const colorScheme = useColorScheme();
 

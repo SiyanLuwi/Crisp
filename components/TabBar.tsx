@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { RFPercentage } from 'react-native-responsive-fontsize';
 
 // Get screen dimensions
 const { width } = Dimensions.get('window');
@@ -52,9 +53,12 @@ const TabBar = ({ state, descriptors, navigation }: { state: any, descriptors: a
             onLongPress={onLongPress}
           >
             {renderIcon}
-            <Text style={[styles.tabBarText, { color: isFocused ? 'green' : '#000000' }]}>
-              {label}
-            </Text>
+            {/* Render text label conditionally */}
+            {false && (
+              <Text style={[styles.tabBarText, { color: isFocused ? 'green' : '#000000' }]}>
+                {label}
+              </Text>
+            )}
           </TouchableOpacity>
         );
       })}
@@ -71,8 +75,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#F0F4C3',
     marginHorizontal: width * 0.02,
-    paddingVertical: width * 0.02, 
-    borderRadius: width * 0.1, 
+    paddingVertical: width * 0.02,
+    borderRadius: width * 0.1,
     shadowColor: 'black',
     shadowOffset: { width: 0, height: 10 },
     shadowRadius: 10,
@@ -84,7 +88,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   tabBarText: {
-    fontSize: width * 0.04, 
+    fontSize: RFPercentage(2),
   },
 });
 

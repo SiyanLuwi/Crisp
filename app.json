@@ -2,7 +2,7 @@
   "expo": {
     "name": "Crisp",
     "slug": "Crisp",
-    "version": "1.0.3",
+    "version": "1.0.5",
     "orientation": "portrait",
     "icon": "./assets/images/android-icon.png",
     "scheme": "crisp",
