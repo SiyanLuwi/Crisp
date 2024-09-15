@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   StyleSheet,
   View,
@@ -10,11 +10,15 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { RFPercentage } from "react-native-responsive-fontsize";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 const bgImage = require('@/assets/images/landing_page.png');
+
 // Get screen dimensions
 const { width, height } = Dimensions.get("window");
 
 export default function Login() {
+  const [passwordVisible, setPasswordVisible] = useState(false);
+
   return (
     <View style={styles.container}>
       <Image source={bgImage} style={styles.bgImage} />
@@ -25,12 +29,24 @@ export default function Login() {
           placeholder="Enter your username"
           placeholderTextColor="#888"
         />
-        <TextInput
-          style={styles.password}
-          placeholder="Enter your password"
-          placeholderTextColor="#888"
-          secureTextEntry={true}
-        />
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={styles.password}
+            placeholder="Enter your password"
+            placeholderTextColor="#888"
+            secureTextEntry={!passwordVisible}
+          />
+          <TouchableOpacity
+            style={styles.togglePassword}
+            onPress={() => setPasswordVisible(!passwordVisible)}
+          >
+            <MaterialCommunityIcons
+              name={passwordVisible ? "eye-off" : "eye"}
+              size={24}
+              color="#888"
+            />
+          </TouchableOpacity>
+        </View>
         <TouchableOpacity
           style={styles.enterLogin}
           onPress={() => router.push(`/(tabs)/home`)}
@@ -40,7 +56,7 @@ export default function Login() {
         <TouchableOpacity style={styles.forgot}>
           <Text style={styles.forgotPass}>Forgot Password?</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.register} onPress = {() => router.navigate(`/register`)}>
+        <TouchableOpacity style={styles.register} onPress={() => router.navigate(`/register`)}>
           <Text style={styles.already}>Don't have an account? Register</Text>
         </TouchableOpacity>
       </View>
@@ -88,13 +104,21 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 20,
   },
-  password: {
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: "#ffffff",
     width: "80%",
-    fontSize: RFPercentage(2.5),
-    padding: 10,
     borderRadius: 10,
     marginBottom: 20,
+  },
+  password: {
+    flex: 1,
+    fontSize: RFPercentage(2.5),
+    padding: 10,
+  },
+  togglePassword: {
+    padding: 10,
   },
   forgot: {
     marginBottom: 20,

@@ -10,16 +10,28 @@ import {
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { RFPercentage } from "react-native-responsive-fontsize";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 const bgImage = require("@/assets/images/landing_page.png");
 const { width, height } = Dimensions.get("window");
-export default function register() {
+
+export default function Register() {
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
 
   const handlePasswordChange = (text: string) => {
     if (text.length <= 12) {
       setPassword(text);
     }
   };
+
+  const handleConfirmPasswordChange = (text: string) => {
+    if (text.length <= 12) {
+      setConfirmPassword(text);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Image source={bgImage} style={styles.bgImage} />
@@ -47,17 +59,54 @@ export default function register() {
           keyboardType="numeric"
           maxLength={11}
         />
-        <TextInput
-          style={styles.password}
-          placeholder="Enter your password"
-          placeholderTextColor="#888"
-          secureTextEntry={true}
-          maxLength={12}
-          onChangeText={handlePasswordChange}
-        />
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={styles.password}
+            placeholder="Enter your password"
+            placeholderTextColor="#888"
+            secureTextEntry={!passwordVisible}
+            maxLength={12}
+            onChangeText={handlePasswordChange}
+          />
+          <TouchableOpacity
+            style={styles.togglePassword}
+            onPress={() => setPasswordVisible(!passwordVisible)}
+          >
+            <MaterialCommunityIcons
+              name={passwordVisible ? "eye-off" : "eye"}
+              size={24}
+              color="#888"
+            />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={styles.password}
+            placeholder="Confirm your password"
+            placeholderTextColor="#888"
+            secureTextEntry={!confirmPasswordVisible}
+            maxLength={12}
+            onChangeText={handleConfirmPasswordChange}
+          />
+          <TouchableOpacity
+            style={styles.togglePassword}
+            onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
+          >
+            <MaterialCommunityIcons
+              name={confirmPasswordVisible ? "eye-off" : "eye"}
+              size={24}
+              color="#888"
+            />
+          </TouchableOpacity>
+        </View>
         {password.length > 0 && password.length < 6 && (
           <Text style={styles.errorText}>
             Password must be at least 6 characters long.
+          </Text>
+        )}
+        {confirmPassword.length > 0 && confirmPassword !== password && (
+          <Text style={styles.errorText}>
+            Passwords do not match.
           </Text>
         )}
         <TouchableOpacity
@@ -96,7 +145,7 @@ const styles = StyleSheet.create({
     paddingVertical: height * 0.1,
     backgroundColor: "#F0F4C3",
     width: "100%",
-    height: height * 0.62,
+    height: height * 0.67,
     justifyContent: "center",
     alignItems: "center",
     borderTopLeftRadius: 50,
@@ -107,7 +156,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontFamily: "Roboto",
     fontSize: RFPercentage(5),
-    marginBottom: height * 0.03,
+    marginBottom: height * 0.02,
   },
   name: {
     backgroundColor: "#ffffff",
@@ -141,13 +190,21 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 10,
   },
-  password: {
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: "#ffffff",
     width: "80%",
-    fontSize: RFPercentage(2.5),
-    padding: 10,
     borderRadius: 10,
     marginBottom: 10,
+  },
+  password: {
+    flex: 1,
+    fontSize: RFPercentage(2.5),
+    padding: 10,
+  },
+  togglePassword: {
+    padding: 10,
   },
   forgot: {
     marginBottom: 20,
