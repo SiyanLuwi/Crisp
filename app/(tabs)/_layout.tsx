@@ -3,7 +3,7 @@ import { Tabs } from 'expo-router';
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import TabBar from '@/components/TabBar';
+import TabBar from '@/components/navigation/TabBar';
 import { Dimensions } from 'react-native';
 
 // Get screen width

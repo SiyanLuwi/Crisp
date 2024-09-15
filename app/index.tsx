@@ -23,14 +23,14 @@ export default function Index() {
       <Text style={styles.context}>
         A Smarter Way to Protect{"\n"}Your Neighborhood
       </Text>
-      <TouchableOpacity style={styles.registerContainer}>
-        <Text style={styles.regText}>REGISTER</Text>
-      </TouchableOpacity>
       <TouchableOpacity
         style={styles.loginContainer}
         onPress={() => router.navigate(`/login`)}
       >
         <Text style={styles.loginText}>LOGIN</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.registerContainer} onPress={() => router.navigate(`/register`)}>
+        <Text style={styles.regText}>REGISTER</Text>
       </TouchableOpacity>
     </View>
   );
