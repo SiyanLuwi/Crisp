@@ -9,8 +9,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { RFPercentage } from "react-native-responsive-fontsize";
-import bgImage from "@/assets/images/landing_page.png";
-
+const bgImage = require('@/assets/images/landing_page.png');
 
 // Get screen dimensions
 const { width, height } = Dimensions.get("window");

@@ -8,10 +8,9 @@ import {
   Dimensions,
 } from "react-native";
 import { router } from "expo-router";
-import React, {useState} from "react";
+import React, { useState } from "react";
 import { RFPercentage } from "react-native-responsive-fontsize";
-import bgImage from "@/assets/images/landing_page.png";
-
+const bgImage = require("@/assets/images/landing_page.png");
 const { width, height } = Dimensions.get("window");
 export default function register() {
   const [password, setPassword] = useState("");
@@ -67,7 +66,10 @@ export default function register() {
         >
           <Text style={styles.enter}>REGISTER</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.register} onPress={() => router.navigate(`/login`)}>
+        <TouchableOpacity
+          style={styles.register}
+          onPress={() => router.navigate(`/login`)}
+        >
           <Text style={styles.already}>Already have an account? Login Now</Text>
         </TouchableOpacity>
       </View>
@@ -179,7 +181,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   errorText: {
-    color: 'red',
+    color: "red",
     fontSize: RFPercentage(2.5),
   },
 });

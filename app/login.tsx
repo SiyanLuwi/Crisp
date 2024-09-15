@@ -8,10 +8,9 @@ import {
   TouchableOpacity,
   Dimensions,
 } from "react-native";
-import bgImage from "@/assets/images/landing_page.png";
 import { router } from "expo-router";
 import { RFPercentage } from "react-native-responsive-fontsize";
-
+const bgImage = require('@/assets/images/landing_page.png');
 // Get screen dimensions
 const { width, height } = Dimensions.get("window");
 
