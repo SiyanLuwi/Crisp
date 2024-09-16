@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { RFPercentage } from "react-native-responsive-fontsize";
 
 const { height, width } = Dimensions.get("window");
 
@@ -73,7 +74,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: "#ffffff",
-    fontSize: width * 0.1, 
+    fontSize: RFPercentage(4), 
     fontFamily: "Roboto",
     fontWeight: "bold",
     marginVertical: height * 0.02, 
@@ -91,7 +92,7 @@ const styles = StyleSheet.create({
     marginVertical: height * 0.01, 
   },
   profileName: {
-    fontSize: width * 0.05, 
+    fontSize: RFPercentage(2.5), 
     color: "#000000",
     marginVertical: height * 0.01,
   },
@@ -104,7 +105,7 @@ const styles = StyleSheet.create({
   imageText: {
     color: "#000000",
     textAlign: "center",
-    fontSize: width * 0.04, 
+    fontSize: RFPercentage(2), 
     marginVertical: height * 0.01, 
   },
   voteContainer: {
@@ -115,9 +116,5 @@ const styles = StyleSheet.create({
   },
   voteButton: {
     padding: width * 0.02, 
-  },
-  text: {
-    fontFamily: "Roboto",
-    fontSize: width * 0.06, 
   },
 });

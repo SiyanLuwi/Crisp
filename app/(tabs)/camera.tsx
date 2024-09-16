@@ -9,6 +9,8 @@ const { height, width } = Dimensions.get('window');
 export default function CameraComp() {
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
+  const cameraRef = React.useRef<CameraView>(null);
+
 
   if (!permission) {
     // Camera permissions are still loading.
@@ -30,12 +32,23 @@ export default function CameraComp() {
   }
 
   function capturePhoto() {
-    // Capture photo logic here
+    if (cameraRef.current) {
+      cameraRef.current.takePictureAsync({
+        quality: 1, // Set the quality to 1 for high quality
+        base64: true, // Optional: Get the photo as a base64 string
+        skipProcessing: false, // Make sure processing is enabled
+      }).then(photo => {
+        console.log('Photo captured:', photo);
+      }).catch(error => {
+        console.error('Error capturing photo:', error);
+      });
+    }
   }
+  
 
   return (
     <View style={styles.container}>
-      <CameraView style={styles.camera} facing={facing}>
+      <CameraView style={styles.camera} facing={facing} ref={cameraRef}>
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.captureButton} onPress={capturePhoto}>
             <MaterialCommunityIcons name="camera" size={width * 0.15} color="white" />

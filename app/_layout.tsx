@@ -32,6 +32,7 @@ export default function RootLayout() {
         <Stack.Screen name="index" options={{ headerShown: false, animation:"fade" }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false, animation:"slide_from_bottom" }} />
         <Stack.Screen name="login" options={{ headerShown: false, animation:"fade" }} />
+        <Stack.Screen name="register" options={{ headerShown: false, animation:"fade" }} />
       </Stack>
     </ThemeProvider>
   );
