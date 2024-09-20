@@ -56,7 +56,7 @@ export default function Login() {
         <TouchableOpacity style={styles.forgot}>
           <Text style={styles.forgotPass}>Forgot Password?</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.register} onPress={() => router.navigate(`/register`)}>
+        <TouchableOpacity style={styles.register} onPress={() => router.navigate(`/pages/register`)}>
           <Text style={styles.already}>Don't have an account? Register</Text>
         </TouchableOpacity>
       </View>

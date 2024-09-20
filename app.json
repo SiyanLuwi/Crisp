@@ -2,7 +2,7 @@
   "expo": {
     "name": "Crisp",
     "slug": "Crisp",
-    "version": "1.0.5",
+    "version": "1.0.8",
     "orientation": "portrait",
     "icon": "./assets/images/android-icon.png",
     "scheme": "crisp",
@@ -15,15 +15,22 @@
       "supportsTablet": true
     },
     "android": {
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyAe1iu4272Y5pQ6ccdJUYEAp6qyTAbM_-0"
+        }
+      },
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/android-icon.png",
         "backgroundColor": "#ffffff"
       },
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_FINE_LOCATION"
+        
       ],
-      "package": "com.bscs.group.crisp"
+      "package": "com.bscs.bmmn.crisp"
     },
     "web": {
       "bundler": "metro",
@@ -35,6 +42,7 @@
       "expo-font",
       "expo-camera",
       "expo-asset",
+      "expo-location"
     ],
     "experiments": {
       "typedRoutes": true

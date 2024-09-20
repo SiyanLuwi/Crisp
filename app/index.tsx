@@ -24,11 +24,11 @@ export default function Index() {
       </Text>
       <TouchableOpacity
         style={styles.loginContainer}
-        onPress={() => router.navigate(`/login`)}
+        onPress={() => router.navigate(`/pages/login`)}
       >
         <Text style={styles.loginText}>LOGIN</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.registerContainer} onPress={() => router.navigate(`/register`)}>
+      <TouchableOpacity style={styles.registerContainer} onPress={() => router.navigate(`/pages/register`)}>
         <Text style={styles.regText}>REGISTER</Text>
       </TouchableOpacity>
     </View>
