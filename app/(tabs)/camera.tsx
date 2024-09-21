@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { Dimensions, StyleSheet, Text, View, Button, TouchableOpacity } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { router } from "expo-router";
 
 // Get screen dimensions
 const { height, width } = Dimensions.get('window');
@@ -39,6 +40,7 @@ export default function CameraComp() {
         skipProcessing: false, // Make sure processing is enabled
       }).then(photo => {
         console.log('Photo captured:', photo);
+        router.push('/pages/pictureForm');
       }).catch(error => {
         console.error('Error capturing photo:', error);
       });
@@ -50,7 +52,8 @@ export default function CameraComp() {
     <View style={styles.container}>
       <CameraView style={styles.camera} facing={facing} ref={cameraRef}>
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.captureButton} onPress={capturePhoto}>
+          <TouchableOpacity style={styles.captureButton} 
+          onPress={capturePhoto}>
             <MaterialCommunityIcons name="camera" size={width * 0.15} color="white" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.flipButton} onPress={toggleCameraFacing}>
