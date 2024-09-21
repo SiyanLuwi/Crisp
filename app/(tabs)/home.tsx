@@ -29,6 +29,7 @@ export default function Home() {
         getCurrentLocation();
       } else {
         console.log('Location permission denied');
+        <Text>Location permission denied</Text>
       }
     };
 
