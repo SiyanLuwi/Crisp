@@ -6,11 +6,14 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
+  Alert,
 } from "react-native";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import MapPicker from "@/components/mapPicker";
+
 const bgImage = require("@/assets/images/landing_page.png");
 const { width, height } = Dimensions.get("window");
 
@@ -19,6 +22,8 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
+  const [address, setAddress] = useState("");
+  const [showMapPicker, setShowMapPicker] = useState(false);
 
   const handlePasswordChange = (text: string) => {
     if (text.length <= 12) {
@@ -32,6 +37,12 @@ export default function Register() {
     }
   };
 
+  const handleLocationSelect = (location: { latitude: number; longitude: number }) => {
+    // Convert coordinates to address if needed
+    setAddress(`Lat: ${location.latitude}, Lng: ${location.longitude}`);
+    setShowMapPicker(false); // Close the map picker
+  };
+
   return (
     <View style={styles.container}>
       <Image source={bgImage} style={styles.bgImage} />
@@ -42,11 +53,21 @@ export default function Register() {
           placeholder="Enter your name"
           placeholderTextColor="#888"
         />
-        <TextInput
-          style={styles.address}
-          placeholder="Enter your address"
-          placeholderTextColor="#888"
-        />
+        <TouchableOpacity onPress={() => setShowMapPicker(true)} style={styles.addressContainer}>
+          <TextInput
+            style={styles.address}
+            placeholder="Enter your address"
+            placeholderTextColor="#888"
+            value={address}
+            editable={false} // Make it non-editable
+          />
+          <MaterialCommunityIcons
+            name="map-marker"
+            size={24}
+            color="#0C3B2D"
+            style={styles.mapIcon}
+          />
+        </TouchableOpacity>
         <TextInput
           style={styles.email}
           placeholder="Enter your email"
@@ -122,6 +143,12 @@ export default function Register() {
           <Text style={styles.already}>Already have an account? Login Now</Text>
         </TouchableOpacity>
       </View>
+      {showMapPicker && (
+        <MapPicker 
+          onLocationSelect={handleLocationSelect} 
+          onClose={() => setShowMapPicker(false)} 
+        />
+      )}
     </View>
   );
 }
@@ -166,13 +193,21 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 10,
   },
-  address: {
-    backgroundColor: "#ffffff",
+  addressContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     width: "80%",
-    fontSize: RFPercentage(2.5),
-    padding: 10,
     borderRadius: 10,
     marginBottom: 10,
+    backgroundColor: "#ffffff",
+    padding: 10,
+  },
+  address: {
+    flex: 1,
+    fontSize: RFPercentage(2.5),
+  },
+  mapIcon: {
+    marginLeft: 10,
   },
   email: {
     backgroundColor: "#ffffff",
@@ -205,15 +240,6 @@ const styles = StyleSheet.create({
   },
   togglePassword: {
     padding: 10,
-  },
-  forgot: {
-    marginBottom: 20,
-    justifyContent: "center",
-    alignContent: "center",
-  },
-  forgotPass: {
-    fontSize: RFPercentage(2.5),
-    color: "#0C3B2D",
   },
   enterRegister: {
     backgroundColor: "#0C3B2D",
