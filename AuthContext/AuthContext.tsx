@@ -12,6 +12,8 @@ interface AuthProps{
 }
 
 const TOKEN_KEY = 'my-jwt'
+const REFRESH_KEY = 'my-jwt-refresh'
+const EXPIRATION= 'accessTokenExpiration'
 export const API_URL = 'https://191.168.1.191:8000'
 const AuthContext = createContext<AuthProps>({});
 const useAuth = () => {
@@ -59,9 +61,11 @@ export const AuthProvider = ({children}: any) => {
                     token: res.data.access,
                     authenticated: true
                 })
+                const expirationTime = Date.now() + (60 * 60 * 1000);
                 axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.access}`;
                 await SecureStore.setItemAsync(TOKEN_KEY, res.data.access)
-
+                await SecureStore.setItemAsync(REFRESH_KEY, res.data.refresh)
+                await SecureStore.setItemAsync(EXPIRATION, expirationTime.toString());
                 return res
 
             } catch (error) {
@@ -72,6 +76,7 @@ export const AuthProvider = ({children}: any) => {
         const logout = async () => {
             axios.defaults.headers.common['Authorization'] = ''
             await SecureStore.deleteItemAsync(TOKEN_KEY)
+            await SecureStore.deleteItemAsync(REFRESH_KEY)
 
             setAuthState({
                 token: null,
