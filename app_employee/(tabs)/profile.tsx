@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
   buttonEdit: {
     backgroundColor: "#0C3B2D",
     paddingVertical: height * 0.02,
-    paddingHorizontal: width * 0.06,
+    paddingHorizontal: width * 0.07,
     borderRadius: 10,
     borderColor: "#8BC34A", 
     borderWidth: 0.5, 
