@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle } from 'react-native';
 import { RFPercentage } from 'react-native-responsive-fontsize';
+import { Dimensions } from 'react-native';
+
+const { width, height } = Dimensions.get('window');
 
 interface LoadingButtonProps {
   title: string;
@@ -36,6 +39,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
+    marginBottom: height * 0.02,
   },
   text: {
     fontSize: RFPercentage(2.5),

@@ -142,6 +142,7 @@ const styles = StyleSheet.create({
   },
   register: {
     marginTop: height * 0.03,
+    
   },
   already: {
     fontSize: RFPercentage(2.5),

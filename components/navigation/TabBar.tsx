@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-nati
 import { RFPercentage } from 'react-native-responsive-fontsize';
 
 // Get screen dimensions
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const TabBar = ({ state, descriptors, navigation }: { state: any, descriptors: any, navigation: any }) => {
   return (
@@ -69,7 +69,7 @@ const TabBar = ({ state, descriptors, navigation }: { state: any, descriptors: a
 const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
-    bottom: 10,
+    bottom: height * 0.01,
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
