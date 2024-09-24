@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import MapView, { Marker, Region } from 'react-native-maps';
-import { StyleSheet, View, Dimensions, Text } from 'react-native';
+import { StyleSheet, View, Dimensions, Text, TouchableOpacity } from 'react-native';
 import * as Location from 'expo-location';
 import axios from 'axios';
 import { RFPercentage } from 'react-native-responsive-fontsize';
@@ -17,8 +17,11 @@ export default function Home() {
     longitudeDelta: 0.01,
   };
 
-  const [region, setRegion] = useState<Region>(initialRegion);
+  const [region, setRegion] = useState<Region | null>(initialRegion);
   const [currentWeather, setCurrentWeather] = useState<any | null>(null);
+  const [locationPermissionGranted, setLocationPermissionGranted] = useState(false);
+  const [userLocation, setUserLocation] = useState<any>(null);
+  const mapRef = useRef<MapView>(null); // Add a ref to the MapView
 
   useEffect(() => {
     const requestLocationPermission = async () => {
@@ -26,10 +29,12 @@ export default function Home() {
       console.log('Location permission status:', status);
 
       if (status === 'granted') {
+        setLocationPermissionGranted(true);
         getCurrentLocation();
       } else {
         console.log('Location permission denied');
-        <Text>Location permission denied</Text>
+        setLocationPermissionGranted(false);
+        setRegion(null);
       }
     };
 
@@ -37,6 +42,7 @@ export default function Home() {
       try {
         const location = await Location.getCurrentPositionAsync({});
         const { latitude, longitude } = location.coords;
+        setUserLocation({ latitude, longitude });
         setRegion({
           latitude,
           longitude,
@@ -103,23 +109,49 @@ export default function Home() {
     return timeString.replace(/am|pm/i, match => match.toUpperCase());
   };
 
+  const centerOnUserLocation = () => {
+    if (userLocation) {
+      const newRegion = {
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+        latitudeDelta: region?.latitudeDelta || 0.01,
+        longitudeDelta: region?.longitudeDelta || 0.01,
+      };
+  
+      console.log('Centering on user location:', newRegion); // Debugging ayaw magitna nung location
+      mapRef.current?.animateToRegion(newRegion, 1000); // Animate to the new region
+    } else {
+      console.error('User location is not available'); // Debugging line ulet
+    }
+  };
+  
   return (
     <View style={styles.container}>
-      <View style={styles.mapContainer}>
-        <MapView
-          style={styles.map}
-          region={region}
-          showsUserLocation={true}
-          showsMyLocationButton={true}
-        >
-          <Marker coordinate={region} title={"You are here"} />
-          <Marker
-            coordinate={{ latitude: 14.6543, longitude: 120.9985 }}
-            title={"University of Caloocan City - South Campus"}
-            description="South Campus"
-          />
-        </MapView>
-      </View>
+      {!locationPermissionGranted || region === null ? (
+        <View style={styles.noLocationContainer}>
+          <Text style={styles.noLocationText}>
+            Turn your location services on to see the map.
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.mapContainer}>
+          <MapView
+            ref={mapRef} 
+            style={styles.map}
+            region={region}
+          >
+            <Marker coordinate={region} title={"You are here"} />
+            <Marker
+              coordinate={{ latitude: 14.65344, longitude: 120.99473 }}
+              title={"University of Caloocan City - South Campus"}
+              description="South Campus"
+            />
+          </MapView>
+          <TouchableOpacity style={styles.locationButton} onPress={centerOnUserLocation}>
+            <Icon name="crosshairs-gps" size={RFPercentage(4)} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+      )}
       {currentWeather && (
         <SafeAreaView style={styles.weatherContainer}>
           <View style={styles.weatherRow}>
@@ -155,6 +187,7 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#F0F4C3',
   },
   mapContainer: {
     position: 'absolute',
@@ -164,6 +197,15 @@ const styles = StyleSheet.create({
   },
   map: {
     flex: 1,
+  },
+  locationButton: {
+    position: 'absolute',
+    bottom: height * 0.1,
+    right: 20,
+    backgroundColor: '#0C3B2D',
+    borderRadius: 50,
+    padding: 10,
+    elevation: 5,
   },
   weatherContainer: {
     position: 'absolute',
@@ -187,5 +229,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginLeft: 10,
+  },
+  noLocationContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#0C3B2D',
+  },
+  noLocationText: {
+    fontSize: RFPercentage(3),
+    color: "#ffffff",
+    textAlign: 'center',
   },
 });
