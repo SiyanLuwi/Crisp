@@ -1,50 +1,59 @@
-# Welcome to your Expo app 👋
+# CRISP
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Overview
+CRISP (Community Reporting Interface for Safety and Prevention) is an innovative mobile application designed to empower community members by enabling the real-time reporting of crimes, safety concerns, and other incidents. This crowdsourced platform facilitates the prompt notification of relevant authorities, significantly reducing response times and enhancing the overall safety of the community. Additionally, CRISP provides residents with real-time updates on reported incidents, fostering greater awareness and proactive engagement in community safety efforts of Caloocan City.
 
-## Get started
+## FEATURES
+- The platform will automatically capture and store the GPS coordinates of reported incidents for accurate location mapping
+- CRISP will support the reporting of a variety of incidents, including but not limited to, crimes, safety hazards, and community disturbances.
+- CRISP will include an emergency response feature that directly connects users with local emergency services through an SOS button.
+- The platform will incorporate mechanisms for verifying and validating incident reports, as well as tools to flag and manage potentially false or misleading submissions..
+- CRISP will display the reports made by the users on a map within the app.
+- Reported incidents will be automatically assigned to the appropriate departments or agencies, ensuring rapid notification and response.
+- The app will notify the user when the user is within the radius of an active report and will provide real-time proximity alerts, notifying users when they enter an area with an active or recent report.
 
-1. Install dependencies
 
-   ```bash
-   npm install
+## TECHNOLOGIES USED
+- FRONTEND: `REACT-NATIVE`, `EXPO`, `REACT.JS`
+- BACKEND: `DJANGO`, `PYTHON`, 
+- MACHINE LEARNING: `CHATGPT HAHAHAHAH`
+- REAL-TIME: `FIREBASE`
+
+## INSTALLATION
+1. Clone the repository:
+   ```git
+   git clone https://github.com/SiyanLuwi/Crisp
    ```
+2. Install and Start `EXPO GO` or `APP DEV CLIENT CRISP`
+3. Open the link given in the EXPO TERMINAL usually `YOUR_IP_ADDRESS:8081` or `SCAN THE QR CODE GIVEN BY THE EXPO TERMINAL`
 
-2. Start the app
-
-   ```bash
-    npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### ***CRISP INSTALLATION*** 
+   1. Navigate to project directory
+      ```bash
+      cd CRISP
+      ```
+   2. Install necessary dependencies:
+      ```bash
+      npm install
+      ```
+   3. To start the application run
+      ```bash
+      npm expo start
+      ```
+      or
+      ```bash
+      npx expo start -c --dev-client --reset-cache  
+      ```
+      if you're using dev client
+   4. Open the link given in the EXPO TERMINAL usually `YOUR_IP_ADDRESS:8081` or `SCAN THE QR CODE GIVEN BY THE EXPO TERMINAL`
+### ***CREATION OF APK***
+   1. IF CREATING AN APK DEV-CLIENT USE:
+       ```bash
+      eas build --platform android --profile development
+      ```
+      (REFER TO THE APP.JSON)
+   2. IF CREATING AN APK FOR PRODUCTION:
+      ```bash
+      eas build -p android --profile product
+      ```
+      (REFER TO THE APP.JSON)
