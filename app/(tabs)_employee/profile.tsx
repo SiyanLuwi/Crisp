@@ -1,15 +1,35 @@
 import React, { useState } from "react";
-import { StyleSheet, View, Text, Image, SafeAreaView, Dimensions, TouchableOpacity, TextInput } from "react-native";
+import {
+  StyleSheet,
+  View,
+  Text,
+  Image,
+  SafeAreaView,
+  Dimensions,
+  TouchableOpacity,
+  TextInput,
+} from "react-native";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import LogoutModal from "@/components/logout"; // Adjust import path as needed
-import ChangePasswordModal from "@/components/changePassword"; // Adjust import path as needed
-
+import LogoutModal from "@/components/logout";
+import ChangePasswordModal from "@/components/changePassword"; 
+import SaveConfirmationModal from "@/components/saveConfirmModal";
+import { router } from "expo-router";
 const { width, height } = Dimensions.get("window");
 
 export default function Profile() {
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [changePasswordModalVisible, setChangePasswordModalVisible] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
+
+  const [name, setName] = useState("John Doe");
+  const [address, setAddress] = useState("116 Gonzales Street Barangay 74 Caloocan City");
+  const [email, setEmail] = useState("20210662m.berbon.seanlowie.bscs@gmail.com");
+  const [contact, setContact] = useState("0999123123112");
+
+  // State to hold previous values
+  const [prevValues, setPrevValues] = useState({ name, address, email, contact });
 
   const handleLogout = () => {
     console.log("User logged out");
@@ -18,90 +38,96 @@ export default function Profile() {
 
   const handleChangePassword = async (currentPassword: string, newPassword: string, confirmPassword: string): Promise<void> => {
     return new Promise((resolve, reject) => {
-        console.log("Change password:", { currentPassword, newPassword, confirmPassword });
-
-        // Simulating API call
-        setTimeout(() => {
-            if (newPassword === confirmPassword && newPassword.length > 0) {
-                // Simulate successful password change
-                console.log("Password changed successfully!");
-                resolve();
-            } else {
-                // Simulate an error
-                reject(new Error("Passwords do not match or are invalid."));
-            }
-        }, 2000); // Simulated delay for the API call
+      console.log("Change password:", { currentPassword, newPassword, confirmPassword });
+      setTimeout(() => {
+        if (newPassword === confirmPassword && newPassword.length > 0) {
+          console.log("Password changed successfully!");
+          resolve();
+        } else {
+          reject(new Error("Passwords do not match or are invalid."));
+        }
+      }, 2000);
     });
-};
+  };
+
+  const toggleEdit = () => {
+    if (isEditing) {
+      setShowSaveConfirmation(true); // Show confirmation when trying to save
+    }
+    setIsEditing(!isEditing);
+  };
+
+  const confirmSave = () => {
+    console.log("Saved changes:", { name, address, email, contact });
+    setPrevValues({ name, address, email, contact }); // Update previous values
+    setShowSaveConfirmation(false);
+    setIsEditing(false);
+  };
+
+  const cancelSave = () => {
+    // Revert to previous values
+    setName(prevValues.name);
+    setAddress(prevValues.address);
+    setEmail(prevValues.email);
+    setContact(prevValues.contact);
+    setShowSaveConfirmation(false);
+    setIsEditing(false); // Exit edit mode
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.headerContainer}>
         <Text style={styles.text}>Account</Text>
         <TouchableOpacity onPress={() => setLogoutModalVisible(true)} style={styles.doorIcon}>
-          <MaterialCommunityIcons 
-            name="door" 
-            size={RFPercentage(5)} 
-            color="#ffffff" 
-          />
+          <MaterialCommunityIcons name="door" size={RFPercentage(5)} color="#ffffff" />
         </TouchableOpacity>
       </View>
       <View style={styles.container}>
         <Image
-          source={{ uri: "https://via.placeholder.com/150" }} 
+          source={{ uri: "https://via.placeholder.com/150" }}
           style={styles.profileImage}
         />
         <View style={styles.infoContainer}>
           <TextInput
             style={styles.nameText}
-            value="John Doe"
-            editable={false}
-            multiline={true}
-            numberOfLines={1}
-            textAlignVertical="center"
+            value={name}
+            editable={isEditing}
+            onChangeText={setName}
           />
         </View>
         <View style={styles.infoContainer}>
           <TextInput
             style={styles.infoText}
-            value="116 Gonzales Street Barangay 74 Caloocan City"
-            editable={false}
-            multiline={true}
-            numberOfLines={2}
-            textAlignVertical="center"
+            value={address}
+            editable={isEditing}
+            onChangeText={setAddress}
           />
         </View>
         <View style={styles.infoContainer}>
           <TextInput
             style={styles.infoText}
-            value="20210662m.berbon.seanlowie.bscs@gmail.com"
-            editable={false}
-            multiline={true}
-            numberOfLines={1}
-            textAlignVertical="center"
+            value={email}
+            editable={isEditing}
+            onChangeText={setEmail}
           />
         </View>
         <View style={styles.infoContainer}>
           <TextInput
             style={styles.infoText}
-            value="0999123123112"
-            editable={false}
-            multiline={true}
-            numberOfLines={1}
-            textAlignVertical="center"
+            value={contact}
+            editable={isEditing}
+            onChangeText={setContact}
           />
         </View>
-        <View style={styles.infoContainer}>
-          <View style={styles.verifyContainer}>
-            <Text style={styles.verifyText}>Verify</Text>
-            <TouchableOpacity style={styles.button} onPress={() => setChangePasswordModalVisible(true)}>
-              <Text style={styles.buttonText}>Verify</Text>
-            </TouchableOpacity>
-          </View>
+        <View style={styles.verifyContainer}>
+          <Text style={styles.verifyText}>Not Yet Verified</Text>
+          <TouchableOpacity style={styles.button} onPress={() => router.push('/pages/verifyPage')}>
+            <Text style={styles.buttonText}>Verify</Text>
+          </TouchableOpacity>
         </View>
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.buttonEdit}>
-            <Text style={styles.EditText}>Edit</Text>
+          <TouchableOpacity style={styles.buttonEdit} onPress={toggleEdit}>
+            <Text style={styles.EditText}>{isEditing ? "Save" : "Edit"}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.buttonPass} onPress={() => setChangePasswordModalVisible(true)}>
             <Text style={styles.TextPass}>Change Password</Text>
@@ -122,6 +148,13 @@ export default function Profile() {
         onConfirm={handleChangePassword}
         onCancel={() => setChangePasswordModalVisible(false)}
       />
+
+      {/* Save Confirmation Modal */}
+      <SaveConfirmationModal
+        visible={showSaveConfirmation}
+        onConfirm={confirmSave}
+        onCancel={cancelSave}
+      />
     </SafeAreaView>
   );
 }
@@ -133,12 +166,12 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     flexDirection: 'row',
-    justifyContent: 'center', 
+    justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: width * 0.05,
     marginBottom: height * 0.04,
     marginVertical: height * 0.07,
-    position: 'relative', 
+    position: 'relative',
   },
   text: {
     fontSize: RFPercentage(4),
@@ -146,8 +179,8 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   doorIcon: {
-    position: 'absolute', 
-    right: width * 0.05, 
+    position: 'absolute',
+    right: width * 0.05,
   },
   container: {
     flex: 1,
@@ -191,6 +224,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     width: width * 0.8,
+    backgroundColor: "#F0F4C3",
+    borderRadius: 10,
+    marginBottom: height * 0.025,
   },
   verifyText: {
     fontSize: RFPercentage(2.5),
@@ -203,8 +239,8 @@ const styles = StyleSheet.create({
     paddingVertical: height * 0.02,
     paddingHorizontal: width * 0.06,
     borderRadius: 10,
-    borderColor: "#8BC34A", 
-    borderWidth: 0.7, 
+    borderColor: "#8BC34A",
+    borderWidth: 0.7,
   },
   buttonText: {
     color: "#ffffff",
@@ -221,8 +257,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: width * 0.06,
     borderRadius: 10,
     marginRight: width * 0.06,
-    borderColor: "#8BC34A", 
-    borderWidth: 0.5, 
+    borderColor: "#8BC34A",
+    borderWidth: 0.5,
   },
   buttonPass: {
     backgroundColor: "#8BC34A",
@@ -230,7 +266,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: width * 0.03,
     marginLeft: width * 0.05,
     borderRadius: 10,
-    borderWidth: 0.5, 
+    borderWidth: 0.5,
   },
   EditText: {
     color: "#ffffff",
