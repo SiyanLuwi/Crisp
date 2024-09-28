@@ -71,19 +71,29 @@ export const AuthProvider = ({children}: any) => {
         const login = async (username: string, password: string) => {
             try {
                 // Implement login functionality here
-                const res = await axios.post(`${API_URL}/api/token/`, {username, password})
-                
+                const { data } = await axios.post(`${API_URL}/api/token/`, {username, password})
                 setAuthState({
-                    token: res.data.access,
+                    token: data.access,
                     authenticated: true
                 })
+
                 const expirationTime = Date.now() + (60 * 60 * 1000);
-                axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.access}`;
-                await SecureStore.setItemAsync(TOKEN_KEY, res.data.access)
-                await SecureStore.setItemAsync(REFRESH_KEY, res.data.refresh)
-                await SecureStore.setItemAsync(ROLE, res.data.account_type)
-                await SecureStore.setItemAsync(EXPIRATION, expirationTime.toString());
-                return res
+                axios.defaults.headers.common['Authorization'] = `Bearer ${data.access}`;   
+                const storageItems = {
+                    [TOKEN_KEY]: data.access,
+                    [REFRESH_KEY]: data.refresh,
+                    [ROLE]: data.account_type,
+                    [EXPIRATION]: expirationTime.toString(),
+                    'username': data.username,
+                    'email': data.email,
+                    'address': data.address,  // Fix typo: 'addres' to 'address'
+                    'contact_number': data.contact_number
+                };
+
+                await Promise.all(
+                    Object.entries(storageItems).map(([key, value]) => SecureStore.setItemAsync(key, value))
+                );
+                return data
 
             } catch (error) {
                return {error: true, msg: "Login Error!"} 
@@ -102,6 +112,7 @@ export const AuthProvider = ({children}: any) => {
             })
             console.log("Logging out...")
             router.push('/pages/login')
+
         };
     
         const value = {
