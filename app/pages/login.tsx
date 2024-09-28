@@ -12,23 +12,23 @@ import { router } from "expo-router";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import LoadingButton from "@/components/loadingButton";
+import ForgotPasswordModal from "@/components/forgotPassModal";
 const bgImage = require('@/assets/images/landing_page.png');
 
 // Get screen dimensions
-const { width, height } = Dimensions.get("window");
+const { height } = Dimensions.get("window");
 
 export default function Login() {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const handleLogin = () => {
     setLoading(true);
-    
-    // Simulate a login process (e.g., API call)
     setTimeout(() => {
       setLoading(false);
-      router.push(`/(tabs)/home`); // Navigate to home after loading
-    }, 2000); // Adjust time as needed
+      router.push(`/(tabs)/home`);
+    }, 2000);
   };
 
   return (
@@ -64,16 +64,23 @@ export default function Login() {
           onPress={handleLogin} 
           loading={loading} 
         />
-        <TouchableOpacity style={styles.forgot}>
+        <TouchableOpacity style={styles.forgot} onPress={() => setModalVisible(true)}>
           <Text style={styles.forgotPass}>Forgot Password?</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.register} onPress={() => router.navigate(`/pages/register`)}>
           <Text style={styles.already}>Don't have an account? Register</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Modal for Forgot Password */}
+      <ForgotPasswordModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+      />
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
