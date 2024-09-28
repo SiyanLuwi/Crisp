@@ -4,6 +4,11 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 
 ## Get started
 
+### BEFORE YOU INSTALL REMEMBER THIS
+## 1. Go to settings.py conifgure the DATABASE base on your credentials
+## 2. Go to firebase.py configure your own Firebase Credentials if not contact me hehe
+## 3. Don't include your env when pushing the files.
+
 1. Install dependencies
 
    ```bash

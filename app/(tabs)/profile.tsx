@@ -1,3 +1,4 @@
+import { useAuth } from "@/AuthContext/AuthContext";
 import React from "react";
 import { StyleSheet, View, Text, Image, SafeAreaView, Dimensions, TouchableOpacity, TextInput } from "react-native";
 import { RFPercentage } from "react-native-responsive-fontsize";
@@ -5,6 +6,9 @@ import { RFPercentage } from "react-native-responsive-fontsize";
 const { width, height } = Dimensions.get("window");
 
 export default function Profile() {
+
+  const { onLogout } = useAuth()
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <Text style={styles.text}>Account</Text>
@@ -70,7 +74,7 @@ export default function Profile() {
             <TouchableOpacity style={styles.buttonEdit}>
               <Text style={styles.EditText}>Edit</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.buttonLogout}>
+            <TouchableOpacity style={styles.buttonLogout} onPress={onLogout}>
               <Text style={styles.TextLogout}>Logout</Text>
             </TouchableOpacity>
           </View>
