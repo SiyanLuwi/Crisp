@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { RFPercentage } from 'react-native-responsive-fontsize';
 import { router } from 'expo-router';
+import { useAuth } from '@/AuthContext/AuthContext';
 
 const { width, height } = Dimensions.get("window");
 
@@ -12,9 +13,12 @@ interface LogoutModalProps {
 }
 
 const LogoutModal: React.FC<LogoutModalProps> = ({ visible, onConfirm, onCancel }) => {
-  const handleConfirm = () => {
-    onConfirm();
-    router.push('/pages/login'); // Navigate to the login screen
+  const { onLogout, authState } = useAuth()
+  const handleConfirm = async () => {
+    if(!authState){
+      return
+    }    
+    onConfirm();await onLogout!()
   };
 
   return (

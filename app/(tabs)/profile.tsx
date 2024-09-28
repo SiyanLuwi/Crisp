@@ -16,17 +16,32 @@ import ChangePasswordModal from "@/components/changePassword";
 import SaveConfirmationModal from "@/components/saveConfirmModal";
 import { router } from "expo-router";
 const { width, height } = Dimensions.get("window");
+import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
+import { citizenProfile } from "../api/apiService";
 
-export default function Profile() {
+const queryClient = new QueryClient()
+
+export default function Profile(){
+  return (
+    <QueryClientProvider client={queryClient}>
+      <App/>
+  </QueryClientProvider>
+  )
+}
+
+function App() {
+  const { data } = useQuery({ queryKey: ['groups'], queryFn: citizenProfile })
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [changePasswordModalVisible, setChangePasswordModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
 
-  const [name, setName] = useState("John Doe");
-  const [address, setAddress] = useState("116 Gonzales Street Barangay 74 Caloocan City");
-  const [email, setEmail] = useState("20210662m.berbon.seanlowie.bscs@gmail.com");
-  const [contact, setContact] = useState("0999123123112");
+  
+
+  const [name, setName] = useState(data?.username || '');
+  const [address, setAddress] = useState(data?.address || '');
+  const [email, setEmail] = useState(data?.email || '');
+  const [contact, setContact] = useState(data?.contact_number || '');
 
   // State to hold previous values
   const [prevValues, setPrevValues] = useState({ name, address, email, contact });
