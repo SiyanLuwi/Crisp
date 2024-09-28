@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import { Dimensions, StyleSheet, Text, View, Button, TouchableOpacity } from 'react-native';
+import { Dimensions, StyleSheet, Text, View, Button, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from "expo-router";
 
@@ -10,8 +10,8 @@ const { height, width } = Dimensions.get('window');
 export default function CameraComp() {
   const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
+  const [loading, setLoading] = useState(false); // Add loading state
   const cameraRef = React.useRef<CameraView>(null);
-
 
   if (!permission) {
     // Camera permissions are still loading.
@@ -34,6 +34,7 @@ export default function CameraComp() {
 
   function capturePhoto() {
     if (cameraRef.current) {
+      setLoading(true); // Set loading state to true
       cameraRef.current.takePictureAsync({
         quality: 1, // Set the quality to 1 for high quality
         base64: true, // Optional: Get the photo as a base64 string
@@ -43,18 +44,22 @@ export default function CameraComp() {
         router.push('/pages/pictureForm');
       }).catch(error => {
         console.error('Error capturing photo:', error);
+      }).finally(() => {
+        setLoading(false); 
       });
     }
   }
-  
 
   return (
     <View style={styles.container}>
       <CameraView style={styles.camera} facing={facing} ref={cameraRef}>
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.captureButton} 
-          onPress={capturePhoto}>
-            <MaterialCommunityIcons name="camera" size={width * 0.15} color="white" />
+          <TouchableOpacity style={styles.captureButton} onPress={capturePhoto} disabled={loading}>
+            {loading ? (
+              <ActivityIndicator size="large" color="white" />
+            ) : (
+              <MaterialCommunityIcons name="camera" size={width * 0.15} color="white" />
+            )}
           </TouchableOpacity>
           <TouchableOpacity style={styles.flipButton} onPress={toggleCameraFacing}>
             <MaterialCommunityIcons name="camera-switch" size={width * 0.1} color="white" />

@@ -11,6 +11,7 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { RFPercentage } from "react-native-responsive-fontsize";
+import { router } from "expo-router";
 
 const { height, width } = Dimensions.get("window");
 
@@ -23,7 +24,19 @@ const posts = Array.from({ length: 10 }, (_, index) => ({
 export default function Reports() {
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Reports</Text>
+      <View style={styles.titleContainer}>
+        <Text style={styles.title}>Reports</Text>
+        <TouchableOpacity
+          onPress={() => router.push('/pages/notification')}
+        >
+          <MaterialCommunityIcons
+            name="bell"
+            size={RFPercentage(3)}
+            color="#ffffff"
+            style={styles.notificationIcon}
+          />
+        </TouchableOpacity>
+      </View>
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id}
@@ -67,54 +80,67 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#0C3B2D",
-    alignItems: "center", 
+    alignItems: "center",
   },
   listContent: {
-    paddingVertical: height * 0.01, 
+    paddingVertical: height * 0.01,
   },
   title: {
     color: "#ffffff",
-    fontSize: RFPercentage(4), 
+    marginVertical: height * 0.02,
+    fontSize: RFPercentage(4),
     fontFamily: "Roboto",
     fontWeight: "bold",
-    marginVertical: height * 0.02, 
+    textAlign: "center",
+    flex: 1,
+    marginLeft: width * 0.05,
   },
   postContainer: {
     width: width * 0.9,
     backgroundColor: "#F0F4C3",
     borderRadius: 20,
     alignItems: "center",
-    padding: width * 0.05, 
-    marginVertical: height * 0.01, 
+    padding: width * 0.05,
+    marginVertical: height * 0.01,
     marginBottom: height * 0.02,
   },
   profileIcon: {
-    marginVertical: height * 0.01, 
+    marginVertical: height * 0.01,
   },
   profileName: {
-    fontSize: RFPercentage(2.5), 
+    fontSize: RFPercentage(2.5),
     color: "#000000",
     marginVertical: height * 0.01,
   },
   image: {
     width: "100%",
-    height: width * 0.6, 
+    height: width * 0.6,
     borderRadius: 10,
     marginVertical: height * 0.01,
   },
   imageText: {
     color: "#000000",
     textAlign: "center",
-    fontSize: RFPercentage(2), 
-    marginVertical: height * 0.01, 
+    fontSize: RFPercentage(2),
+    marginVertical: height * 0.01,
   },
   voteContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     width: "100%",
-    paddingVertical: height * 0.02, 
+    paddingVertical: height * 0.02,
   },
   voteButton: {
-    padding: width * 0.02, 
+    padding: width * 0.02,
+  },
+  titleContainer: {
+    width: '100%',
+    paddingHorizontal: width * 0.05,
+    alignItems: 'center', 
+    flexDirection: 'row', 
+    justifyContent: 'space-between',
+  },
+  notificationIcon: {
+    marginLeft: width * 0.02,
   },
 });

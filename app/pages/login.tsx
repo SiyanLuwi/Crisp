@@ -12,41 +12,23 @@ import { router } from "expo-router";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import LoadingButton from "@/components/loadingButton";
+import ForgotPasswordModal from "@/components/forgotPassModal";
 const bgImage = require('@/assets/images/landing_page.png');
-import { useAuth } from '@/AuthContext/AuthContext';
-import * as SecureStore from 'expo-secure-store'
+
 // Get screen dimensions
-const { width, height } = Dimensions.get("window");
+const { height } = Dimensions.get("window");
 
 export default function Login() {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
+  const [modalVisible, setModalVisible] = useState(false);
 
-  const { onLogin } = useAuth();
-
-  const handleLogin = async () => {
+  const handleLogin = () => {
     setLoading(true);
-    try {
-      const res = await onLogin!(username, password)  
-      if(res.status === 401){
-          throw new Error('Network Error: Unable to Login! :))')
-      }
-      const role = await SecureStore.getItemAsync('my-role')
-      setLoading(false)
-      if(role === 'Citizen'){
-        router.push('/(tabs)/home')
-      }else if(role === 'Citizen'){
-        router.push('/(tabs)_employee/home')
-      }else{
-        alert('You are accessing protected routes.')
-        return
-      }
-    } catch (error) {
-        console.log(error)
-    }
-
+    setTimeout(() => {
+      setLoading(false);
+      router.push(`/(tabs)/home`);
+    }, 2000);
   };
 
   return (
@@ -58,7 +40,6 @@ export default function Login() {
           style={styles.username}
           placeholder="Enter your username"
           placeholderTextColor="#888"
-          onChangeText={setUsername}
         />
         <View style={styles.passwordContainer}>
           <TextInput
@@ -66,7 +47,6 @@ export default function Login() {
             placeholder="Enter your password"
             placeholderTextColor="#888"
             secureTextEntry={!passwordVisible}
-            onChangeText={setPassword}
           />
           <TouchableOpacity
             style={styles.togglePassword}
@@ -84,16 +64,23 @@ export default function Login() {
           onPress={handleLogin} 
           loading={loading} 
         />
-        <TouchableOpacity style={styles.forgot}>
+        <TouchableOpacity style={styles.forgot} onPress={() => setModalVisible(true)}>
           <Text style={styles.forgotPass}>Forgot Password?</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.register} onPress={() => router.navigate(`/pages/register`)}>
           <Text style={styles.already}>Don't have an account? Register</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Modal for Forgot Password */}
+      <ForgotPasswordModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+      />
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
@@ -162,6 +149,7 @@ const styles = StyleSheet.create({
   },
   register: {
     marginTop: height * 0.03,
+    
   },
   already: {
     fontSize: RFPercentage(2.5),

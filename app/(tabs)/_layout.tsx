@@ -4,13 +4,7 @@ import { TabBarIcon } from '@/components/navigation/TabBarIcon';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import TabBar from '@/components/navigation/TabBar';
-import { Dimensions } from 'react-native';
-
-// Get screen width
-const { width } = Dimensions.get('window');
-
-// Define a responsive icon size
-const ICON_SIZE = width * 0.1;
+import { RFPercentage } from 'react-native-responsive-fontsize';
 
 export default function NavLayout() {
   const colorScheme = useColorScheme();
@@ -31,7 +25,7 @@ export default function NavLayout() {
             <TabBarIcon
               name={focused ? 'home' : 'home-outline'}
               color={color}
-              size={ICON_SIZE}
+              size={RFPercentage(4.5)}
             />
           ),
         }}
@@ -44,7 +38,7 @@ export default function NavLayout() {
             <TabBarIcon
               name={focused ? 'document-text' : 'document-text-outline'}
               color={color}
-              size={ICON_SIZE}
+              size={RFPercentage(4.5)}
             />
           ),
         }}
@@ -57,7 +51,7 @@ export default function NavLayout() {
             <TabBarIcon
               name={focused ? 'camera' : 'camera-outline'}
               color={color}
-              size={ICON_SIZE}
+              size={RFPercentage(4.5)}
             />
           ),
         }}
@@ -70,7 +64,7 @@ export default function NavLayout() {
             <TabBarIcon
               name={focused ? 'file-tray-full' : 'file-tray-full-outline'}
               color={color}
-              size={ICON_SIZE}
+              size={RFPercentage(4.5)}
             />
           ),
         }}
@@ -83,7 +77,7 @@ export default function NavLayout() {
             <TabBarIcon
               name={focused ? 'person' : 'person-outline'}
               color={color}
-              size={ICON_SIZE}
+              size={RFPercentage(4.5)}
             />
           ),
         }}
