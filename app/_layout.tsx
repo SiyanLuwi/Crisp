@@ -4,7 +4,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
-
+import { AuthProvider } from '@/AuthContext/AuthContext';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -27,6 +27,7 @@ export default function RootLayout() {
   }
 
   return (
+    <AuthProvider>
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false, animation:"fade" }} />
@@ -36,5 +37,6 @@ export default function RootLayout() {
         <Stack.Screen name="pages_employee" options={{ headerShown: false, animation:"fade" }} />
       </Stack>
     </ThemeProvider>
+    </AuthProvider>
   );
 }

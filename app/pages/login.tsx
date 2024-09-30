@@ -13,24 +13,38 @@ import { RFPercentage } from "react-native-responsive-fontsize";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import LoadingButton from "@/components/loadingButton";
 import ForgotPasswordModal from "@/components/forgotPassModal";
+import { useAuth } from "@/AuthContext/AuthContext";
 const bgImage = require('@/assets/images/landing_page.png');
-
 // Get screen dimensions
 const { height } = Dimensions.get("window");
-
+import axios from 'axios'
 export default function Login() {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
   const [modalVisible, setModalVisible] = useState(false);
+  const { onLogin } = useAuth()
 
-  const handleLogin = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      router.push(`/(tabs)/home`);
-    }, 2000);
-  };
 
+  const handleLogin = async () => {
+    setLoading(true); 
+    try {
+        const data = await onLogin!(username, password);
+        if(!data){
+           return;
+        }
+        router.push('/(tabs)/home');
+    } catch (error: unknown) {
+        if (axios.isAxiosError(error) && error.response) {
+            console.log(error.response.data);
+        } else {
+            console.log("An unexpected error occurred:", error);
+        }
+    } finally {
+        setLoading(false); 
+    }
+};
   return (
     <View style={styles.container}>
       <Image source={bgImage} style={styles.bgImage} />
@@ -39,6 +53,7 @@ export default function Login() {
         <TextInput
           style={styles.username}
           placeholder="Enter your username"
+          onChangeText={setUsername}
           placeholderTextColor="#888"
         />
         <View style={styles.passwordContainer}>
@@ -47,6 +62,7 @@ export default function Login() {
             placeholder="Enter your password"
             placeholderTextColor="#888"
             secureTextEntry={!passwordVisible}
+            onChangeText={setPassword}
           />
           <TouchableOpacity
             style={styles.togglePassword}
