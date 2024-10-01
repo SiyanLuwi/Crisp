@@ -132,7 +132,7 @@ export default function Register() {
         )}
         <TouchableOpacity
           style={styles.enterRegister}
-          onPress={() => router.push(`/pages/login`)}
+          onPress={() => router.push(`/pages/verifyEmail`)}
         >
           <Text style={styles.enter}>REGISTER</Text>
         </TouchableOpacity>
