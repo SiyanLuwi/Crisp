@@ -14,37 +14,36 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import LoadingButton from "@/components/loadingButton";
 import ForgotPasswordModal from "@/components/forgotPassModal";
 import { useAuth } from "@/AuthContext/AuthContext";
-const bgImage = require('@/assets/images/landing_page.png');
+const bgImage = require("@/assets/images/landing_page.png");
 // Get screen dimensions
 const { height } = Dimensions.get("window");
-import axios from 'axios'
+import axios from "axios";
 export default function Login() {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
-  const { onLogin } = useAuth()
-
+  const { onLogin } = useAuth();
 
   const handleLogin = async () => {
-    setLoading(true); 
+    setLoading(true);
     try {
-        const data = await onLogin!(username, password);
-        if(!data){
-           return;
-        }
-        router.push('/(tabs)/home');
+      const data = await onLogin!(username, password);
+      if (!data) {
+        return;
+      }
+      router.push("/(tabs)/home");
     } catch (error: unknown) {
-        if (axios.isAxiosError(error) && error.response) {
-            console.log(error.response.data);
-        } else {
-            console.log("An unexpected error occurred:", error);
-        }
+      if (axios.isAxiosError(error) && error.response) {
+        console.log(error.response.data);
+      } else {
+        console.log("An unexpected error occurred:", error);
+      }
     } finally {
-        setLoading(false); 
+      setLoading(false);
     }
-};
+  };
   return (
     <View style={styles.container}>
       <Image source={bgImage} style={styles.bgImage} />
@@ -75,15 +74,17 @@ export default function Login() {
             />
           </TouchableOpacity>
         </View>
-        <LoadingButton 
-          title="LOGIN" 
-          onPress={handleLogin} 
-          loading={loading} 
-        />
-        <TouchableOpacity style={styles.forgot} onPress={() => setModalVisible(true)}>
+        <LoadingButton title="LOGIN" onPress={handleLogin} loading={loading} />
+        <TouchableOpacity
+          style={styles.forgot}
+          onPress={() => setModalVisible(true)}
+        >
           <Text style={styles.forgotPass}>Forgot Password?</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.register} onPress={() => router.navigate(`/pages/register`)}>
+        <TouchableOpacity
+          style={styles.register}
+          onPress={() => router.navigate(`/pages/register`)}
+        >
           <Text style={styles.already}>Don't have an account? Register</Text>
         </TouchableOpacity>
       </View>
@@ -96,7 +97,6 @@ export default function Login() {
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -165,7 +165,6 @@ const styles = StyleSheet.create({
   },
   register: {
     marginTop: height * 0.03,
-    
   },
   already: {
     fontSize: RFPercentage(2.5),
