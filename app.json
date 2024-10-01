@@ -27,7 +27,8 @@
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",
-        "android.permission.ACCESS_FINE_LOCATION"
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
       ],
       "package": "com.bscs.bmmn.crisp"
     },
@@ -54,6 +55,7 @@
       "eas": {
         "projectId": "c7b9d51e-3b89-4da1-a947-b1d13c069826"
       }
-    }
+    },
+    "owner": "thesis-group"
   }
 }

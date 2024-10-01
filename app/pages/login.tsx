@@ -17,34 +17,39 @@ import { useAuth } from "@/AuthContext/AuthContext";
 const bgImage = require('@/assets/images/landing_page.png');
 // Get screen dimensions
 const { height } = Dimensions.get("window");
-import axios from 'axios'
+import * as SecureStore from 'expo-secure-store'
 export default function Login() {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [modalVisible, setModalVisible] = useState(false);
+  const IS_EMAIL_VERIFIED = 'is_email_verified'
   const { onLogin } = useAuth()
 
 
   const handleLogin = async () => {
-    setLoading(true); 
-    try {
-        const data = await onLogin!(username, password);
-        if(!data){
-           return;
+    setLoading(true);
+    try {   
+       const result = await onLogin!(username, password);    
+        const is_email_verified = await SecureStore.getItemAsync(IS_EMAIL_VERIFIED)
+        if(is_email_verified !== 'true'){
+            router.push('/pages/verifyPage')
+            return;
         }
         router.push('/(tabs)/home');
-    } catch (error: unknown) {
-        if (axios.isAxiosError(error) && error.response) {
-            console.log(error.response.data);
-        } else {
-            console.log("An unexpected error occurred:", error);
-        }
+    } catch (error: any) {
+          if (error.message === 'Invalid username or password') {
+            alert('Login failed: Invalid username or password');  
+          } else {
+              alert('An unexpected error occurred. Please try again.');
+          }
     } finally {
-        setLoading(false); 
+        setLoading(false);
     }
-};
+  };
+
+
   return (
     <View style={styles.container}>
       <Image source={bgImage} style={styles.bgImage} />
