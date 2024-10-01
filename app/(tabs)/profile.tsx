@@ -12,48 +12,64 @@ import {
 import { RFPercentage } from "react-native-responsive-fontsize";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import LogoutModal from "@/components/logout";
-import ChangePasswordModal from "@/components/changePassword"; 
+import ChangePasswordModal from "@/components/changePassword";
 import SaveConfirmationModal from "@/components/saveConfirmModal";
 import { router } from "expo-router";
 const { width, height } = Dimensions.get("window");
-import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+} from "@tanstack/react-query";
 import { citizenProfile } from "../api/apiService";
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient();
 
-export default function Profile(){
+export default function Profile() {
   return (
     <QueryClientProvider client={queryClient}>
-      <App/>
-  </QueryClientProvider>
-  )
+      <App />
+    </QueryClientProvider>
+  );
 }
 
 function App() {
-  const { data } = useQuery({ queryKey: ['groups'], queryFn: citizenProfile })
+  const { data } = useQuery({ queryKey: ["groups"], queryFn: citizenProfile });
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
-  const [changePasswordModalVisible, setChangePasswordModalVisible] = useState(false);
+  const [changePasswordModalVisible, setChangePasswordModalVisible] =
+    useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
 
-  
-
-  const [name, setName] = useState(data?.username || '');
-  const [address, setAddress] = useState(data?.address || '');
-  const [email, setEmail] = useState(data?.email || '');
-  const [contact, setContact] = useState(data?.contact_number || '');
+  const [name, setName] = useState(data?.username || "");
+  const [address, setAddress] = useState(data?.address || "");
+  const [email, setEmail] = useState(data?.email || "");
+  const [contact, setContact] = useState(data?.contact_number || "");
 
   // State to hold previous values
-  const [prevValues, setPrevValues] = useState({ name, address, email, contact });
+  const [prevValues, setPrevValues] = useState({
+    name,
+    address,
+    email,
+    contact,
+  });
 
   const handleLogout = () => {
     console.log("User logged out");
     setLogoutModalVisible(false);
   };
 
-  const handleChangePassword = async (currentPassword: string, newPassword: string, confirmPassword: string): Promise<void> => {
+  const handleChangePassword = async (
+    currentPassword: string,
+    newPassword: string,
+    confirmPassword: string
+  ): Promise<void> => {
     return new Promise((resolve, reject) => {
-      console.log("Change password:", { currentPassword, newPassword, confirmPassword });
+      console.log("Change password:", {
+        currentPassword,
+        newPassword,
+        confirmPassword,
+      });
       setTimeout(() => {
         if (newPassword === confirmPassword && newPassword.length > 0) {
           console.log("Password changed successfully!");
@@ -93,8 +109,15 @@ function App() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.headerContainer}>
         <Text style={styles.text}>Account</Text>
-        <TouchableOpacity onPress={() => setLogoutModalVisible(true)} style={styles.doorIcon}>
-          <MaterialCommunityIcons name="door" size={RFPercentage(5)} color="#ffffff" />
+        <TouchableOpacity
+          onPress={() => setLogoutModalVisible(true)}
+          style={styles.doorIcon}
+        >
+          <MaterialCommunityIcons
+            name="door"
+            size={RFPercentage(5)}
+            color="#ffffff"
+          />
         </TouchableOpacity>
       </View>
       <View style={styles.container}>
@@ -136,7 +159,10 @@ function App() {
         </View>
         <View style={styles.verifyContainer}>
           <Text style={styles.verifyText}>Not Yet Verified</Text>
-          <TouchableOpacity style={styles.button} onPress={() => router.push('/pages/verifyPage')}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => router.push("/pages/verifyPage")}
+          >
             <Text style={styles.buttonText}>Verify</Text>
           </TouchableOpacity>
         </View>
@@ -144,7 +170,10 @@ function App() {
           <TouchableOpacity style={styles.buttonEdit} onPress={toggleEdit}>
             <Text style={styles.EditText}>{isEditing ? "Save" : "Edit"}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.buttonPass} onPress={() => setChangePasswordModalVisible(true)}>
+          <TouchableOpacity
+            style={styles.buttonPass}
+            onPress={() => setChangePasswordModalVisible(true)}
+          >
             <Text style={styles.TextPass}>Change Password</Text>
           </TouchableOpacity>
         </View>
@@ -180,13 +209,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#0C3B2D",
   },
   headerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: width * 0.05,
     marginBottom: height * 0.04,
     marginVertical: height * 0.07,
-    position: 'relative',
+    position: "relative",
   },
   text: {
     fontSize: RFPercentage(4),
@@ -194,7 +223,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   doorIcon: {
-    position: 'absolute',
+    position: "absolute",
     right: width * 0.05,
   },
   container: {

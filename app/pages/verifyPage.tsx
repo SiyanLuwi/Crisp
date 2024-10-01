@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  StyleSheet,
   View,
   Text,
   TextInput,
@@ -9,10 +8,13 @@ import {
   Dimensions,
   Image,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import { RFPercentage } from "react-native-responsive-fontsize";
-import * as ImagePicker from 'expo-image-picker';
-import { Camera } from 'expo-camera';
+import * as ImagePicker from "expo-image-picker";
+import { Camera } from "expo-camera";
 import { router } from "expo-router";
 
 const { width, height } = Dimensions.get("window");
@@ -28,16 +30,23 @@ export default function VerifyPage() {
   const [modalVisible, setModalVisible] = useState(false);
 
   const handleVerify = () => {
-    console.log("Verifying with inputs:", { name, address, birthday, idNumber, selfie, idPhoto, idPicture });
+    console.log("Verifying with inputs:", {
+      name,
+      address,
+      birthday,
+      idNumber,
+      selfie,
+      idPhoto,
+      idPicture,
+    });
     setModalVisible(true); // Show modal when verifying
-  
+
     // Simulate verification process
     setTimeout(() => {
       setModalVisible(false); // Close modal
       router.back(); // Navigate back after verification
     }, 2000); // Auto close modal after 2 seconds (for demonstration)
   };
-  
 
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -70,182 +79,129 @@ export default function VerifyPage() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <Text style={styles.title}>Verify Account</Text>
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Name"
-          value={name}
-          onChangeText={setName}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Address"
-          value={address}
-          onChangeText={setAddress}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Birthday"
-          value={birthday}
-          onChangeText={setBirthday}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="ID Number"
-          value={idNumber}
-          onChangeText={setIdNumber}
-        />
-      </View>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+    >
+      <SafeAreaView className="w-full h-full flex flex-col justify-center items-center bg-[#0C3B2D]">
+        <View className="flex flex-col h-full w-full px-6">
+          <Text className="font-bold text-4xl text-white mt-8 mb-8 ml-4">
+            Verify Account
+          </Text>
+          <View className="justify-center items-center px-3 mt-6">
+            <TextInput
+              className="w-full bg-white text-lg p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+              placeholderTextColor="#888"
+              placeholder="Name"
+              value={name}
+              onChangeText={setName}
+            />
+            <TextInput
+              className="w-full bg-white text-lg p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+              placeholderTextColor="#888"
+              placeholder="Address"
+              value={address}
+              onChangeText={setAddress}
+            />
+            <TextInput
+              className="w-full bg-white text-lg p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+              placeholderTextColor="#888"
+              placeholder="Birthday"
+              value={birthday}
+              onChangeText={setBirthday}
+            />
+            <TextInput
+              className="w-full bg-white text-lg p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+              placeholderTextColor="#888"
+              placeholder="ID Number"
+              value={idNumber}
+              onChangeText={setIdNumber}
+            />
+            {/* ID Photo Upload Button */}
+            <View className="w-full flex flex-row justify-between items-center bg-white mx-3 mb-4 rounded-lg">
+              <Text className="text-lg font-bold text-[#888] p-3">
+                Upload ID Photo
+              </Text>
+              <TouchableOpacity
+                className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg"
+                onPress={pickImage}
+              >
+                <Text className="text-white text-md font-normal">
+                  Choose Photo
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-      {/* ID Photo Upload Button */}
-      <View style={styles.verifyContainer}>
-        <Text style={styles.verifyText}>Upload ID Photo</Text>
-        <TouchableOpacity style={styles.button} onPress={pickImage}>
-          <Text style={styles.buttonText}>Choose Photo</Text>
-        </TouchableOpacity>
-      </View>
+            {/* Selfie with ID Button */}
+            <View className="w-full flex flex-row justify-between items-center bg-white mx-3 mb-4 rounded-lg">
+              <Text className="text-lg font-bold text-[#888] p-3">
+                Take a Selfie with ID
+              </Text>
+              <TouchableOpacity
+                className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg"
+                onPress={takeSelfie}
+              >
+                <Text className="text-white text-md font-normal px-2">
+                  Take Selfie
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-      {/* Selfie with ID Button */}
-      <View style={styles.verifyContainer}>
-        <Text style={styles.verifyText}>Take a Selfie with ID</Text>
-        <TouchableOpacity style={styles.button} onPress={takeSelfie}>
-          <Text style={styles.buttonText}>Take Selfie</Text>
-        </TouchableOpacity>
-      </View>
+            {/* Take Picture of ID Button */}
+            <View className="w-full flex flex-row justify-between items-center bg-white mx-3 mb-4 rounded-lg">
+              <Text className="text-lg font-bold text-[#888] p-3">
+                Take a Picture of the ID
+              </Text>
+              <TouchableOpacity
+                className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg"
+                onPress={takeIdPicture}
+              >
+                <Text className="text-white text-md font-normal px-2">
+                  Capture ID
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-      {/* Take Picture of ID Button */}
-      <View style={styles.verifyContainer}>
-        <Text style={styles.verifyText}>Take a Picture of the ID</Text>
-        <TouchableOpacity style={styles.button} onPress={takeIdPicture}>
-          <Text style={styles.buttonText}>Capture ID</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.verifyButton} onPress={handleVerify}>
-          <Text style={styles.buttonText}>Verify</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()}>
-          <Text style={styles.buttonText}>Cancel</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Modal for Verification */}
-      <Modal
-        transparent={true}
-        animationType="slide"
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalText}>Wait for Verification</Text>
-            <TouchableOpacity style={styles.modalButton} onPress={() => setModalVisible(false)}>
-              <Text style={styles.buttonText}>Close</Text>
+            <TouchableOpacity
+              className="mt-12 w-full bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center border-2 border-[#8BC34A]"
+              onPress={handleVerify}
+            >
+              <Text className="text-xl py-1 font-bold text-white">Verify</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className="mt-3 w-full bg-[#8BC34A] rounded-xl p-2 shadow-lg justify-center items-center"
+              onPress={() => router.back()}
+            >
+              <Text className="text-xl py-1 font-bold text-white">Cancel</Text>
             </TouchableOpacity>
           </View>
+
+          {/* Modal for Verification */}
+          <Modal
+            transparent={true}
+            animationType="slide"
+            visible={modalVisible}
+            onRequestClose={() => setModalVisible(false)}
+          >
+            <View className="flex-1 justify-center items-center bg-black/50">
+              <View className="w-4/5 p-5 bg-white rounded-lg items-center border-2 border-[#0C3B2D]">
+                <Text className="text-2xl font-semibold text-[#0C3B2D] mb-5">
+                  Wait for Verification
+                </Text>
+                <TouchableOpacity
+                  className="bg-[#0C3B2D] p-2 rounded"
+                  onPress={() => setModalVisible(false)}
+                >
+                  <Text className="text-lg font-semibold text-white px-2">
+                    Close
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
         </View>
-      </Modal>
-    </SafeAreaView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#0C3B2D",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
-  },
-  title: {
-    position: "absolute",
-    fontSize: RFPercentage(4),
-    color: "#ffffff",
-    fontWeight: "bold",
-    top: height * 0.07,
-  },
-  inputContainer: {
-    width: width * 0.88,
-  },
-  input: {
-    backgroundColor: "#F0F4C3",
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 15,
-    fontSize: RFPercentage(2.5),
-  },
-  verifyContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    width: width * 0.88,
-    backgroundColor: "#F0F4C3",
-    borderRadius: 10,
-    marginBottom: height * 0.025,
-  },
-  verifyText: {
-    fontSize: RFPercentage(2.5),
-    color: "#000000",
-    fontWeight: "bold",
-    marginLeft: width * 0.05,
-  },
-  button: {
-    backgroundColor: "#0C3B2D",
-    padding: 15,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#8BC34A",
-    marginRight: width * 0,
-  },
-  buttonText: {
-    color: "#ffffff",
-    textAlign: "center",
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-  },
-  verifyButton: {
-    backgroundColor: "#0C3B2D",
-    padding: 15,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#8BC34A",
-    flex: 1,
-    marginRight: 5,
-  },
-  cancelButton: {
-    backgroundColor: "#8BC34A",
-    padding: 15,
-    borderRadius: 10,
-    flex: 1,
-    marginLeft: 5,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  modalContent: {
-    width: width * 0.8,
-    padding: 20,
-    backgroundColor: "#F0F4C3",
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  modalText: {
-    fontSize: RFPercentage(3),
-    color: "#000000",
-    marginBottom: 20,
-  },
-  modalButton: {
-    backgroundColor: "#0C3B2D",
-    padding: 10,
-    borderRadius: 5,
-  },
-});
