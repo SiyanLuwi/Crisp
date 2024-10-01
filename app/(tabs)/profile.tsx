@@ -23,7 +23,7 @@ const queryClient = new QueryClient()
 
 export default function Profile(){
   return (
-   <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
       <App/>
   </QueryClientProvider>
   )

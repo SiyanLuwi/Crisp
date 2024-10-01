@@ -13,53 +13,35 @@ import React, { useState } from "react";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import MapPicker from "@/components/mapPicker";
-import { useAuth } from "@/AuthContext/AuthContext";
 
 const bgImage = require("@/assets/images/landing_page.png");
 const { width, height } = Dimensions.get("window");
 
 export default function Register() {
   const [password, setPassword] = useState("");
-  const [password_confirm, setConfirmPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
   const [address, setAddress] = useState("");
-  const [contact_number, setContactNumber] = useState("");
   const [showMapPicker, setShowMapPicker] = useState(false);
-  const { onRegister } = useAuth()
+
   const handlePasswordChange = (text: string) => {
-    if (text.length <= 16) {
+    if (text.length <= 12) {
       setPassword(text);
     }
   };
 
   const handleConfirmPasswordChange = (text: string) => {
-    if (text.length <= 16) {
+    if (text.length <= 12) {
       setConfirmPassword(text);
     }
   };
 
   const handleLocationSelect = (location: { latitude: number; longitude: number }) => {
     // Convert coordinates to address if needed
-    setAddress(`${location.latitude}, ${location.longitude}`);
+    setAddress(`Lat: ${location.latitude}, Lng: ${location.longitude}`);
     setShowMapPicker(false); // Close the map picker
   };
-
-  const handleRegister = async () => {
-    try {
-      const res = await onRegister!(username, email, password, password_confirm, address, contact_number);
-      if(!res.ok){
-        console.log(res)
-        throw new Error("Register Error!");
-      }
-      router.push('/pages/login')
-    } catch (error: any) {
-      alert(error.response.toString())
-    }
-  }
-
 
   return (
     <View style={styles.container}>
@@ -70,7 +52,6 @@ export default function Register() {
           style={styles.name}
           placeholder="Enter your name"
           placeholderTextColor="#888"
-          onChangeText={setUsername}
         />
         <TouchableOpacity onPress={() => setShowMapPicker(true)} style={styles.addressContainer}>
           <TextInput
@@ -79,21 +60,18 @@ export default function Register() {
             placeholderTextColor="#888"
             value={address}
             editable={false} // Make it non-editable
-            onChangeText={setAddress}
           />
           <MaterialCommunityIcons
             name="map-marker"
             size={24}
             color="#0C3B2D"
             style={styles.mapIcon}
-          
           />
         </TouchableOpacity>
         <TextInput
           style={styles.email}
           placeholder="Enter your email"
           placeholderTextColor="#888"
-          onChangeText={setEmail}
         />
         <TextInput
           style={styles.number}
@@ -101,7 +79,6 @@ export default function Register() {
           placeholderTextColor="#888"
           keyboardType="numeric"
           maxLength={11}
-          onChangeText={setContactNumber}
         />
         <View style={styles.passwordContainer}>
           <TextInput
@@ -109,7 +86,7 @@ export default function Register() {
             placeholder="Enter your password"
             placeholderTextColor="#888"
             secureTextEntry={!passwordVisible}
-            maxLength={16}
+            maxLength={12}
             onChangeText={handlePasswordChange}
           />
           <TouchableOpacity
@@ -129,7 +106,7 @@ export default function Register() {
             placeholder="Confirm your password"
             placeholderTextColor="#888"
             secureTextEntry={!confirmPasswordVisible}
-            maxLength={16}
+            maxLength={12}
             onChangeText={handleConfirmPasswordChange}
           />
           <TouchableOpacity
@@ -148,14 +125,14 @@ export default function Register() {
             Password must be at least 6 characters long.
           </Text>
         )}
-        {password_confirm.length > 0 && password_confirm !== password && (
+        {confirmPassword.length > 0 && confirmPassword !== password && (
           <Text style={styles.errorText}>
             Passwords do not match.
           </Text>
         )}
         <TouchableOpacity
           style={styles.enterRegister}
-          onPress={handleRegister}
+          onPress={() => router.push(`/pages/verifyEmail`)}
         >
           <Text style={styles.enter}>REGISTER</Text>
         </TouchableOpacity>

@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   Dimensions,
   Image,
+  Modal,
 } from "react-native";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import * as ImagePicker from 'expo-image-picker';
@@ -24,11 +25,19 @@ export default function VerifyPage() {
   const [selfie, setSelfie] = useState<string | null>(null);
   const [idPhoto, setIdPhoto] = useState<string | null>(null);
   const [idPicture, setIdPicture] = useState<string | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const handleVerify = () => {
     console.log("Verifying with inputs:", { name, address, birthday, idNumber, selfie, idPhoto, idPicture });
-    // Handle verification logic here
+    setModalVisible(true); // Show modal when verifying
+  
+    // Simulate verification process
+    setTimeout(() => {
+      setModalVisible(false); // Close modal
+      router.back(); // Navigate back after verification
+    }, 2000); // Auto close modal after 2 seconds (for demonstration)
   };
+  
 
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -122,6 +131,23 @@ export default function VerifyPage() {
           <Text style={styles.buttonText}>Cancel</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Modal for Verification */}
+      <Modal
+        transparent={true}
+        animationType="slide"
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalText}>Wait for Verification</Text>
+            <TouchableOpacity style={styles.modalButton} onPress={() => setModalVisible(false)}>
+              <Text style={styles.buttonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -198,5 +224,28 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     flex: 1,
     marginLeft: 5,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    width: width * 0.8,
+    padding: 20,
+    backgroundColor: "#F0F4C3",
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  modalText: {
+    fontSize: RFPercentage(3),
+    color: "#000000",
+    marginBottom: 20,
+  },
+  modalButton: {
+    backgroundColor: "#0C3B2D",
+    padding: 10,
+    borderRadius: 5,
   },
 });

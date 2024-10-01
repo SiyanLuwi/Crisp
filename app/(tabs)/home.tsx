@@ -6,8 +6,6 @@ import axios from 'axios';
 import { RFPercentage } from 'react-native-responsive-fontsize';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '@/AuthContext/AuthContext';
-import { router } from 'expo-router';
 
 const { width, height } = Dimensions.get('window');
 
@@ -18,13 +16,12 @@ export default function Home() {
     latitudeDelta: 0.01,
     longitudeDelta: 0.01,
   };
+
   const [region, setRegion] = useState<Region | null>(initialRegion);
   const [currentWeather, setCurrentWeather] = useState<any | null>(null);
   const [locationPermissionGranted, setLocationPermissionGranted] = useState(false);
   const [userLocation, setUserLocation] = useState<any>(null);
-  
   const mapRef = useRef<MapView>(null); // Add a ref to the MapView
-
 
   useEffect(() => {
     const requestLocationPermission = async () => {
