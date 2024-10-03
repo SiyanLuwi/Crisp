@@ -173,7 +173,9 @@ export default function VerifyPage() {
               className="mt-3 w-full bg-[#8BC34A] rounded-xl p-2 shadow-lg justify-center items-center"
               onPress={() => router.back()}
             >
-              <Text className="text-xl py-1 font-bold text-white">Cancel</Text>
+              <Text className="text-xl py-1 font-bold text-[#0C3B2D]">
+                Cancel
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -185,18 +187,23 @@ export default function VerifyPage() {
             onRequestClose={() => setModalVisible(false)}
           >
             <View className="flex-1 justify-center items-center bg-black/50">
-              <View className="w-4/5 p-5 bg-white rounded-lg items-center border-2 border-[#0C3B2D]">
-                <Text className="text-2xl font-semibold text-[#0C3B2D] mb-5">
+              <View className="w-4/5 py-5 px-5 bg-white rounded-xl items-start border-2 border-[#0C3B2D]">
+                <Text className="text-3xl font-extrabold text-[#0C3B2D] mb-5">
+                  Done
+                </Text>
+                <Text className="text-xl font-normal text-[#0C3B2D] mb-10">
                   Wait for Verification
                 </Text>
-                <TouchableOpacity
-                  className="bg-[#0C3B2D] p-2 rounded"
-                  onPress={() => setModalVisible(false)}
-                >
-                  <Text className="text-lg font-semibold text-white px-2">
-                    Close
-                  </Text>
-                </TouchableOpacity>
+                <View className="flex flex-row justify-end w-full ">
+                  <TouchableOpacity
+                    className="bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center"
+                    onPress={() => setModalVisible(false)}
+                  >
+                    <Text className="text-lg font-semibold text-white px-2">
+                      Close
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           </Modal>

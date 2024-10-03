@@ -1,6 +1,13 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Modal } from 'react-native';
-import { RFPercentage } from 'react-native-responsive-fontsize';
+import React from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+  Modal,
+} from "react-native";
+import { RFPercentage } from "react-native-responsive-fontsize";
 
 const { width } = Dimensions.get("window");
 
@@ -10,22 +17,37 @@ interface SaveConfirmationModalProps {
   onCancel: () => void;
 }
 
-const SaveConfirmationModal: React.FC<SaveConfirmationModalProps> = ({ visible, onConfirm, onCancel }) => {
+const SaveConfirmationModal: React.FC<SaveConfirmationModalProps> = ({
+  visible,
+  onConfirm,
+  onCancel,
+}) => {
   return (
-    <Modal
-      transparent={true}
-      visible={visible}
-      animationType="slide"
-    >
-      <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
-          <Text style={styles.modalText}>Save your current changes?</Text>
-          <View style={styles.modalButtonContainer}>
-            <TouchableOpacity style={styles.modalButton} onPress={onConfirm}>
-              <Text style={styles.modalButtonText}>Yes</Text>
+    <Modal transparent={true} visible={visible} animationType="slide">
+      <View className="flex-1 justify-center items-center bg-black/50">
+        <View className="w-4/5 py-5 px-3 bg-white rounded-xl items-start border-2 border-[#0C3B2D]">
+          <Text className="text-3xl font-extrabold text-[#0C3B2D] mb-5">
+            Data Modified
+          </Text>
+          <Text className="text-xl font-normal text-[#0C3B2D] mb-10">
+            Do you wish to save your changes?
+          </Text>
+          <View className="flex flex-row justify-end w-full ">
+            <TouchableOpacity
+              className="bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center"
+              onPress={onConfirm}
+            >
+              <Text className="text-md font-semibold text-white px-4">
+                Confrim
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.modalButton} onPress={onCancel}>
-              <Text style={styles.modalButtonText}>No</Text>
+            <TouchableOpacity
+              className="bg-white border-[#0C3B2D] border-2 p-2 rounded-lg h-auto items-center justify-center ml-3"
+              onPress={onCancel}
+            >
+              <Text className="text-md font-semibold text-[#0C3B2D] px-4">
+                Cancel
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -33,42 +55,5 @@ const SaveConfirmationModal: React.FC<SaveConfirmationModalProps> = ({ visible, 
     </Modal>
   );
 };
-
-const styles = StyleSheet.create({
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(12, 59, 45, 0.5)', // Semi-transparent background matching your theme
-  },
-  modalContent: {
-    width: width * 0.8,
-    padding: 20,
-    borderRadius: 10,
-    backgroundColor: "#F0F4C3", // Light background color consistent with your app
-    alignItems: "center",
-  },
-  modalText: {
-    fontSize: RFPercentage(2.5),
-    marginBottom: 20,
-    textAlign: "center",
-    color: "#000000", // Text color for contrast
-  },
-  modalButtonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    width: "100%",
-  },
-  modalButton: {
-    backgroundColor: "#0C3B2D", // Button color matching your theme
-    padding: 10,
-    borderRadius: 10,
-    marginHorizontal: 10,
-  },
-  modalButtonText: {
-    color: "#ffffff", // Text color for buttons
-    fontSize: RFPercentage(2.5),
-  },
-});
 
 export default SaveConfirmationModal;

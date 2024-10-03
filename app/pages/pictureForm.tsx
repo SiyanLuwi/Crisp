@@ -5,6 +5,9 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import React from "react";
 import { Dimensions } from "react-native";
@@ -16,88 +19,71 @@ const { width, height } = Dimensions.get("window");
 
 export default function PictureForm() {
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.text}>SUBMIT REPORT</Text>
-      <View style={styles.pictureContainer}>
-        {/* Replace with actual image source if needed */}
-        <Image
-          source={{ uri: "https://via.placeholder.com/150" }}
-          style={styles.picture}
-        />
-      </View>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+    >
+      <SafeAreaView className="w-full h-full flex flex-col justify-center items-center bg-[#0C3B2D]">
+        <ScrollView className="w-full h-full flex bg-[#0C3B2D] p-6">
+          <Text className="font-bold text-4xl text-white mt-3 mb-4 ml-4">
+            Make a Report
+          </Text>
+          <View className="justify-center items-center px-3 mt-3">
+            <View className="w-full h-auto">
+              {/* Replace with actual image source if needed */}
+              <Image
+                source={{ uri: "https://via.placeholder.com/150" }}
+                className="w-full h-60 rounded-lg my-4 border border-[#8BC34A]"
+              />
+            </View>
+            <TextInput
+              className="w-full bg-white text-lg p-3 rounded-lg mt-4 mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+              placeholderTextColor="#888"
+              placeholder="Location"
+            />
+            <TextInput
+              className="w-full bg-white text-lg p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+              placeholderTextColor="#888"
+              placeholder="Emergency (yes/no)"
+            />
+            <TextInput
+              className="w-full bg-white text-lg p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+              placeholderTextColor="#888"
+              placeholder="Type of Report"
+            />
+            <TextInput
+              className="w-full bg-white text-lg p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+              placeholderTextColor="#888"
+              placeholder="Description"
+              multiline={true}
+              scrollEnabled={true}
+              style={{
+                maxHeight: 150, // Adjust this value as needed
+                height: 150,
+              }}
+            />
+            <TouchableOpacity
+              className="mt-12 w-full bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center border-2 border-[#8BC34A]"
+              onPress={() => console.log("Report Submitted")}
+            >
+              <Text className="text-xl py-1 font-bold text-white">
+                Submit Report
+              </Text>
+            </TouchableOpacity>
 
-      <TextInput style={styles.input} placeholder="Location" />
-
-      <TextInput style={styles.input} placeholder="Emergency (yes/no)" />
-
-      <TextInput style={styles.input} placeholder="Description" multiline />
-
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => console.log("Report Submitted")}
-        >
-          <Text style={styles.buttonText}>Submit Report</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.button} onPress={() => router.back()}>
-          <Text style={styles.buttonText}>Cancel</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+            <TouchableOpacity
+              className="mt-3 w-full bg-[#8BC34A] rounded-xl p-2 shadow-lg justify-center items-center"
+              onPress={() => router.back()}
+            >
+              <Text className="text-xl py-1 font-bold text-[#0C3B2D]">
+                Cancel
+              </Text>
+            </TouchableOpacity>
+            <Text className="text-xl py-1 font-boldtext-[#0C3B2D]">.</Text>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: "#0C3B2D",
-  },
-  text: {
-    color: "#F0F4C3",
-    fontWeight: "bold",
-    fontSize: RFPercentage(5),
-    textAlign: "center",
-  },
-  pictureContainer: {
-    marginTop: height * 0.02,
-    height: height * 0.5,
-    width: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: height * 0.05,
-  },
-  picture: {
-    width: width * 0.9,
-    height: "100%",
-    resizeMode: "cover",
-  },
-  input: {
-    height: height * 0.06,
-    backgroundColor: "#F0F4C3",
-    borderRadius: 5,
-    borderColor: "#ccc",
-    borderWidth: 1,
-    marginBottom: height * 0.03,
-    paddingHorizontal: 8,
-    fontSize: RFPercentage(2.5),
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  button: {
-    backgroundColor: "#F0F4C3",
-    padding: 10,
-    borderRadius: 5,
-    flex: 1,
-    marginHorizontal: 5,
-  },
-  buttonText: {
-    color: "#000000",
-    fontWeight: "bold",
-    textAlign: "center",
-    fontSize: RFPercentage(2.5),
-  },
-});

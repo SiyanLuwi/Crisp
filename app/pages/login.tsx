@@ -82,7 +82,7 @@ export default function Login() {
               <MaterialCommunityIcons
                 name={passwordVisible ? "eye-off" : "eye"}
                 size={24}
-                color="#888"
+                color="#0C3B2D"
               />
             </TouchableOpacity>
           </View>
@@ -121,78 +121,3 @@ export default function Login() {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    position: "relative",
-  },
-  bgImage: {
-    position: "absolute",
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-  loginContainer: {
-    position: "absolute",
-    bottom: 0,
-    paddingVertical: height * 0.05,
-    backgroundColor: "#F0F4C3",
-    width: "100%",
-    height: height * 0.62,
-    justifyContent: "center",
-    alignItems: "center",
-    borderTopLeftRadius: 50,
-    borderTopRightRadius: 50,
-  },
-  text: {
-    color: "#0C3B2D",
-    fontWeight: "bold",
-    fontFamily: "Roboto",
-    fontSize: RFPercentage(5),
-    marginBottom: height * 0.03,
-  },
-  username: {
-    backgroundColor: "#ffffff",
-    width: "80%",
-    fontSize: RFPercentage(2.5),
-    padding: 10,
-    borderRadius: 10,
-    marginBottom: 20,
-  },
-  passwordContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#ffffff",
-    width: "80%",
-    borderRadius: 10,
-    marginBottom: 20,
-  },
-  password: {
-    flex: 1,
-    fontSize: RFPercentage(2.5),
-    padding: 10,
-  },
-  togglePassword: {
-    padding: 10,
-  },
-  forgot: {
-    marginBottom: 20,
-    justifyContent: "center",
-    alignContent: "center",
-  },
-  forgotPass: {
-    fontSize: RFPercentage(2.5),
-    color: "#0C3B2D",
-  },
-  register: {
-    marginTop: height * 0.03,
-  },
-  already: {
-    fontSize: RFPercentage(2.5),
-    color: "#0C3B2D",
-    textAlign: "center",
-  },
-});
