@@ -97,7 +97,7 @@ export default function CameraComp() {
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator size="large" color="white" />
+              <ActivityIndicator size={width * 0.15} color="#0C3B2D" />
             ) : (
               <MaterialCommunityIcons
                 name="camera-iris"

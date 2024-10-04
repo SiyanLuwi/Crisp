@@ -53,7 +53,7 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
       >
         <View className="flex-1 justify-center items-center bg-black/50">
           <View className="w-4/5 p-5 bg-white rounded-xl items-start border-2 border-[#0C3B2D]">
-            <Text className="text-3xl font-extrabold text-[#0C3B2D] mb-5">
+            <Text className="text-2xl font-extrabold text-[#0C3B2D] mb-5">
               Forgot Password
             </Text>
             <TextInput

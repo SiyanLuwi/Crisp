@@ -1,88 +1,88 @@
-import { StyleSheet, Text, View, FlatList, Dimensions, TouchableOpacity } from "react-native";
+import {
+  Text,
+  View,
+  FlatList,
+  Dimensions,
+  TouchableOpacity,
+} from "react-native";
 import React from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { RFPercentage } from "react-native-responsive-fontsize";
 
 const { height, width } = Dimensions.get("window");
 
 // Generate random notifications
-const types = ['emergency', 'road blockage', 'weather'];
+const types = ["Emergency", "Road blockage", "Weather"];
 const notifications = Array.from({ length: 20 }, (_, index) => {
   const type = types[Math.floor(Math.random() * types.length)];
-  const content = type === 'emergency' 
-    ? `Emergency Alert: Event ${index + 1}` 
-    : type === 'road blockage' 
-    ? `Road Blockage: Event ${index + 1}` 
-    : `Weather Update: Event ${index + 1}`;
-  return { id: index.toString(), type, content };
+  const content =
+    type === "Emergency"
+      ? `Emergency Alert: Event ${index + 1}`
+      : type === "Road blockage"
+      ? `Road Blockage: Event ${index + 1}`
+      : `Weather Update: Event ${index + 1}`;
+  const time = `Time: ${new Date().toLocaleTimeString()}`; // Example time string
+  return { id: index.toString(), type, content, time };
 });
 
 interface NotificationItemProps {
   content: string;
   type: string;
+  time: string; // Added time to props
 }
 
-const NotificationItem: React.FC<NotificationItemProps> = ({ content, type }) => (
-  <TouchableOpacity style={styles.notificationContainer}>
-    <View style={styles.notificationItem}>
-      <MaterialCommunityIcons 
-        name={type === 'emergency' ? "alert" : type === 'weather' ? "weather-rainy" : "road-variant"} 
-        size={24} 
-        color={type === 'emergency' ? "red" : type === 'weather' ? "blue" : "orange"} 
-      />
-      <Text style={styles.notificationText}>{content}</Text>
+const NotificationItem: React.FC<NotificationItemProps> = ({
+  content,
+  type,
+  time,
+}) => (
+  <TouchableOpacity className="w-full bg-white my-2 p-4 rounded-lg shadow">
+    <View className="flex flex-row items-center">
+      <View className="border-2 border-[#0C3B2D] rounded-full p-4">
+        <MaterialCommunityIcons
+          name={
+            type === "Emergency"
+              ? "alert"
+              : type === "Weather"
+              ? "weather-rainy"
+              : "road-variant"
+          }
+          size={45}
+          color="#0C3B2D"
+        />
+      </View>
+      <View className="ml-3 flex-1">
+        <Text className="text-lg font-bold text-[#0C3B2D]">{type}</Text>
+        <Text className="text-xl font-semibold text-slate-500 mb-2">
+          {content}
+        </Text>
+        <Text className="text-md font-semibold text-slate-500">{time}</Text>
+      </View>
     </View>
   </TouchableOpacity>
 );
 
 export default function NotificationForm() {
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Notifications</Text>
+    <SafeAreaView className="flex-1 bg-[#0C3B2D]">
+      <View className="flex-row items-center justify-between px-6">
+        <Text className="font-bold text-3xl text-white my-4">
+          Notifications
+        </Text>
+      </View>
       <FlatList
         data={notifications}
         showsVerticalScrollIndicator={false}
+        className="w-full h-auto flex px-8"
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <NotificationItem content={item.content} type={item.type} />}
+        renderItem={({ item }) => (
+          <NotificationItem
+            content={item.content}
+            type={item.type}
+            time={item.time}
+          />
+        )}
       />
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#0C3B2D",
-    alignItems: "center",
-  },
-  title: {
-    fontSize: RFPercentage(3), 
-    color: "white",
-    marginVertical: 20, 
-    fontWeight: 'bold', 
-  },
-  notificationContainer: {
-    marginVertical: 5, 
-    width: width * 0.9,
-    height: height * 0.1,
-    borderRadius: 8,
-    backgroundColor: '#1E4D3B',
-    borderWidth: width * 0.005,
-    elevation: 10,
-    borderColor: '#0C3B2D',
-    overflow: 'hidden',
-  },
-  notificationItem: {
-    flexDirection: "row",
-    alignItems: "flex-start", 
-    padding: 15, 
-  },
-  notificationText: {
-    color: "white",
-    marginLeft: 10,
-    flexWrap: 'wrap',
-    fontSize: RFPercentage(2),
-    width: width * 0.7, 
-  },
-});

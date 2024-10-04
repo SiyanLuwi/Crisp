@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   StyleSheet,
   View,
@@ -12,6 +12,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import { router } from "expo-router";
+import DeleteReportModal from "@/components/deleteReport";
 
 const { height, width } = Dimensions.get("window");
 
@@ -24,6 +25,8 @@ const posts = Array.from({ length: 10 }, (_, index) => ({
 }));
 
 export default function ManageReports() {
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+
   return (
     <SafeAreaView className="w-full h-auto flex-1 justify-center items-center bg-[#0C3B2D]">
       <View className="flex flex-row h-auto w-full items-center justify-between px-6">
@@ -102,7 +105,10 @@ export default function ManageReports() {
                 <Text className="text-lg mx-1">121</Text>
               </View>
               <View className="flex flex-row items-center">
-                <TouchableOpacity className="p-2">
+                <TouchableOpacity
+                  className="p-2"
+                  onPress={() => setDeleteModalVisible(true)}
+                >
                   <MaterialCommunityIcons
                     name="format-align-justify"
                     size={width * 0.06} // Responsive icon size
@@ -121,6 +127,11 @@ export default function ManageReports() {
           color="#0C3B2D"
         />
       </TouchableOpacity>
+
+      <DeleteReportModal
+        visible={deleteModalVisible}
+        onClose={() => setDeleteModalVisible(false)} // Hide modal
+      />
     </SafeAreaView>
   );
 }

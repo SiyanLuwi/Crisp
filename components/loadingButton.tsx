@@ -1,9 +1,15 @@
-import React, { useState } from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle } from 'react-native';
-import { RFPercentage } from 'react-native-responsive-fontsize';
-import { Dimensions } from 'react-native';
+import React, { useState } from "react";
+import {
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  ViewStyle,
+} from "react-native";
+import { RFPercentage } from "react-native-responsive-fontsize";
+import { Dimensions } from "react-native";
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get("window");
 
 interface LoadingButtonProps {
   title: string;
@@ -13,7 +19,13 @@ interface LoadingButtonProps {
   textStyle?: ViewStyle;
 }
 
-const LoadingButton: React.FC<LoadingButtonProps> = ({ title, onPress, loading, style, textStyle }) => {
+const LoadingButton: React.FC<LoadingButtonProps> = ({
+  title,
+  onPress,
+  loading,
+  style,
+  textStyle,
+}) => {
   const handlePress = () => {
     if (!loading) {
       onPress();
@@ -21,32 +33,18 @@ const LoadingButton: React.FC<LoadingButtonProps> = ({ title, onPress, loading, 
   };
 
   return (
-    <TouchableOpacity style={[styles.button, style]} onPress={handlePress} disabled={loading}>
+    <TouchableOpacity
+      className="mt-3 w-full max-w-[80%] bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center"
+      onPress={handlePress}
+      disabled={loading}
+    >
       {loading ? (
-        <ActivityIndicator size="small" color="#F0F4C3" />
+        <ActivityIndicator className="text-xl py-2 font-bold text-white" />
       ) : (
-        <Text style={[styles.text, textStyle]}>{title}</Text>
+        <Text className="text-xl py-1 font-bold text-white">{title}</Text>
       )}
     </TouchableOpacity>
   );
 };
-
-const styles = StyleSheet.create({
-  button: {
-    backgroundColor: "#0C3B2D",
-    width: "50%",
-    padding: 15,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: height * 0.02,
-  },
-  text: {
-    fontSize: RFPercentage(2.5),
-    color: "#F0F4C3",
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-});
 
 export default LoadingButton;

@@ -42,13 +42,13 @@ const LogoutModal: React.FC<LogoutModalProps> = ({
     >
       <View className="flex-1 justify-center items-center bg-black/50">
         <View className="w-4/5 py-5 px-5 bg-white rounded-xl items-start border-2 border-[#0C3B2D]">
-          <Text className="text-3xl font-extrabold text-[#0C3B2D] mb-5">
+          <Text className="text-2xl font-extrabold text-[#0C3B2D] mb-5">
             Log Out?
           </Text>
-          <Text className="text-xl font-normal text-[#0C3B2D] mb-10">
+          <Text className="text-md font-normal text-[#0C3B2D] mb-10">
             Are you sure you want to log out?
           </Text>
-          <View className="flex flex-row justify-end w-full ">
+          <View className="flex flex-row justify-end w-full">
             <TouchableOpacity
               className="bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center"
               onPress={handleConfirm}
@@ -69,41 +69,5 @@ const LogoutModal: React.FC<LogoutModalProps> = ({
     </Modal>
   );
 };
-
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContainer: {
-    width: width * 0.8,
-    padding: height * 0.05,
-    backgroundColor: "#F0F4C3",
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  modalText: {
-    fontSize: RFPercentage(2.5),
-    marginBottom: height * 0.02,
-  },
-  modalButtonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-  },
-  modalButton: {
-    backgroundColor: "#0C3B2D",
-    paddingVertical: height * 0.02,
-    paddingHorizontal: width * 0.1,
-    borderRadius: 10,
-    marginHorizontal: width * 0.02,
-  },
-  modalButtonText: {
-    color: "#ffffff",
-    fontSize: RFPercentage(2),
-  },
-});
 
 export default LogoutModal;

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { RFPercentage } from "react-native-responsive-fontsize";
+import ReportReportModal from "@/components/reportReport";
 import { router } from "expo-router";
 
 const { height, width } = Dimensions.get("window");
@@ -23,6 +24,8 @@ const posts = Array.from({ length: 10 }, (_, index) => ({
 }));
 
 export default function Reports() {
+  const [reportModalVisible, setReportModalVisible] = useState(false);
+
   return (
     <SafeAreaView className="w-full h-auto flex-1 justify-center items-center bg-[#0C3B2D]">
       <View className="flex flex-row h-auto w-full items-center justify-between px-6">
@@ -99,10 +102,13 @@ export default function Reports() {
                 <Text className="text-lg mx-1">121</Text>
               </View>
               <View className="flex flex-row items-center">
-                <TouchableOpacity className="p-2">
+                <TouchableOpacity
+                  className="p-2"
+                  onPress={() => setReportModalVisible(true)}
+                >
                   <MaterialCommunityIcons
                     name="format-align-justify"
-                    size={width * 0.06} // Responsive icon size
+                    size={width * 0.06} // make modal here
                     color="#0C3B2D"
                   />
                 </TouchableOpacity>
@@ -118,6 +124,11 @@ export default function Reports() {
           color="#0C3B2D"
         />
       </TouchableOpacity>
+
+      <ReportReportModal
+        visible={reportModalVisible}
+        onClose={() => setReportModalVisible(false)} // Hide modal
+      />
     </SafeAreaView>
   );
 }

@@ -17,6 +17,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import LogoutModal from "@/components/logout";
 import ChangePasswordModal from "@/components/changePassword";
 import SaveConfirmationModal from "@/components/saveConfirmModal";
+import CancelModal from "@/components/cancelModal";
 import { router } from "expo-router";
 const { width, height } = Dimensions.get("window");
 import {
@@ -43,6 +44,7 @@ function App() {
     useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
+  const [cancelModalVisible, setCancelModalVisible] = useState(false);
 
   const [name, setName] = useState(data?.username || "");
   const [address, setAddress] = useState(data?.address || "");
@@ -89,6 +91,12 @@ function App() {
       setShowSaveConfirmation(true); // Show confirmation when trying to save
     }
     setIsEditing(!isEditing);
+  };
+
+  const confirmCancel = () => {
+    cancelSave(); // Call the function to revert changes
+    setCancelModalVisible(false);
+    router.push("/(tabs)/profile");
   };
 
   const confirmSave = () => {
@@ -185,14 +193,27 @@ function App() {
                   {isEditing ? "Save" : "Edit"}
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                className="mt-3 w-full bg-[#8BC34A] rounded-xl p-2 shadow-lg justify-center items-center"
-                onPress={() => setChangePasswordModalVisible(true)}
-              >
-                <Text className="text-xl py-1 font-bold text-[#0C3B2D]">
-                  Change Password
-                </Text>
-              </TouchableOpacity>
+              {isEditing && (
+                <TouchableOpacity
+                  className="mt-3 w-full bg-[#8BC34A] rounded-xl p-2 shadow-lg justify-center items-center"
+                  onPress={() => setCancelModalVisible(true)}
+                >
+                  <Text className="text-xl py-1 font-bold text-[#0C3B2D]">
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {!isEditing && (
+                <TouchableOpacity
+                  className="mt-3 w-full bg-[#8BC34A] rounded-xl p-2 shadow-lg justify-center items-center"
+                  onPress={() => setChangePasswordModalVisible(true)}
+                >
+                  <Text className="text-xl py-1 font-bold text-[#0C3B2D]">
+                    Change Password
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
 
@@ -216,6 +237,14 @@ function App() {
             onConfirm={confirmSave}
             onCancel={cancelSave}
           />
+
+          {/* Cancel Modal */}
+          <CancelModal
+            visible={cancelModalVisible}
+            onConfirm={confirmCancel}
+            onCancel={() => setCancelModalVisible(false)}
+          />
+
           <View className="flex flex-row items-center">
             <TouchableOpacity className="p-2">
               <MaterialCommunityIcons

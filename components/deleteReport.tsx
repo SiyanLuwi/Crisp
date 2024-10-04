@@ -1,49 +1,41 @@
 import React from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Dimensions,
-  Modal,
-} from "react-native";
-import { RFPercentage } from "react-native-responsive-fontsize";
+import { View, Text, Modal, TouchableOpacity, StyleSheet } from "react-native";
 
-const { width } = Dimensions.get("window");
-
-interface SaveConfirmationModalProps {
+interface DeleteReportModalProps {
   visible: boolean;
-  onConfirm: () => void;
-  onCancel: () => void;
+  onClose: () => void;
 }
 
-const SaveConfirmationModal: React.FC<SaveConfirmationModalProps> = ({
+const DeleteReportModal: React.FC<DeleteReportModalProps> = ({
   visible,
-  onConfirm,
-  onCancel,
+  onClose,
 }) => {
+  const handleConfirm = () => {
+    onClose(); // Use the modified close function
+    console.log("Report deleted");
+  };
   return (
-    <Modal transparent={true} visible={visible} animationType="slide">
+    <Modal transparent={true} visible={visible} animationType="fade">
       <View className="flex-1 justify-center items-center bg-black/50">
         <View className="w-4/5 py-5 px-3 bg-white rounded-xl items-start border-2 border-[#0C3B2D]">
           <Text className="text-2xl font-extrabold text-[#0C3B2D] mb-5 px-3">
-            Data Modified
+            Delete Report
           </Text>
           <Text className="text-md font-normal text-[#0C3B2D] mb-10 px-3">
-            Do you wish to save your changes?
+            Are you sure you want to delete your post?
           </Text>
-          <View className="flex flex-row justify-end w-full ">
+          <View className="flex flex-row justify-end w-full mt-3  px-3">
             <TouchableOpacity
+              onPress={handleConfirm}
               className="bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center"
-              onPress={onConfirm}
             >
               <Text className="text-md font-semibold text-white px-4">
-                Confrim
+                Confirm
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
+              onPress={onClose}
               className="bg-white border-[#0C3B2D] border-2 p-2 rounded-lg h-auto items-center justify-center ml-3"
-              onPress={onCancel}
             >
               <Text className="text-md font-semibold text-[#0C3B2D] px-4">
                 Cancel
@@ -56,4 +48,4 @@ const SaveConfirmationModal: React.FC<SaveConfirmationModalProps> = ({
   );
 };
 
-export default SaveConfirmationModal;
+export default DeleteReportModal;

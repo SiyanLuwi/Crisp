@@ -82,7 +82,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
           {!success ? (
             <>
               <View className="flex flex-col w-full px-3">
-                <Text className="text-3xl font-extrabold text-[#0C3B2D] mb-5">
+                <Text className="text-2xl font-extrabold text-[#0C3B2D] mb-5">
                   Change Password
                 </Text>
 
@@ -204,90 +204,5 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
     </Modal>
   );
 };
-
-// Styles
-const styles = StyleSheet.create({
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  modalContent: {
-    backgroundColor: "#F0F4C3",
-    padding: 20,
-    borderRadius: 10,
-    width: "80%",
-  },
-  modalTitle: {
-    fontSize: RFPercentage(3),
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
-  inputContainer: {
-    position: "relative",
-    marginBottom: 15,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#0C3B2D",
-    borderRadius: 5,
-    padding: 10,
-    fontSize: RFPercentage(2),
-  },
-  eyeIcon: {
-    position: "absolute",
-    right: 10,
-    top: 10,
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  button: {
-    backgroundColor: "#0C3B2D",
-    padding: 10,
-    borderRadius: 5,
-    flex: 1,
-    marginHorizontal: 5,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "#ffffff",
-    fontSize: RFPercentage(2),
-    fontWeight: "bold",
-  },
-  successContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 20,
-  },
-  successMessage: {
-    fontSize: RFPercentage(2.5),
-    marginVertical: 10,
-  },
-  successButton: {
-    backgroundColor: "#0C3B2D",
-    padding: width * 0.02,
-    borderRadius: 5,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  successText: {
-    color: "#ffffff",
-    fontSize: RFPercentage(2),
-    fontWeight: "bold",
-  },
-  errorContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  errorMessage: {
-    color: "red",
-    marginLeft: 5,
-    fontSize: RFPercentage(2),
-  },
-});
 
 export default ChangePasswordModal;

@@ -4,20 +4,47 @@ import {
   View,
   TextInput,
   TouchableOpacity,
+  FlatList,
   Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Modal,
 } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 import { Dimensions } from "react-native";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import CancelModal from "@/components/cancelModal";
 
 const { width, height } = Dimensions.get("window");
 
 export default function PictureForm() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<string | null>(null);
+  const [cancelModalVisible, setCancelModalVisible] = useState(false);
+
+  const toggleDropdown = () => {
+    setIsOpen((prev) => !prev);
+  };
+
+  const handleItemPress = (item: string) => {
+    setSelectedItem(item);
+    setIsOpen(false);
+    console.log("Selected Item:", item);
+  };
+
+  const data = [
+    { id: "1", name: "Option 1" },
+    { id: "2", name: "Option 2" },
+    { id: "3", name: "Option 3" },
+  ];
+
+  const confirmCancel = () => {
+    setCancelModalVisible(false);
+  };
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -31,7 +58,6 @@ export default function PictureForm() {
           </Text>
           <View className="justify-center items-center px-3 mt-3">
             <View className="w-full h-auto">
-              {/* Replace with actual image source if needed */}
               <Image
                 source={{ uri: "https://via.placeholder.com/150" }}
                 className="w-full h-60 rounded-lg my-4 border border-[#8BC34A]"
@@ -47,11 +73,55 @@ export default function PictureForm() {
               placeholderTextColor="#888"
               placeholder="Emergency (yes/no)"
             />
-            <TextInput
-              className="w-full bg-white text-lg p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
-              placeholderTextColor="#888"
-              placeholder="Type of Report"
-            />
+            <TouchableOpacity
+              onPress={toggleDropdown}
+              className="w-full bg-white p-3 rounded-lg mb-4 border border-[#0C3B2D] justify-center"
+            >
+              <Text className="text-lg text-[#0C3B2D] font-semibold">
+                {selectedItem ? selectedItem : "Select a type of Report"}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Dropdown options displayed in Modal */}
+            <Modal
+              visible={isOpen}
+              transparent={true}
+              animationType="fade"
+              onRequestClose={toggleDropdown}
+            >
+              <TouchableOpacity
+                className="flex-1 justify-center items-center bg-black/50"
+                onPress={toggleDropdown}
+              >
+                <View
+                  style={{
+                    width: "80%",
+                    backgroundColor: "white",
+                    borderRadius: 10,
+                    padding: 20,
+                  }}
+                >
+                  <Text className="text-lg text-[#0C3B2D] font-bold mb-3">
+                    Select a Type of Report
+                  </Text>
+                  <FlatList
+                    data={data}
+                    keyExtractor={(item) => item.id}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        onPress={() => handleItemPress(item.name)}
+                        className="w-full p-2 border-b border-[#0C3B2D]"
+                      >
+                        <Text className="text-md font-semibold py-2">
+                          {item.name}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  />
+                </View>
+              </TouchableOpacity>
+            </Modal>
+
             <TextInput
               className="w-full bg-white text-lg p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
               placeholderTextColor="#888"
@@ -59,13 +129,16 @@ export default function PictureForm() {
               multiline={true}
               scrollEnabled={true}
               style={{
-                maxHeight: 150, // Adjust this value as needed
+                maxHeight: 150,
                 height: 150,
               }}
             />
             <TouchableOpacity
               className="mt-12 w-full bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center border-2 border-[#8BC34A]"
-              onPress={() => console.log("Report Submitted")}
+              onPress={() => {
+                router.push("/(tabs)/reports"); // Call the onClose function
+                console.log("Report Submitted"); // Log the message
+              }}
             >
               <Text className="text-xl py-1 font-bold text-white">
                 Submit Report
@@ -74,14 +147,23 @@ export default function PictureForm() {
 
             <TouchableOpacity
               className="mt-3 w-full bg-[#8BC34A] rounded-xl p-2 shadow-lg justify-center items-center"
-              onPress={() => router.back()}
+              onPress={() => {
+                setCancelModalVisible(true);
+              }}
             >
               <Text className="text-xl py-1 font-bold text-[#0C3B2D]">
                 Cancel
               </Text>
             </TouchableOpacity>
-            <Text className="text-xl py-1 font-boldtext-[#0C3B2D]">.</Text>
+            <Text className="text-xl py-1 font-bold text-[#0C3B2D]">.</Text>
           </View>
+
+          {/* Cancel Modal */}
+          <CancelModal
+            visible={cancelModalVisible}
+            onConfirm={confirmCancel}
+            onCancel={() => setCancelModalVisible(false)}
+          />
         </ScrollView>
       </SafeAreaView>
     </KeyboardAvoidingView>
