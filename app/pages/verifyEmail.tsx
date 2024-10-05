@@ -8,17 +8,29 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { RFPercentage } from "react-native-responsive-fontsize";
+import { useAuth } from "@/AuthContext/AuthContext";
+import * as SecureStore from "expo-secure-store";
 
 const { height } = Dimensions.get("window");
 
 export default function VerifyEmail() {
   const [otp, setOtp] = useState("");
-
+  const { onVerifyEmail } = useAuth();
   const handleOtpChange = (text: string) => {
     // Only allow digits and limit to 6 characters
     if (/^\d*$/.test(text) && text.length <= 6) {
       setOtp(text);
     }
+  };
+
+  const sendOtp = async () => {
+    try {
+      const email = await SecureStore.getItemAsync("email");
+      if (!email) {
+        throw new Error("Email is missing!");
+      }
+      await onVerifyEmail!(email, otp);
+    } catch (error) {}
   };
 
   return (
@@ -40,7 +52,7 @@ export default function VerifyEmail() {
       />
       <TouchableOpacity
         className="w-full max-w-[80%] bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center"
-        onPress={() => router.push(`/(tabs)/home`)}
+        onPress={sendOtp}
       >
         <Text className="text-xl py-1 font-bold text-white">Verify</Text>
       </TouchableOpacity>

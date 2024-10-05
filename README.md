@@ -48,11 +48,24 @@ CRISP (Community Reporting Interface for Safety and Prevention) is an innovative
    4. Open the link given in the EXPO TERMINAL usually `YOUR_IP_ADDRESS:8081` or `SCAN THE QR CODE GIVEN BY THE EXPO TERMINAL`
 ### ***CREATION OF APK***
    1. IF CREATING AN APK DEV-CLIENT USE:
-       ```bash
+      
+      First use
+      ```bash
+      npx expo-doctor
+      ```
+      to check for dependencies
+      then
+      ```bash
+      npm install --check
+      ```
+      to update dependencies
+      then
+      ```bash
       eas build --platform android --profile development
       ```
       (REFER TO THE APP.JSON)
-   2. IF CREATING AN APK FOR PRODUCTION:
+      
+   3. IF CREATING AN APK FOR PRODUCTION:
       ```bash
       eas build -p android --profile product
       ```

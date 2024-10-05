@@ -20,7 +20,8 @@ import { useAuth } from "@/AuthContext/AuthContext";
 const bgImage = require("@/assets/images/landing_page.png");
 // Get screen dimensions
 const { height } = Dimensions.get("window");
-import axios from "axios";
+import * as SecureStore from "expo-secure-store";
+
 export default function Login() {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -28,25 +29,31 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const { onLogin } = useAuth();
+  const IS_EMAIL_VERIFIED = "is_email_verified";
 
   const handleLogin = async () => {
     setLoading(true);
     try {
-      const data = await onLogin!(username, password);
-      if (!data) {
+      const result = await onLogin!(username, password);
+      const is_email_verified = await SecureStore.getItemAsync(
+        IS_EMAIL_VERIFIED
+      );
+      if (is_email_verified !== "true") {
+        router.push("/pages/verifyPage");
         return;
       }
       router.push("/(tabs)/home");
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error) && error.response) {
-        console.log(error.response.data);
+    } catch (error: any) {
+      if (error.message === "Invalid username or password") {
+        alert("Login failed: Invalid username or password");
       } else {
-        console.log("An unexpected error occurred:", error);
+        alert("An unexpected error occurred. Please try again.");
       }
     } finally {
       setLoading(false);
     }
   };
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -62,14 +69,14 @@ export default function Login() {
             </Text>
           </View>
           <TextInput
-            className="w-4/5 bg-white text-lg p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+            className="w-4/5 bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
             placeholder="Enter your email"
             onChangeText={setUsername}
             placeholderTextColor="#888"
           />
           <View className="w-4/5 bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
             <TextInput
-              className="w-4/5 text-lg p-3 text-[#0C3B2D] font-semibold items-center justify-center"
+              className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
               placeholder="Enter your password"
               placeholderTextColor="#888"
               secureTextEntry={!passwordVisible}

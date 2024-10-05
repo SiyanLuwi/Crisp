@@ -16,26 +16,32 @@ import React, { useState } from "react";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import MapPicker from "@/components/mapPicker";
-
+import { useAuth } from "@/AuthContext/AuthContext";
+import LoadingButton from "@/components/loadingButton";
 const bgImage = require("@/assets/images/landing_page.png");
 const { width, height } = Dimensions.get("window");
 
 export default function Register() {
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [password_confirm, setConfirmPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
+  const [contact_number, setContactNumber] = useState("");
   const [showMapPicker, setShowMapPicker] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { onRegister } = useAuth();
 
   const handlePasswordChange = (text: string) => {
-    if (text.length <= 12) {
+    if (text.length <= 16) {
       setPassword(text);
     }
   };
 
   const handleConfirmPasswordChange = (text: string) => {
-    if (text.length <= 12) {
+    if (text.length <= 16) {
       setConfirmPassword(text);
     }
   };
@@ -45,8 +51,32 @@ export default function Register() {
     longitude: number;
   }) => {
     // Convert coordinates to address if needed
-    setAddress(`Lat: ${location.latitude}, Lng: ${location.longitude}`);
+    setAddress(`${location.latitude}, ${location.longitude}`);
     setShowMapPicker(false); // Close the map picker
+  };
+
+  const handleRegister = async () => {
+    try {
+      setLoading(true);
+      const res = await onRegister!(
+        username,
+        email,
+        password,
+        password_confirm,
+        address,
+        contact_number
+      );
+      console.log(res.status);
+      if (res.status !== 200 && res.status !== 201) {
+        console.log(res.data);
+        throw new Error("Register Error!");
+      }
+      router.push("/pages/verifyEmail");
+    } catch (error: any) {
+      alert(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -65,7 +95,7 @@ export default function Register() {
             </Text>
           </View>
           <TextInput
-            className="w-4/5 bg-white text-lg p-3 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+            className="w-4/5 bg-white text-md p-4 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
             placeholder="Enter your name"
             placeholderTextColor="#888"
           />
@@ -74,11 +104,12 @@ export default function Register() {
             className="w-4/5 bg-white mb-2 rounded-lg flex flex-row items-center border border-[#0C3B2D]"
           >
             <TextInput
-              className="w-4/5 text-lg p-3 text-[#0C3B2D] font-semibold items-center justify-center"
+              className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
               placeholder="Enter your address"
               placeholderTextColor="#888"
               value={address}
               editable={false} // Make it non-editable
+              onChangeText={setAddress}
             />
             <MaterialCommunityIcons
               name="map-marker"
@@ -87,24 +118,26 @@ export default function Register() {
             />
           </TouchableOpacity>
           <TextInput
-            className="w-4/5 bg-white text-lg p-3 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+            className="w-4/5 bg-white text-md p-4 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
             placeholder="Enter your email"
             placeholderTextColor="#888"
+            onChangeText={setEmail}
           />
           <TextInput
-            className="w-4/5 bg-white text-lg p-3 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+            className="w-4/5 bg-white text-md p-4 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
             placeholder="Enter your phone number"
             placeholderTextColor="#888"
             keyboardType="numeric"
             maxLength={11}
+            onChangeText={setContactNumber}
           />
           <View className="w-4/5 bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
             <TextInput
-              className="w-4/5 text-lg p-3 text-[#0C3B2D] font-semibold items-center justify-center"
+              className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
               placeholder="Enter your password"
               placeholderTextColor="#888"
               secureTextEntry={!passwordVisible}
-              maxLength={12}
+              maxLength={16}
               onChangeText={handlePasswordChange}
             />
             <TouchableOpacity
@@ -120,11 +153,11 @@ export default function Register() {
           </View>
           <View className="w-4/5 bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
             <TextInput
-              className="w-4/5 text-lg p-3 text-[#0C3B2D] font-semibold items-center justify-center"
+              className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
               placeholder="Confirm your password"
               placeholderTextColor="#888"
               secureTextEntry={!confirmPasswordVisible}
-              maxLength={12}
+              maxLength={16}
               onChangeText={handleConfirmPasswordChange}
             />
             <TouchableOpacity
@@ -143,17 +176,16 @@ export default function Register() {
               Password must be at least 6 characters long.
             </Text>
           )}
-          {confirmPassword.length > 0 && confirmPassword !== password && (
+          {password_confirm.length > 0 && password_confirm !== password && (
             <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
               Passwords do not match.
             </Text>
           )}
-          <TouchableOpacity
-            className="mt-5 w-full max-w-[80%] bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center"
-            onPress={() => router.push(`/pages/verifyEmail`)}
-          >
-            <Text className="text-xl py-1 font-bold text-white">REGISTER</Text>
-          </TouchableOpacity>
+          <LoadingButton
+            title="REGISTER"
+            onPress={handleRegister}
+            loading={loading}
+          />
           <TouchableOpacity
             className="w-full flex items-center justify-center flex-row mt-6"
             onPress={() => router.navigate(`/pages/login`)}

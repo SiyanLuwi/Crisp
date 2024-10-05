@@ -143,7 +143,7 @@ function App() {
             />
             <View className="justify-center w-full items-center px-12 mt-6">
               <TextInput
-                className="w-full bg-white text-lg p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                 value={name}
                 editable={isEditing}
                 onChangeText={setName}
@@ -151,7 +151,7 @@ function App() {
                 placeholder="Name"
               />
               <TextInput
-                className="w-full bg-white text-lg p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                 value={address}
                 editable={isEditing}
                 onChangeText={setAddress}
@@ -159,7 +159,7 @@ function App() {
                 placeholder="Address"
               />
               <TextInput
-                className="w-full bg-white text-lg p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                 value={email}
                 editable={isEditing}
                 onChangeText={setEmail}
@@ -167,7 +167,7 @@ function App() {
                 placeholder="Email Address"
               />
               <TextInput
-                className="w-full bg-white text-lg p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                 value={contact}
                 editable={isEditing}
                 onChangeText={setContact}
