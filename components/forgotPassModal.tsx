@@ -57,7 +57,7 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
               Forgot Password
             </Text>
             <TextInput
-              className="w-full h-auto bg-white text-lg p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+              className="w-full h-auto bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
               placeholder="Enter your email"
               placeholderTextColor="#888"
               value={email}

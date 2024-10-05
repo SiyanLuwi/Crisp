@@ -89,7 +89,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                 {/* Current Password Input */}
                 <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between items-center border border-[#0C3B2D]">
                   <TextInput
-                    className="w-4/5 text-lg p-3 text-[#0C3B2D] font-semibold items-center h-full justify-center"
+                    className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center h-full justify-center"
                     placeholder="Current Password"
                     secureTextEntry={!showCurrent}
                     value={currentPassword}
@@ -110,7 +110,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                 {/* New Password Input */}
                 <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between items-center border border-[#0C3B2D]">
                   <TextInput
-                    className="w-4/5 text-lg p-3 text-[#0C3B2D] font-semibold items-center h-full justify-center"
+                    className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center h-full justify-center"
                     placeholder="New Password"
                     secureTextEntry={!showNew}
                     value={newPassword}
@@ -131,7 +131,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                 {/* Confirm New Password Input */}
                 <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between items-center border border-[#0C3B2D]">
                   <TextInput
-                    className="w-4/5 text-lg p-3 text-[#0C3B2D] font-semibold items-center h-full justify-center"
+                    className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center h-full justify-center"
                     placeholder="Confirm New Password"
                     secureTextEntry={!showConfirm}
                     value={confirmPassword}
