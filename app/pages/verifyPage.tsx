@@ -16,6 +16,7 @@ import { RFPercentage } from "react-native-responsive-fontsize";
 import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
 import { router } from "expo-router";
+import CancelModal from "@/components/cancelModal";
 
 const { width, height } = Dimensions.get("window");
 
@@ -28,6 +29,7 @@ export default function VerifyPage() {
   const [idPhoto, setIdPhoto] = useState<string | null>(null);
   const [idPicture, setIdPicture] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [cancelModalVisible, setCancelModalVisible] = useState(false);
 
   const handleVerify = () => {
     console.log("Verifying with inputs:", {
@@ -78,6 +80,12 @@ export default function VerifyPage() {
     }
   };
 
+  const confirmCancel = () => {
+    router.back();
+    setCancelModalVisible(false);
+    router.push("/(tabs)/profile");
+  };
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -91,28 +99,28 @@ export default function VerifyPage() {
           </Text>
           <View className="justify-center items-center px-3 mt-6">
             <TextInput
-              className="w-full bg-white text-lg p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+              className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
               placeholderTextColor="#888"
               placeholder="Name"
               value={name}
               onChangeText={setName}
             />
             <TextInput
-              className="w-full bg-white text-lg p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+              className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
               placeholderTextColor="#888"
               placeholder="Address"
               value={address}
               onChangeText={setAddress}
             />
             <TextInput
-              className="w-full bg-white text-lg p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+              className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
               placeholderTextColor="#888"
               placeholder="Birthday"
               value={birthday}
               onChangeText={setBirthday}
             />
             <TextInput
-              className="w-full bg-white text-lg p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+              className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
               placeholderTextColor="#888"
               placeholder="ID Number"
               value={idNumber}
@@ -120,7 +128,7 @@ export default function VerifyPage() {
             />
             {/* ID Photo Upload Button */}
             <View className="w-full flex flex-row justify-between items-center bg-white mx-3 mb-4 rounded-lg">
-              <Text className="text-lg font-bold text-[#888] p-3">
+              <Text className="text-md font-bold text-[#888] p-4">
                 Upload ID Photo
               </Text>
               <TouchableOpacity
@@ -135,7 +143,7 @@ export default function VerifyPage() {
 
             {/* Selfie with ID Button */}
             <View className="w-full flex flex-row justify-between items-center bg-white mx-3 mb-4 rounded-lg">
-              <Text className="text-lg font-bold text-[#888] p-3">
+              <Text className="text-md font-bold text-[#888] p-4">
                 Take a Selfie with ID
               </Text>
               <TouchableOpacity
@@ -150,7 +158,7 @@ export default function VerifyPage() {
 
             {/* Take Picture of ID Button */}
             <View className="w-full flex flex-row justify-between items-center bg-white mx-3 mb-4 rounded-lg">
-              <Text className="text-lg font-bold text-[#888] p-3">
+              <Text className="text-md font-bold text-[#888] p-4">
                 Take a Picture of the ID
               </Text>
               <TouchableOpacity
@@ -171,7 +179,7 @@ export default function VerifyPage() {
             </TouchableOpacity>
             <TouchableOpacity
               className="mt-3 w-full bg-[#8BC34A] rounded-xl p-2 shadow-lg justify-center items-center"
-              onPress={() => router.back()}
+              onPress={() => setCancelModalVisible(true)}
             >
               <Text className="text-xl py-1 font-bold text-[#0C3B2D]">
                 Cancel
@@ -188,10 +196,10 @@ export default function VerifyPage() {
           >
             <View className="flex-1 justify-center items-center bg-black/50">
               <View className="w-4/5 py-5 px-5 bg-white rounded-xl items-start border-2 border-[#0C3B2D]">
-                <Text className="text-3xl font-extrabold text-[#0C3B2D] mb-5">
+                <Text className="text-2xl font-extrabold text-[#0C3B2D] mb-5 px-3">
                   Done
                 </Text>
-                <Text className="text-xl font-normal text-[#0C3B2D] mb-10">
+                <Text className="text-md font-normal text-[#0C3B2D] mb-10 px-3">
                   Wait for Verification
                 </Text>
                 <View className="flex flex-row justify-end w-full ">
@@ -208,6 +216,13 @@ export default function VerifyPage() {
             </View>
           </Modal>
         </View>
+
+        {/* Cancel Modal */}
+        <CancelModal
+          visible={cancelModalVisible}
+          onConfirm={confirmCancel}
+          onCancel={() => setCancelModalVisible(false)}
+        />
       </SafeAreaView>
     </KeyboardAvoidingView>
   );

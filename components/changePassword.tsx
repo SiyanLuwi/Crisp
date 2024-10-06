@@ -91,6 +91,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                   <TextInput
                     className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center h-full justify-center"
                     placeholder="Current Password"
+                    placeholderTextColor={"#0C3B2D"}
                     secureTextEntry={!showCurrent}
                     value={currentPassword}
                     onChangeText={setCurrentPassword}
@@ -112,6 +113,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                   <TextInput
                     className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center h-full justify-center"
                     placeholder="New Password"
+                    placeholderTextColor={"#0C3B2D"}
                     secureTextEntry={!showNew}
                     value={newPassword}
                     onChangeText={setNewPassword}
@@ -133,6 +135,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                   <TextInput
                     className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center h-full justify-center"
                     placeholder="Confirm New Password"
+                    placeholderTextColor={"#0C3B2D"}
                     secureTextEntry={!showConfirm}
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}

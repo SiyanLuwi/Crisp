@@ -38,7 +38,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
 }) => (
   <TouchableOpacity className="w-full bg-white my-2 p-4 rounded-lg shadow">
     <View className="flex flex-row items-center">
-      <View className="border-2 border-[#0C3B2D] rounded-full p-4">
+      <View className="border-2 border-[#0C3B2D] bg-[#f0fff2] rounded-full p-4">
         <MaterialCommunityIcons
           name={
             type === "Emergency"

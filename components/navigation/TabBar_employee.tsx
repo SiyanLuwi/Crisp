@@ -1,12 +1,27 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
-import { RFPercentage } from 'react-native-responsive-fontsize';
-// Get screen dimensions
-const { width, height } = Dimensions.get('window');
+import React from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+} from "react-native";
+import { RFPercentage } from "react-native-responsive-fontsize";
 
-const TabBar = ({ state, descriptors, navigation }: { state: any, descriptors: any, navigation: any }) => {
+// Get screen dimensions
+const { width, height } = Dimensions.get("window");
+
+const TabBar = ({
+  state,
+  descriptors,
+  navigation,
+}: {
+  state: any;
+  descriptors: any;
+  navigation: any;
+}) => {
   return (
-    <View style={styles.tabBar}>
+    <View className="absolute bottom-[2%] w-auto flex-row justify-center items-center bg-white mx-[22%] py-[2%] rounded-3xl shadow-xl border-[#0C3B2D] border-2">
       {state.routes.map((route: any, index: number) => {
         const { options } = descriptors[route.key];
         const label =
@@ -20,7 +35,7 @@ const TabBar = ({ state, descriptors, navigation }: { state: any, descriptors: a
 
         const onPress = () => {
           const event = navigation.emit({
-            type: 'tabPress',
+            type: "tabPress",
             target: route.key,
             canPreventDefault: true,
           });
@@ -32,18 +47,23 @@ const TabBar = ({ state, descriptors, navigation }: { state: any, descriptors: a
 
         const onLongPress = () => {
           navigation.emit({
-            type: 'tabLongPress',
+            type: "tabLongPress",
             target: route.key,
           });
         };
 
         // Render icon if available
-        const renderIcon = options.tabBarIcon ? options.tabBarIcon({ color: isFocused ? 'green' : '#000000', focused: isFocused }) : null;
+        const renderIcon = options.tabBarIcon
+          ? options.tabBarIcon({
+              color: isFocused ? "#0C3B2D" : "#000000",
+              focused: isFocused,
+            })
+          : null;
 
         return (
           <TouchableOpacity
             key={route.key}
-            style={styles.tabBarItem}
+            className="flex-1 items-center justify-center my-3"
             accessibilityRole="button"
             accessibilityState={isFocused ? { selected: true } : {}}
             accessibilityLabel={options.tabBarAccessibilityLabel}
@@ -52,9 +72,17 @@ const TabBar = ({ state, descriptors, navigation }: { state: any, descriptors: a
             onLongPress={onLongPress}
           >
             {renderIcon}
-            <Text style={[styles.tabBarText, { color: isFocused ? 'green' : '#000000' }]}>
-              {label}
-            </Text>
+            {/* Render text label conditionally */}
+            {false && (
+              <Text
+                style={[
+                  styles.tabBarText,
+                  { color: isFocused ? "#0C3B2D" : "#000000" },
+                ]}
+              >
+                {label}
+              </Text>
+            )}
           </TouchableOpacity>
         );
       })}
@@ -63,29 +91,8 @@ const TabBar = ({ state, descriptors, navigation }: { state: any, descriptors: a
 };
 
 const styles = StyleSheet.create({
-  tabBar: {
-    position: 'absolute',
-    bottom: height * 0,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: '#F0F4C3',
-    paddingVertical: width * 0.01, // Padding top and bottom
-    shadowColor: 'black',
-    shadowOffset: { width: 0, height: 10 },
-    shadowRadius: 10,
-    shadowOpacity: 0.1,
-    elevation: 20,
-    width: width,
-  },
-  tabBarItem: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    flex: 1,
-  },
   tabBarText: {
     fontSize: RFPercentage(2),
-    fontWeight: 'bold', 
   },
 });
 
