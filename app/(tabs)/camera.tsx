@@ -1,14 +1,22 @@
-import React, { useState } from 'react';
-import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import { Dimensions, StyleSheet, Text, View, Button, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import React, { useState } from "react";
+import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
+import {
+  Dimensions,
+  StyleSheet,
+  Text,
+  View,
+  Button,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
 // Get screen dimensions
-const { height, width } = Dimensions.get('window');
+const { height, width } = Dimensions.get("window");
 
 export default function CameraComp() {
-  const [facing, setFacing] = useState<CameraType>('back');
+  const [facing, setFacing] = useState<CameraType>("back");
   const [permission, requestPermission] = useCameraPermissions();
   const [loading, setLoading] = useState(false); // Add loading state
   const cameraRef = React.useRef<CameraView>(null);
@@ -21,97 +29,85 @@ export default function CameraComp() {
   if (!permission.granted) {
     // Camera permissions are not granted yet.
     return (
-      <View style={styles.container}>
-        <Text style={styles.message}>We need your permission to show the camera</Text>
+      <View className="w-full h-full flex justify-center items-center">
+        <Text className="items-center justify-center text-2xl font-bold">
+          We need your permission to show the camera
+        </Text>
         <Button onPress={requestPermission} title="Grant Permission" />
       </View>
     );
   }
 
   function toggleCameraFacing() {
-    setFacing(current => (current === 'back' ? 'front' : 'back'));
+    setFacing((current) => (current === "back" ? "front" : "back"));
   }
 
   function capturePhoto() {
     if (cameraRef.current) {
       setLoading(true); // Set loading state to true
-      cameraRef.current.takePictureAsync({
-        quality: 1, // Set the quality to 1 for high quality
-        base64: true, // Optional: Get the photo as a base64 string
-        skipProcessing: false, // Make sure processing is enabled
-      }).then(photo => {
-        console.log('Photo captured:', photo);
-        router.push('/pages/pictureForm');
-      }).catch(error => {
-        console.error('Error capturing photo:', error);
-      }).finally(() => {
-        setLoading(false); 
-      });
+      cameraRef.current
+        .takePictureAsync({
+          quality: 1, // Set the quality to 1 for high quality
+          base64: true, // Optional: Get the photo as a base64 string
+          skipProcessing: false, // Make sure processing is enabled
+        })
+        .then((photo) => {
+          console.log("Photo captured:", photo);
+          router.push("/pages/pictureForm");
+        })
+        .catch((error) => {
+          console.error("Error capturing photo:", error);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
     }
   }
 
   return (
-    <View style={styles.container}>
-      <CameraView style={styles.camera} facing={facing} ref={cameraRef}>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.captureButton} onPress={capturePhoto} disabled={loading}>
-            {loading ? (
-              <ActivityIndicator size="large" color="white" />
-            ) : (
-              <MaterialCommunityIcons name="camera" size={width * 0.15} color="white" />
-            )}
+    <View className="w-full h-full flex justify-center items-center">
+      <CameraView
+        className="w-full h-full flex justify-center items-center"
+        facing={facing}
+        ref={cameraRef}
+      >
+        <View className="absolute top-[5%] w-full flex-row justify-between">
+          <TouchableOpacity className="m-5 ml-8" onPress={toggleCameraFacing}>
+            <MaterialCommunityIcons
+              name="lightbulb-on"
+              size={width * 0.1}
+              color="white"
+            />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.flipButton} onPress={toggleCameraFacing}>
-            <MaterialCommunityIcons name="camera-switch" size={width * 0.1} color="white" />
+          <TouchableOpacity
+            className="m-5 mr-8 mt-6"
+            onPress={toggleCameraFacing}
+          >
+            <MaterialCommunityIcons
+              name="camera-switch"
+              size={width * 0.1}
+              color="white"
+            />
+          </TouchableOpacity>
+        </View>
+        <View className="absolute bottom-[13%] w-full flex-row justify-center">
+          <TouchableOpacity
+            className="w-auto h-full rounded-full bg-white justify-center items-center p-2 mx-[10%] border-2 border-[#0C3B2D]"
+            onPress={capturePhoto}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator size={width * 0.15} color="#0C3B2D" />
+            ) : (
+              <MaterialCommunityIcons
+                name="camera-iris"
+                size={width * 0.15}
+                color="#0C3B2D"
+              />
+            )}
           </TouchableOpacity>
         </View>
       </CameraView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  message: {
-    textAlign: 'center',
-    paddingBottom: 10,
-    fontSize: width * 0.05,
-  },
-  camera: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-  },
-  buttonContainer: {
-    position: 'absolute',
-    bottom: height * 0.1,
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  captureButton: {
-    width: width * 0.2, 
-    height: width * 0.2, 
-    borderRadius: (width * 0.2) / 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginHorizontal: width * 0.1,
-    borderWidth: 1,
-    borderColor: 'white',
-  },
-  flipButton: {
-    position: 'absolute',
-    right: width * 0.05, 
-    bottom: height * 0.01,
-  },
-  text: {
-    fontSize: width * 0.06,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-});

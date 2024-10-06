@@ -4,100 +4,168 @@ import {
   View,
   TextInput,
   TouchableOpacity,
+  FlatList,
   Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Modal,
 } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 import { Dimensions } from "react-native";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import CancelModal from "@/components/cancelModal";
 
 const { width, height } = Dimensions.get("window");
 
 export default function PictureForm() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<string | null>(null);
+  const [cancelModalVisible, setCancelModalVisible] = useState(false);
+
+  const toggleDropdown = () => {
+    setIsOpen((prev) => !prev);
+  };
+
+  const handleItemPress = (item: string) => {
+    setSelectedItem(item);
+    setIsOpen(false);
+    console.log("Selected Item:", item);
+  };
+
+  const data = [
+    { id: "1", name: "Option 1" },
+    { id: "2", name: "Option 2" },
+    { id: "3", name: "Option 3" },
+  ];
+
+  const confirmCancel = () => {
+    setCancelModalVisible(false);
+  };
+
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.text}>SUBMIT REPORT</Text>
-      <View style={styles.pictureContainer}>
-        {/* Replace with actual image source if needed */}
-        <Image
-          source={{ uri: "https://via.placeholder.com/150" }}
-          style={styles.picture}
-        />
-      </View>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+    >
+      <SafeAreaView className="w-full h-full flex flex-col justify-center items-center bg-[#0C3B2D]">
+        <ScrollView className="w-full h-full flex bg-[#0C3B2D] p-6">
+          <Text className="font-bold text-4xl text-white mt-3 mb-4 ml-4">
+            Make a Report
+          </Text>
+          <View className="justify-center items-center px-3 mt-3">
+            <View className="w-full h-auto">
+              <Image
+                source={{ uri: "https://via.placeholder.com/150" }}
+                className="w-full h-60 rounded-lg my-4 border border-[#8BC34A]"
+              />
+            </View>
+            <TextInput
+              className="w-full bg-white text-lg p-3 rounded-lg mt-4 mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+              placeholderTextColor="#888"
+              placeholder="Location"
+            />
+            <TextInput
+              className="w-full bg-white text-lg p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+              placeholderTextColor="#888"
+              placeholder="Emergency (yes/no)"
+            />
+            <TouchableOpacity
+              onPress={toggleDropdown}
+              className="w-full bg-white p-3 rounded-lg mb-4 border border-[#0C3B2D] justify-center"
+            >
+              <Text className="text-lg text-[#0C3B2D] font-semibold">
+                {selectedItem ? selectedItem : "Select a type of Report"}
+              </Text>
+            </TouchableOpacity>
 
-      <TextInput style={styles.input} placeholder="Location" />
+            {/* Dropdown options displayed in Modal */}
+            <Modal
+              visible={isOpen}
+              transparent={true}
+              animationType="fade"
+              onRequestClose={toggleDropdown}
+            >
+              <TouchableOpacity
+                className="flex-1 justify-center items-center bg-black/50"
+                onPress={toggleDropdown}
+              >
+                <View
+                  style={{
+                    width: "80%",
+                    backgroundColor: "white",
+                    borderRadius: 10,
+                    padding: 20,
+                  }}
+                >
+                  <Text className="text-lg text-[#0C3B2D] font-bold mb-3">
+                    Select a Type of Report
+                  </Text>
+                  <FlatList
+                    data={data}
+                    keyExtractor={(item) => item.id}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        onPress={() => handleItemPress(item.name)}
+                        className="w-full p-2 border-b border-[#0C3B2D]"
+                      >
+                        <Text className="text-md font-semibold py-2">
+                          {item.name}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  />
+                </View>
+              </TouchableOpacity>
+            </Modal>
 
-      <TextInput style={styles.input} placeholder="Emergency (yes/no)" />
+            <TextInput
+              className="w-full bg-white text-lg p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+              placeholderTextColor="#888"
+              placeholder="Description"
+              multiline={true}
+              scrollEnabled={true}
+              style={{
+                maxHeight: 150,
+                height: 150,
+              }}
+            />
+            <TouchableOpacity
+              className="mt-12 w-full bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center border-2 border-[#8BC34A]"
+              onPress={() => {
+                router.push("/(tabs)/reports"); // Call the onClose function
+                console.log("Report Submitted"); // Log the message
+              }}
+            >
+              <Text className="text-xl py-1 font-bold text-white">
+                Submit Report
+              </Text>
+            </TouchableOpacity>
 
-      <TextInput style={styles.input} placeholder="Description" multiline />
+            <TouchableOpacity
+              className="mt-3 w-full bg-[#8BC34A] rounded-xl p-2 shadow-lg justify-center items-center"
+              onPress={() => {
+                setCancelModalVisible(true);
+              }}
+            >
+              <Text className="text-xl py-1 font-bold text-[#0C3B2D]">
+                Cancel
+              </Text>
+            </TouchableOpacity>
+            <Text className="text-xl py-1 font-bold text-[#0C3B2D]">.</Text>
+          </View>
 
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => console.log("Report Submitted")}
-        >
-          <Text style={styles.buttonText}>Submit Report</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.button} onPress={() => router.back()}>
-          <Text style={styles.buttonText}>Cancel</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+          {/* Cancel Modal */}
+          <CancelModal
+            visible={cancelModalVisible}
+            onConfirm={confirmCancel}
+            onCancel={() => setCancelModalVisible(false)}
+          />
+        </ScrollView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: "#0C3B2D",
-  },
-  text: {
-    color: "#F0F4C3",
-    fontWeight: "bold",
-    fontSize: RFPercentage(5),
-    textAlign: "center",
-  },
-  pictureContainer: {
-    marginTop: height * 0.02,
-    height: height * 0.5,
-    width: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: height * 0.05,
-  },
-  picture: {
-    width: width * 0.9,
-    height: "100%",
-    resizeMode: "cover",
-  },
-  input: {
-    height: height * 0.06,
-    backgroundColor: "#F0F4C3",
-    borderRadius: 5,
-    borderColor: "#ccc",
-    borderWidth: 1,
-    marginBottom: height * 0.03,
-    paddingHorizontal: 8,
-    fontSize: RFPercentage(2.5),
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  button: {
-    backgroundColor: "#F0F4C3",
-    padding: 10,
-    borderRadius: 5,
-    flex: 1,
-    marginHorizontal: 5,
-  },
-  buttonText: {
-    color: "#000000",
-    fontWeight: "bold",
-    textAlign: "center",
-    fontSize: RFPercentage(2.5),
-  },
-});

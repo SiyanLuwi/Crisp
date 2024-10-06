@@ -1,10 +1,11 @@
-import React from 'react';
-import { Tabs } from 'expo-router';
-import { TabBarIcon } from '@/components/navigation/TabBarIcon';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import TabBar from '@/components/navigation/TabBar';
-import { RFPercentage } from 'react-native-responsive-fontsize';
+import React from "react";
+import { View, Text } from "react-native";
+import { Tabs } from "expo-router";
+import { TabBarIcon } from "@/components/navigation/TabBarIcon";
+import { Colors } from "@/constants/Colors";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import TabBar from "@/components/navigation/TabBar";
+import { RFPercentage } from "react-native-responsive-fontsize";
 
 export default function NavLayout() {
   const colorScheme = useColorScheme();
@@ -12,7 +13,7 @@ export default function NavLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
         headerShown: false,
       }}
       tabBar={(props) => <TabBar {...props} />}
@@ -20,65 +21,105 @@ export default function NavLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: 'Home',
+          title: "Home",
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon
-              name={focused ? 'home' : 'home-outline'}
-              color={color}
-              size={RFPercentage(4.5)}
-            />
+            <View style={{ alignItems: "center" }}>
+              <TabBarIcon
+                name={focused ? "home" : "home-outline"}
+                color={color}
+                size={RFPercentage(3)}
+              />
+              <Text
+                style={{ color, fontWeight: focused ? "600" : "400" }}
+                className="mt-2 text-xs font-semiboldbold"
+              >
+                Home
+              </Text>
+            </View>
           ),
         }}
       />
       <Tabs.Screen
         name="reports"
         options={{
-          title: 'Reports',
+          title: "Reports",
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon
-              name={focused ? 'document-text' : 'document-text-outline'}
-              color={color}
-              size={RFPercentage(4.5)}
-            />
+            <View style={{ alignItems: "center" }}>
+              <TabBarIcon
+                name={focused ? "document-text" : "document-text-outline"}
+                color={color}
+                size={RFPercentage(3)}
+              />
+              <Text
+                style={{ color, fontWeight: focused ? "600" : "400" }}
+                className="mt-2 text-xs"
+              >
+                Reports
+              </Text>
+            </View>
           ),
         }}
       />
       <Tabs.Screen
         name="camera"
         options={{
-          title: 'Camera',
+          title: "Camera",
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon
-              name={focused ? 'camera' : 'camera-outline'}
-              color={color}
-              size={RFPercentage(4.5)}
-            />
+            <View style={{ alignItems: "center" }}>
+              <TabBarIcon
+                name={focused ? "camera" : "camera-outline"}
+                color={color}
+                size={RFPercentage(3)}
+              />
+              <Text
+                style={{ color, fontWeight: focused ? "600" : "400" }}
+                className="mt-2 text-xs"
+              >
+                Report
+              </Text>
+            </View>
           ),
         }}
       />
       <Tabs.Screen
         name="manage"
         options={{
-          title: 'Manage',
+          title: "Manage",
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon
-              name={focused ? 'file-tray-full' : 'file-tray-full-outline'}
-              color={color}
-              size={RFPercentage(4.5)}
-            />
+            <View style={{ alignItems: "center" }}>
+              <TabBarIcon
+                name={focused ? "file-tray-full" : "file-tray-full-outline"}
+                color={color}
+                size={RFPercentage(3)}
+              />
+              <Text
+                style={{ color, fontWeight: focused ? "600" : "400" }}
+                className="mt-2 text-xs"
+              >
+                Manage
+              </Text>
+            </View>
           ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: "Profile",
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon
-              name={focused ? 'person' : 'person-outline'}
-              color={color}
-              size={RFPercentage(4.5)}
-            />
+            <View style={{ alignItems: "center" }}>
+              <TabBarIcon
+                name={focused ? "person" : "person-outline"}
+                color={color}
+                size={RFPercentage(3)}
+              />
+              <Text
+                style={{ color, fontWeight: focused ? "600" : "400" }}
+                className="mt-2 text-xs"
+              >
+                Profile
+              </Text>
+            </View>
           ),
         }}
       />

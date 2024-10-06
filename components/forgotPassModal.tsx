@@ -6,6 +6,8 @@ import {
   TextInput,
   TouchableOpacity,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { RFPercentage } from "react-native-responsive-fontsize";
 
@@ -44,27 +46,47 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
       visible={visible}
       onRequestClose={onClose}
     >
-      <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Forgot Password</Text>
-          <TextInput
-            style={styles.modalInput}
-            placeholder="Enter your email"
-            placeholderTextColor="#888"
-            value={email}
-            onChangeText={setEmail}
-          />
-          <TouchableOpacity style={styles.modalButton} onPress={handleForgotPassword}>
-            <Text style={styles.modalButtonText}>Send Email</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={onClose}>
-            <Text style={styles.closeModal}>Close</Text>
-          </TouchableOpacity>
-          {message ? (
-            <Text style={styles.message}>{message}</Text>
-          ) : null}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0} // Adjust this value if needed
+      >
+        <View className="flex-1 justify-center items-center bg-black/50">
+          <View className="w-4/5 p-5 bg-white rounded-xl items-start border-2 border-[#0C3B2D]">
+            <Text className="text-2xl font-extrabold text-[#0C3B2D] mb-5">
+              Forgot Password
+            </Text>
+            <TextInput
+              className="w-full h-auto bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+              placeholder="Enter your email"
+              placeholderTextColor="#888"
+              value={email}
+              onChangeText={setEmail}
+            />
+            {message ? (
+              <Text className="text-md text-red-800 font-semibold flex items-center w-full">
+                {message}
+              </Text>
+            ) : null}
+            <TouchableOpacity
+              className="mt-5 w-full bg-[#0C3B2D] rounded-lg p-2 shadow-lg justify-center items-center"
+              onPress={handleForgotPassword}
+            >
+              <Text className="text-md py-1 font-bold text-white">
+                Send Email
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              className="mt-2 w-full bg-white border border-[#0C3B2D] rounded-lg p-2 shadow-lg justify-center items-center"
+              onPress={onClose}
+            >
+              <Text className="text-md py-1 font-bold text-[#0C3B2D] ">
+                Close
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };

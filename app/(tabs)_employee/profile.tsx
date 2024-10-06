@@ -8,37 +8,73 @@ import {
   Dimensions,
   TouchableOpacity,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import LogoutModal from "@/components/logout";
-import ChangePasswordModal from "@/components/changePassword"; 
+import ChangePasswordModal from "@/components/changePassword";
 import SaveConfirmationModal from "@/components/saveConfirmModal";
+import CancelModal from "@/components/cancelModal";
 import { router } from "expo-router";
 const { width, height } = Dimensions.get("window");
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+} from "@tanstack/react-query";
+import { citizenProfile } from "../api/apiService";
+
+const queryClient = new QueryClient();
 
 export default function Profile() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>
+  );
+}
+
+function App() {
+  const { data } = useQuery({ queryKey: ["groups"], queryFn: citizenProfile });
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
-  const [changePasswordModalVisible, setChangePasswordModalVisible] = useState(false);
+  const [changePasswordModalVisible, setChangePasswordModalVisible] =
+    useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
+  const [cancelModalVisible, setCancelModalVisible] = useState(false);
 
-  const [name, setName] = useState("John Doe");
-  const [address, setAddress] = useState("116 Gonzales Street Barangay 74 Caloocan City");
-  const [email, setEmail] = useState("20210662m.berbon.seanlowie.bscs@gmail.com");
-  const [contact, setContact] = useState("0999123123112");
+  const [name, setName] = useState(data?.username || "");
+  const [address, setAddress] = useState(data?.address || "");
+  const [email, setEmail] = useState(data?.email || "");
+  const [contact, setContact] = useState(data?.contact_number || "");
 
   // State to hold previous values
-  const [prevValues, setPrevValues] = useState({ name, address, email, contact });
+  const [prevValues, setPrevValues] = useState({
+    name,
+    address,
+    email,
+    contact,
+  });
 
   const handleLogout = () => {
-    console.log("User logged out");
+    console.log("Employee logged out");
     setLogoutModalVisible(false);
   };
 
-  const handleChangePassword = async (currentPassword: string, newPassword: string, confirmPassword: string): Promise<void> => {
+  const handleChangePassword = async (
+    currentPassword: string,
+    newPassword: string,
+    confirmPassword: string
+  ): Promise<void> => {
     return new Promise((resolve, reject) => {
-      console.log("Change password:", { currentPassword, newPassword, confirmPassword });
+      console.log("Change password:", {
+        currentPassword,
+        newPassword,
+        confirmPassword,
+      });
       setTimeout(() => {
         if (newPassword === confirmPassword && newPassword.length > 0) {
           console.log("Password changed successfully!");
@@ -55,6 +91,12 @@ export default function Profile() {
       setShowSaveConfirmation(true); // Show confirmation when trying to save
     }
     setIsEditing(!isEditing);
+  };
+
+  const confirmCancel = () => {
+    cancelSave(); // Call the function to revert changes
+    setCancelModalVisible(false);
+    router.push("/(tabs)/profile");
   };
 
   const confirmSave = () => {
@@ -75,207 +117,145 @@ export default function Profile() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.headerContainer}>
-        <Text style={styles.text}>Account</Text>
-        <TouchableOpacity onPress={() => setLogoutModalVisible(true)} style={styles.doorIcon}>
-          <MaterialCommunityIcons name="door" size={RFPercentage(5)} color="#ffffff" />
-        </TouchableOpacity>
-      </View>
-      <View style={styles.container}>
-        <Image
-          source={{ uri: "https://via.placeholder.com/150" }}
-          style={styles.profileImage}
-        />
-        <View style={styles.infoContainer}>
-          <TextInput
-            style={styles.nameText}
-            value={name}
-            editable={isEditing}
-            onChangeText={setName}
-          />
-        </View>
-        <View style={styles.infoContainer}>
-          <TextInput
-            style={styles.infoText}
-            value={address}
-            editable={isEditing}
-            onChangeText={setAddress}
-          />
-        </View>
-        <View style={styles.infoContainer}>
-          <TextInput
-            style={styles.infoText}
-            value={email}
-            editable={isEditing}
-            onChangeText={setEmail}
-          />
-        </View>
-        <View style={styles.infoContainer}>
-          <TextInput
-            style={styles.infoText}
-            value={contact}
-            editable={isEditing}
-            onChangeText={setContact}
-          />
-        </View>
-        <View style={styles.verifyContainer}>
-          <Text style={styles.verifyText}>Not Yet Verified</Text>
-          <TouchableOpacity style={styles.button} onPress={() => router.push('/pages/verifyPage')}>
-            <Text style={styles.buttonText}>Verify</Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+    >
+      <SafeAreaView className="w-full h-full flex-1 justify-start items-center absolute bg-[#0C3B2D]">
+        <View className="flex flex-row w-full items-center justify-between px-6">
+          <Text className="font-bold text-4xl text-white mt-3 mb-2">
+            Account
+          </Text>
+          <TouchableOpacity onPress={() => setLogoutModalVisible(true)}>
+            <MaterialCommunityIcons
+              name="logout"
+              size={RFPercentage(4)}
+              color="#ffffff"
+            />
           </TouchableOpacity>
         </View>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.buttonEdit} onPress={toggleEdit}>
-            <Text style={styles.EditText}>{isEditing ? "Save" : "Edit"}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.buttonPass} onPress={() => setChangePasswordModalVisible(true)}>
-            <Text style={styles.TextPass}>Change Password</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+        <ScrollView className="w-full h-full flex bg-[#0C3B2D]">
+          <View className="flex flex-col w-full h-full items-center ">
+            <Image
+              source={{ uri: "https://via.placeholder.com/150" }}
+              className="w-48 h-48 rounded-full border-4 border-white mb-8 mt-8"
+            />
+            <View className="justify-center w-full items-center px-12 mt-6">
+              <TextInput
+                className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                value={name}
+                editable={isEditing}
+                onChangeText={setName}
+                placeholderTextColor="#888"
+                placeholder="Name"
+              />
+              <TextInput
+                className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                value={address}
+                editable={isEditing}
+                onChangeText={setAddress}
+                placeholderTextColor="#888"
+                placeholder="Address"
+              />
+              <TextInput
+                className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                value={email}
+                editable={isEditing}
+                onChangeText={setEmail}
+                placeholderTextColor="#888"
+                placeholder="Email Address"
+              />
+              <TextInput
+                className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                value={contact}
+                editable={isEditing}
+                onChangeText={setContact}
+                placeholderTextColor="#888"
+                placeholder="Phone Number"
+              />
+              <View className="w-full flex flex-row justify-between items-center bg-white mx-3 mb-4 rounded-lg">
+                <Text className="text-md font-bold text-[#888] p-4">
+                  Not Yet Verified
+                </Text>
+                <TouchableOpacity
+                  className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg"
+                  onPress={() => router.push("/pages/verifyPage")}
+                >
+                  <Text className="text-white text-md font-normal">Verify</Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                className="mt-12 w-full bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center border-2 border-[#8BC34A]"
+                onPress={toggleEdit}
+              >
+                <Text className="text-xl py-1 font-bold text-white">
+                  {isEditing ? "Save" : "Edit"}
+                </Text>
+              </TouchableOpacity>
+              {isEditing && (
+                <TouchableOpacity
+                  className="mt-3 w-full bg-[#8BC34A] rounded-xl p-2 shadow-lg justify-center items-center"
+                  onPress={() => setCancelModalVisible(true)}
+                >
+                  <Text className="text-xl py-1 font-bold text-[#0C3B2D]">
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+              )}
 
-      {/* Logout Confirmation Modal */}
-      <LogoutModal
-        visible={logoutModalVisible}
-        onConfirm={handleLogout}
-        onCancel={() => setLogoutModalVisible(false)}
-      />
+              {!isEditing && (
+                <TouchableOpacity
+                  className="mt-3 w-full bg-[#8BC34A] rounded-xl p-2 shadow-lg justify-center items-center"
+                  onPress={() => setChangePasswordModalVisible(true)}
+                >
+                  <Text className="text-xl py-1 font-bold text-[#0C3B2D]">
+                    Change Password
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
 
-      {/* Change Password Modal */}
-      <ChangePasswordModal
-        visible={changePasswordModalVisible}
-        onConfirm={handleChangePassword}
-        onCancel={() => setChangePasswordModalVisible(false)}
-      />
+          {/* Logout Confirmation Modal */}
+          <LogoutModal
+            visible={logoutModalVisible}
+            onConfirm={handleLogout}
+            onCancel={() => setLogoutModalVisible(false)}
+          />
 
-      {/* Save Confirmation Modal */}
-      <SaveConfirmationModal
-        visible={showSaveConfirmation}
-        onConfirm={confirmSave}
-        onCancel={cancelSave}
-      />
-    </SafeAreaView>
+          {/* Change Password Modal */}
+          <ChangePasswordModal
+            visible={changePasswordModalVisible}
+            onConfirm={handleChangePassword}
+            onCancel={() => setChangePasswordModalVisible(false)}
+          />
+
+          {/* Save Confirmation Modal */}
+          <SaveConfirmationModal
+            visible={showSaveConfirmation}
+            onConfirm={confirmSave}
+            onCancel={cancelSave}
+          />
+
+          {/* Cancel Modal */}
+          <CancelModal
+            visible={cancelModalVisible}
+            onConfirm={confirmCancel}
+            onCancel={() => setCancelModalVisible(false)}
+          />
+
+          <View className="flex flex-row items-center">
+            <TouchableOpacity className="p-2">
+              <MaterialCommunityIcons
+                name="format-align-justify"
+                size={width * 0.2} // Responsive icon size
+                color="#0C3B2D"
+              />
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#0C3B2D",
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: width * 0.05,
-    marginBottom: height * 0.04,
-    marginVertical: height * 0.07,
-    position: 'relative',
-  },
-  text: {
-    fontSize: RFPercentage(4),
-    color: "#ffffff",
-    fontWeight: "bold",
-  },
-  doorIcon: {
-    position: 'absolute',
-    right: width * 0.05,
-  },
-  container: {
-    flex: 1,
-    justifyContent: "flex-start",
-    alignItems: "center",
-    paddingTop: height * 0.01,
-  },
-  profileImage: {
-    width: width * 0.43,
-    height: height * 0.2,
-    borderRadius: 100,
-    borderWidth: width * 0.01,
-    borderColor: "#fff",
-    marginBottom: height * 0.05,
-  },
-  nameText: {
-    fontSize: RFPercentage(2.5),
-    fontWeight: "bold",
-    color: "#000000",
-    marginBottom: height * 0.01,
-    textAlign: "left",
-    marginLeft: width * 0.03,
-  },
-  infoText: {
-    fontSize: RFPercentage(2),
-    color: "#000000",
-    fontWeight: "bold",
-    marginBottom: height * 0.01,
-    textAlign: "left",
-    marginLeft: width * 0.03,
-  },
-  infoContainer: {
-    justifyContent: "center",
-    marginBottom: height * 0.025,
-    backgroundColor: "#F0F4C3",
-    borderRadius: 10,
-    width: width * 0.8,
-  },
-  verifyContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    width: width * 0.8,
-    backgroundColor: "#F0F4C3",
-    borderRadius: 10,
-    marginBottom: height * 0.025,
-  },
-  verifyText: {
-    fontSize: RFPercentage(2.5),
-    color: "#000000",
-    fontWeight: "bold",
-    marginLeft: width * 0.05,
-  },
-  button: {
-    backgroundColor: "#0C3B2D",
-    paddingVertical: height * 0.02,
-    paddingHorizontal: width * 0.06,
-    borderRadius: 10,
-    borderColor: "#8BC34A",
-    borderWidth: 0.7,
-  },
-  buttonText: {
-    color: "#ffffff",
-    fontSize: RFPercentage(2.5),
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    width: width * 0.6,
-  },
-  buttonEdit: {
-    backgroundColor: "#0C3B2D",
-    paddingVertical: height * 0.02,
-    paddingHorizontal: width * 0.06,
-    borderRadius: 10,
-    marginRight: width * 0.06,
-    borderColor: "#8BC34A",
-    borderWidth: 0.5,
-  },
-  buttonPass: {
-    backgroundColor: "#8BC34A",
-    paddingVertical: height * 0.02,
-    paddingHorizontal: width * 0.03,
-    marginLeft: width * 0.05,
-    borderRadius: 10,
-    borderWidth: 0.5,
-  },
-  EditText: {
-    color: "#ffffff",
-    fontWeight: "bold",
-    fontSize: RFPercentage(2.5),
-  },
-  TextPass: {
-    color: "#000000",
-    fontWeight: "bold",
-    fontSize: RFPercentage(2.5),
-  },
-});
