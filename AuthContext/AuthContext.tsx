@@ -83,7 +83,7 @@ export const AuthProvider = ({ children }: any) => {
   //Login function
   const login = async (username: string, password: string) => {
     try {
-      // Log the username
+      console.log("Starting login process for username:", username); // Log the username
       // Implement login functionality here
       const { data } = await axios.post(`${API_URL}/api/token/`, {
         username,

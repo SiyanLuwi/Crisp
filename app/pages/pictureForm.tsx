@@ -11,12 +11,13 @@ import {
   ScrollView,
   Modal,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dimensions } from "react-native";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import CancelModal from "@/components/cancelModal";
+import * as SecureStore from 'expo-secure-store'
 
 const { width, height } = Dimensions.get("window");
 
@@ -24,7 +25,25 @@ export default function PictureForm() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
+  const [imageUri, setImageUri] = useState<string | null>(null);
 
+  const fetchImageUri = async () => {
+    try {
+      const uri = await SecureStore.getItemAsync('imageUri');
+      return uri ? uri : null; 
+    } catch (error) {
+      console.error("Error fetching image URI:", error);
+      return null; 
+    }
+  };
+
+  useEffect(() => {
+    const getImageUri = async () => {
+      const uri = await fetchImageUri();
+      setImageUri(uri); 
+    };
+    getImageUri(); 
+  }, []);
   const toggleDropdown = () => {
     setIsOpen((prev) => !prev);
   };
@@ -58,10 +77,15 @@ export default function PictureForm() {
           </Text>
           <View className="justify-center items-center px-3 mt-3">
             <View className="w-full h-auto">
+              {imageUri ? <Image
+                source={{ uri: imageUri }}
+                className="w-full h-60 rounded-lg my-4 border border-[#8BC34A]"
+              /> :
               <Image
                 source={{ uri: "https://via.placeholder.com/150" }}
                 className="w-full h-60 rounded-lg my-4 border border-[#8BC34A]"
               />
+              }
             </View>
             <TextInput
               className="w-full bg-white text-lg p-3 rounded-lg mt-4 mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
