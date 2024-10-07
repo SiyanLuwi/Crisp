@@ -185,7 +185,7 @@ export default function Home() {
             />
           </MapView>
           <TouchableOpacity
-            className="absolute bottom-40 right-5 bg-[#0C3B2D] rounded-full p-2 shadow-lg"
+            className="absolute bottom-28 right-5 bg-[#0C3B2D] rounded-full p-2 shadow-lg"
             onPress={centerOnUserLocation}
           >
             <Icon

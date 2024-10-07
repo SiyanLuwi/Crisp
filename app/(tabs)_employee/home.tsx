@@ -1,13 +1,13 @@
-import React, { useEffect, useState, useRef } from 'react';
-import MapView, { Marker, Region } from 'react-native-maps';
-import { StyleSheet, View, Dimensions, Text, TouchableOpacity } from 'react-native';
-import * as Location from 'expo-location';
-import axios from 'axios';
-import { RFPercentage } from 'react-native-responsive-fontsize';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useEffect, useState, useRef } from "react";
+import MapView, { Marker, Region } from "react-native-maps";
+import { View, Dimensions, Image, Text, TouchableOpacity } from "react-native";
+import * as Location from "expo-location";
+import axios from "axios";
+import { RFPercentage } from "react-native-responsive-fontsize";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get("window");
 
 export default function Home() {
   const initialRegion = {
@@ -19,20 +19,21 @@ export default function Home() {
 
   const [region, setRegion] = useState<Region | null>(initialRegion);
   const [currentWeather, setCurrentWeather] = useState<any | null>(null);
-  const [locationPermissionGranted, setLocationPermissionGranted] = useState(false);
+  const [locationPermissionGranted, setLocationPermissionGranted] =
+    useState(false);
   const [userLocation, setUserLocation] = useState<any>(null);
   const mapRef = useRef<MapView>(null); // Add a ref to the MapView
 
   useEffect(() => {
     const requestLocationPermission = async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      console.log('Location permission status:', status);
+      console.log("Location permission status:", status);
 
-      if (status === 'granted') {
+      if (status === "granted") {
         setLocationPermissionGranted(true);
         getCurrentLocation();
       } else {
-        console.log('Location permission denied');
+        console.log("Location permission denied");
         setLocationPermissionGranted(false);
         setRegion(null);
       }
@@ -51,7 +52,7 @@ export default function Home() {
         });
         fetchCurrentWeather(latitude, longitude);
       } catch (error) {
-        console.error('Error getting location:', error);
+        console.error("Error getting location:", error);
       }
     };
 
@@ -71,7 +72,7 @@ export default function Home() {
 
         setCurrentWeather(currentWeather);
       } catch (error) {
-        console.error('Error fetching current weather data:', error);
+        console.error("Error fetching current weather data:", error);
       }
     };
 
@@ -80,33 +81,73 @@ export default function Home() {
 
   const getWeatherDescription = (code: number) => {
     const weatherConditions: { [key: number]: string } = {
-      0: 'Clear sky',
-      1: 'Mainly clear',
-      2: 'Partly cloudy',
-      3: 'Overcast',
-      45: 'Fog',
-      48: 'Depositing rime fog',
-      51: 'Drizzle: Light',
-      53: 'Drizzle: Moderate',
-      61: 'Rain: Slight',
-      63: 'Rain: Moderate',
-      65: 'Rain: Heavy intensity',
-      80: 'Rain showers: Slight',
-      81: 'Rain showers: Moderate',
-      95: 'Thunderstorm: Slight or moderate',
+      0: "Clear sky",
+      1: "Mainly clear",
+      2: "Partly cloudy",
+      3: "Overcast",
+      45: "Fog",
+      48: "Depositing rime fog",
+      51: "Drizzle: Light",
+      53: "Drizzle: Moderate",
+      61: "Rain: Slight",
+      63: "Rain: Moderate",
+      65: "Rain: Heavy intensity",
+      80: "Rain showers: Slight",
+      81: "Rain showers: Moderate",
+      95: "Thunderstorm",
     };
 
-    return weatherConditions[code] || 'Unknown weather condition';
+    return weatherConditions[code] || "Unknown weather condition";
+  };
+
+  const getWeatherImage = (code: number) => {
+    const weatherConditions: { [key: number]: { image: any } } = {
+      0: { image: require("../../assets/images/weather/Clear-sky.png") },
+      // 1: { image: require('./../assets/images/weather/Unknown.png') },
+      2: { image: require("../../assets/images/weather/partly-cloudy.png") },
+      3: { image: require("../../assets/images/weather/Overcast.png") },
+      45: { image: require("../../assets/images/weather/Fog.png") },
+      48: {
+        image: require("../../assets/images/weather/Depositing-rime-fog.png"),
+      },
+      51: { image: require("../../assets/images/weather/Drizzle-Light.png") },
+      53: {
+        image: require("../../assets/images/weather/Drizzle-Moderate.png"),
+      },
+      61: {
+        image: require("../../assets/images/weather/Rain-Slight.png"),
+      },
+      63: { image: require("../../assets/images/weather/Rain-Moderate.png") },
+      65: { image: require("../../assets/images/weather/Rain-Heavy.png") },
+      80: { image: require("../../assets/images/weather/Rain-Slight.png") },
+      81: { image: require("../../assets/images/weather/Rain-Moderate.png") },
+      95: { image: require("../../assets/images/weather/Thunderstorm.png") },
+    };
+
+    return weatherConditions[code] && weatherConditions[code].image;
   };
 
   const getLocalTime = () => {
-    const timeString = new Date().toLocaleTimeString('en-PH', {
-      hour: 'numeric',
-      minute: 'numeric',
+    const timeString = new Date().toLocaleTimeString("en-PH", {
+      hour: "numeric",
+      minute: "numeric",
       hour12: true,
-      timeZone: 'Asia/Manila',
+      timeZone: "Asia/Manila",
     });
-    return timeString.replace(/am|pm/i, match => match.toUpperCase());
+    return timeString.replace(/am|pm/i, (match) => match.toUpperCase());
+  };
+
+  const getLocalDay = () => {
+    const optionsDay: Intl.DateTimeFormatOptions = { weekday: "long" }; // Correct type
+    return new Date().toLocaleDateString("en-PH", optionsDay);
+  };
+
+  const getLocalMonthAndDay = () => {
+    const optionsMonthDay: Intl.DateTimeFormatOptions = {
+      month: "long",
+      day: "numeric",
+    }; // Correct type
+    return new Date().toLocaleDateString("en-PH", optionsMonthDay);
   };
 
   const centerOnUserLocation = () => {
@@ -117,29 +158,25 @@ export default function Home() {
         latitudeDelta: region?.latitudeDelta || 0.01,
         longitudeDelta: region?.longitudeDelta || 0.01,
       };
-  
-      console.log('Centering on user location:', newRegion); // Debugging ayaw magitna nung location
+
+      console.log("Centering on user location:", newRegion); // Debugging ayaw magitna nung location
       mapRef.current?.animateToRegion(newRegion, 1000); // Animate to the new region
     } else {
-      console.error('User location is not available'); // Debugging line ulet
+      console.error("User location is not available"); // Debugging line ulet
     }
   };
-  
+
   return (
-    <View style={styles.container}>
+    <View className="h-full w-full flex-1 absolute">
       {!locationPermissionGranted || region === null ? (
-        <View style={styles.noLocationContainer}>
-          <Text style={styles.noLocationText}>
+        <View className="flex-1 justify-center items-center absolute">
+          <Text className="text-4xl font-semibold">
             Turn your location services on to see the map.
           </Text>
         </View>
       ) : (
-        <View style={styles.mapContainer}>
-          <MapView
-            ref={mapRef} 
-            style={styles.map}
-            region={region}
-          >
+        <View className="w-full h-full flex-1 absolute">
+          <MapView ref={mapRef} className="flex-1" region={region}>
             <Marker coordinate={region} title={"You are here"} />
             <Marker
               coordinate={{ latitude: 14.65344, longitude: 120.99473 }}
@@ -147,98 +184,53 @@ export default function Home() {
               description="South Campus"
             />
           </MapView>
-          <TouchableOpacity style={styles.locationButton} onPress={centerOnUserLocation}>
-            <Icon name="crosshairs-gps" size={RFPercentage(4)} color="#FFFFFF" />
+          <TouchableOpacity
+            className="absolute bottom-28 right-5 bg-[#0C3B2D] rounded-full p-2 shadow-lg"
+            onPress={centerOnUserLocation}
+          >
+            <Icon
+              name="crosshairs-gps"
+              size={RFPercentage(4)}
+              color="#FFFFFF"
+            />
           </TouchableOpacity>
         </View>
       )}
       {currentWeather && (
-        <SafeAreaView style={styles.weatherContainer}>
-          <View style={styles.weatherRow}>
-            <Icon name="thermometer" size={RFPercentage(3)} color="#000" />
-            <Text style={styles.weatherText}>
-              {`Temperature: ${currentWeather.temperature}°C`}
-            </Text>
+        <SafeAreaView className="bg-white w-full absolute p-0 flex-row rounded-b-3xl border-[#0C3B2D] border-4">
+          <View className="flex-1 items-start justify-center p-5 ml-4">
+            <View className="items-start justify-start">
+              <Text className="text-[#0C3B2D]  font-bold text-4xl mb-2">
+                {getLocalDay()}
+              </Text>
+            </View>
+            <View className="items-start justify-start">
+              <Text className="text-[#0C3B2D]  font-semibold text-lg mb-2">
+                {getLocalMonthAndDay()}
+              </Text>
+            </View>
+            <View className="items-start justify-start">
+              <Text className="text-[#0C3B2D]  font-normal text-5xl">
+                {`${currentWeather.temperature}°C`}
+              </Text>
+            </View>
           </View>
-          <View style={styles.weatherRow}>
-            <Icon name="weather-windy" size={RFPercentage(3)} color="#000" />
-            <Text style={styles.weatherText}>
-              {`Wind Speed: ${currentWeather.windspeed} km/h`}
-            </Text>
-          </View>
-          <View style={styles.weatherRow}>
-            <Icon name="weather-cloudy" size={RFPercentage(3)} color="#000" />
-            <Text style={styles.weatherText}>
-              {`Condition: ${getWeatherDescription(currentWeather.weathercode)}`}
-            </Text>
-          </View>
-          <View style={styles.weatherRow}>
-            <Icon name="clock" size={RFPercentage(3)} color="#000" />
-            <Text style={styles.weatherText}>
-              {`Time: ${getLocalTime()}`}
-            </Text>
+          <View className="flex-1 items-center justify-center p-3 ">
+            <View className="items-start justify-start">
+              <Image
+                source={getWeatherImage(currentWeather.weathercode)}
+                style={{ width: 100, height: 100 }}
+                resizeMode="contain"
+              />
+            </View>
+            <View className="items-start justify-start">
+              <Text className="text-[#0C3B2D] font-semibold text-lg">
+                {getWeatherDescription(currentWeather.weathercode)}
+              </Text>
+            </View>
           </View>
         </SafeAreaView>
       )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F0F4C3',
-  },
-  mapContainer: {
-    position: 'absolute',
-    height: height * 0.8,
-    width: width,
-    bottom: 0,
-  },
-  map: {
-    flex: 1,
-  },
-  locationButton: {
-    position: 'absolute',
-    bottom: height * 0.1,
-    right: 20,
-    backgroundColor: '#0C3B2D',
-    borderRadius: 50,
-    padding: 10,
-    elevation: 5,
-  },
-  weatherContainer: {
-    position: 'absolute',
-    width: width,
-    alignContent: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F0F4C3',
-    padding: height * 0.02,
-    borderBottomLeftRadius: 5,
-    borderBottomRightRadius: 5,
-    zIndex: 1,
-    elevation: 10,
-  },
-  weatherRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  weatherText: {
-    fontSize: RFPercentage(2.5),
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginLeft: 10,
-  },
-  noLocationContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#0C3B2D',
-  },
-  noLocationText: {
-    fontSize: RFPercentage(3),
-    color: "#ffffff",
-    textAlign: 'center',
-  },
-});
