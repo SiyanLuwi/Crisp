@@ -54,24 +54,32 @@ export default function Register() {
     setAddress(`${location.latitude}, ${location.longitude}`);
     setShowMapPicker(false); // Close the map picker
   };
-
+  const emptyFieldChecker = () => {
+    if (!username || !email || !password || !password_confirm || !address) {
+      alert("Empty fields must be filled up!");
+      return false; 
+    }
+      return true;
+  }
   const handleRegister = async () => {
     try {
+      const validatedFields = emptyFieldChecker()     
+      if(!validatedFields) return;
       setLoading(true);
       const res = await onRegister!(
-        username,
-        email,
-        password,
-        password_confirm,
-        address,
-        contact_number
-      );
-      console.log(res.status);
-      if (res.status !== 200 && res.status !== 201) {
-        console.log(res.data);
-        throw new Error("Register Error!");
-      }
-      router.push("/pages/verifyEmail");
+          username,
+          email,
+          password,
+          password_confirm,
+          address,
+          contact_number
+        );
+        console.log(res.status);
+        if (res.status !== 200 && res.status !== 201) {
+          console.log(res.data);
+          throw new Error("Register Error!");
+        }
+        router.push("/pages/verifyEmail");
     } catch (error: any) {
       alert(error);
     } finally {
@@ -98,6 +106,7 @@ export default function Register() {
             className="w-4/5 bg-white text-md p-4 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
             placeholder="Enter your name"
             placeholderTextColor="#888"
+            onChangeText={setUsername}
           />
           <TouchableOpacity
             onPress={() => setShowMapPicker(true)}

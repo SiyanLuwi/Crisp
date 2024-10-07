@@ -21,7 +21,7 @@ const TOKEN_KEY = "my-jwt";
 const REFRESH_KEY = "my-jwt-refresh";
 const EXPIRATION = "accessTokenExpiration";
 const ROLE = "my-role";
-export const API_URL = "http://192.168.1.11:8000"; //change this based on your url
+export const API_URL = "http://192.168.1.191:8000"; //change this based on your url
 const AuthContext = createContext<AuthProps>({});
 export const useAuth = () => {
   return useContext(AuthContext);
