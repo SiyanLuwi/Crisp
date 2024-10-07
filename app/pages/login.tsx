@@ -34,8 +34,11 @@ export default function Login() {
   const handleLogin = async () => {
     setLoading(true);
     try {   
-       const result = await onLogin!(username, password);    
+        const result = await onLogin!(username, password);    
         const is_email_verified = await SecureStore.getItemAsync(IS_EMAIL_VERIFIED)
+        if (!result){
+            throw new Error("Error While Logging in!")
+        }
         if(is_email_verified !== 'true'){
             router.push('/pages/verifyPage')
             return;
