@@ -26,7 +26,7 @@ export default function PictureForm() {
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
-
+  const [location, setLocation] = useState<string | null>(null);
   const fetchImageUri = async () => {
     try {
       const uri = await SecureStore.getItemAsync('imageUri');
@@ -36,13 +36,24 @@ export default function PictureForm() {
       return null; 
     }
   };
+  const fetchCurrentLocation = async () => {
+    try {
+      const latlong = await SecureStore.getItemAsync('currentLocation')
+      return latlong ? latlong : null
+    } catch (error) {
+      console.error("Error fetching current location:", error);
+      return null; 
+    }
+  }
 
   useEffect(() => {
-    const getImageUri = async () => {
+    const getImageUriAndLocation = async () => {
       const uri = await fetchImageUri();
+      const locations = await fetchCurrentLocation()
+      setLocation(locations);
       setImageUri(uri); 
     };
-    getImageUri(); 
+    getImageUriAndLocation(); 
   }, []);
   const toggleDropdown = () => {
     setIsOpen((prev) => !prev);
@@ -55,9 +66,12 @@ export default function PictureForm() {
   };
 
   const data = [
-    { id: "1", name: "Option 1" },
-    { id: "2", name: "Option 2" },
-    { id: "3", name: "Option 3" },
+    { id: "1", name: "Street Light" },
+    { id: "2", name: "Pot Hole" },
+    { id: "3", name: "Fire" },
+    { id: "4", name: "Health and Safety Concerns" },
+    { id: "5", name: "Road Incidents" },
+    { id: "6", name: "Crime" },
   ];
 
   const confirmCancel = () => {
@@ -91,7 +105,9 @@ export default function PictureForm() {
               className="w-full bg-white text-lg p-3 rounded-lg mt-4 mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
               placeholderTextColor="#888"
               placeholder="Location"
+              value={location?.toString()}
             />
+            
             <TextInput
               className="w-full bg-white text-lg p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
               placeholderTextColor="#888"

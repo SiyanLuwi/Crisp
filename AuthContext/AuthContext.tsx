@@ -2,6 +2,7 @@ import axios from "axios";
 import React, { useState, createContext, useEffect, useContext } from "react";
 import * as SecureStore from "expo-secure-store";
 import { router } from "expo-router";
+import api from "@/app/api/axios";
 interface AuthProps {
   authState?: { token: string | null; authenticated: boolean | null };
   onRegister?: (
@@ -14,6 +15,13 @@ interface AuthProps {
   ) => Promise<any>;
   onLogin?: (username: string, password: string) => Promise<any>;
   onVerifyEmail?: (email: string, otp: string) => Promise<any>;
+  createReport?: (
+    type_of_report: string,
+    report_description: string,
+    longitude: string,
+    latitude: string,
+    category: string,
+    image_path: string) => Promise<any>;
   onLogout?: () => Promise<any>;
 }
 import * as Network from "expo-network";
@@ -21,7 +29,7 @@ const TOKEN_KEY = "my-jwt";
 const REFRESH_KEY = "my-jwt-refresh";
 const EXPIRATION = "accessTokenExpiration";
 const ROLE = "my-role";
-export const API_URL = "http://192.168.1.191:8000"; //change this based on your url
+// export const API_URL = "http://192.168.1.191:8000"; //change this based on your url
 const AuthContext = createContext<AuthProps>({});
 export const useAuth = () => {
   return useContext(AuthContext);
@@ -61,7 +69,7 @@ export const AuthProvider = ({ children }: any) => {
   ) => {
     const ipv = await Network.getIpAddressAsync();
     try {
-      const res = await axios.post(`${API_URL}/api/citizen/registration/`, {
+      const res = await api.post(`api/citizen/registration/`, {
         username,
         email,
         password,
@@ -85,7 +93,7 @@ export const AuthProvider = ({ children }: any) => {
     try {
       console.log("Starting login process for username:", username); // Log the username
       // Implement login functionality here
-      const { data } = await axios.post(`${API_URL}/api/token/`, {
+      const { data } = await api.post(`api/token/`, {
         username,
         password,
       });
@@ -155,7 +163,7 @@ export const AuthProvider = ({ children }: any) => {
 
   const onVerifyEmail = async (email: string, otp: string) => {
     try {
-      const res = await axios.post(`${API_URL}/api/otp/verify/`, {
+      const res = await api.post(`api/otp/verify/`, {
         email,
         otp,
       });
@@ -178,12 +186,50 @@ export const AuthProvider = ({ children }: any) => {
     }
   };
 
+  const createReport = async (
+    type_of_report: string,
+    report_description: string,
+    longitude: string,
+    latitude: string,
+    category: string,
+    image_path: string) => {
+    
+    const report = {
+      type_of_report: type_of_report,
+      report_description: report_description,
+      longitude: longitude,
+      latitude: latitude,
+      category: category,
+      image_path: image_path,
+    }
+
+    try {
+      const res = await api.post('api/create-report/', report)
+
+      if(res.status === 201 || res.status === 200){
+          alert("Created Report!") 
+          return
+      }
+      throw new Error("Error on createReport Function!")
+    } catch (error: any) {
+        if (error.response.status === 401) {
+          throw new Error("You are unauthorized for this page");
+        } else {
+          throw new Error("An unexpected error occurred");
+        }
+    }
+
+
+
+  }
+
   const value = {
     onRegister: register,
     onLogin: login,
     onLogout: logout,
     onVerifyEmail: onVerifyEmail,
     authState,
+    createReport: createReport
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
