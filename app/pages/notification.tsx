@@ -4,10 +4,12 @@ import {
   FlatList,
   Dimensions,
   TouchableOpacity,
+  ImageBackground,
 } from "react-native";
 import React from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+const bgImage = require("@/assets/images/bgImage.png");
 
 const { height, width } = Dimensions.get("window");
 
@@ -64,25 +66,31 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
 
 export default function NotificationForm() {
   return (
-    <SafeAreaView className="flex-1 bg-[#0C3B2D]">
-      <View className="flex-row items-center justify-between px-6">
-        <Text className="font-bold text-3xl text-white my-4">
-          Notifications
-        </Text>
-      </View>
-      <FlatList
-        data={notifications}
-        showsVerticalScrollIndicator={false}
-        className="w-full h-auto flex px-8"
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <NotificationItem
-            content={item.content}
-            type={item.type}
-            time={item.time}
-          />
-        )}
-      />
-    </SafeAreaView>
+    <ImageBackground
+      source={bgImage}
+      className="flex-1 justify-center items-center"
+      resizeMode="cover"
+    >
+      <SafeAreaView className="flex-1 w-full">
+        <View className="flex-row items-center justify-between px-6">
+          <Text className="font-bold text-3xl text-white my-4">
+            Notifications
+          </Text>
+        </View>
+        <FlatList
+          data={notifications}
+          showsVerticalScrollIndicator={false}
+          className="w-full h-auto flex px-8"
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <NotificationItem
+              content={item.content}
+              type={item.type}
+              time={item.time}
+            />
+          )}
+        />
+      </SafeAreaView>
+    </ImageBackground>
   );
 }
