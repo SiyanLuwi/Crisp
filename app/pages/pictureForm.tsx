@@ -10,6 +10,7 @@ import {
   Platform,
   ScrollView,
   Modal,
+  ImageBackground,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import { Dimensions } from "react-native";
@@ -17,7 +18,8 @@ import { RFPercentage } from "react-native-responsive-fontsize";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import CancelModal from "@/components/cancelModal";
-import * as SecureStore from 'expo-secure-store'
+const bgImage = require("@/assets/images/bgImage.png");
+import * as SecureStore from "expo-secure-store";
 
 const { width, height } = Dimensions.get("window");
 
@@ -29,20 +31,20 @@ export default function PictureForm() {
 
   const fetchImageUri = async () => {
     try {
-      const uri = await SecureStore.getItemAsync('imageUri');
-      return uri ? uri : null; 
+      const uri = await SecureStore.getItemAsync("imageUri");
+      return uri ? uri : null;
     } catch (error) {
       console.error("Error fetching image URI:", error);
-      return null; 
+      return null;
     }
   };
 
   useEffect(() => {
     const getImageUri = async () => {
       const uri = await fetchImageUri();
-      setImageUri(uri); 
+      setImageUri(uri);
     };
-    getImageUri(); 
+    getImageUri();
   }, []);
   const toggleDropdown = () => {
     setIsOpen((prev) => !prev);
@@ -65,43 +67,45 @@ export default function PictureForm() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+    <ImageBackground
+      source={bgImage}
+      className="flex-1 justify-center items-center w-full h-full"
+      resizeMode="cover"
     >
-      <SafeAreaView className="w-full h-full flex flex-col justify-center items-center bg-[#0C3B2D]">
-        <ScrollView className="w-full h-full flex bg-[#0C3B2D] p-6">
+      <SafeAreaView className="flex-1  w-full h-full">
+        <ScrollView className="w-full h-full flex p-6">
           <Text className="font-bold text-4xl text-white mt-3 mb-4 ml-4">
             Make a Report
           </Text>
           <View className="justify-center items-center px-3 mt-3">
             <View className="w-full h-auto">
-              {imageUri ? <Image
-                source={{ uri: imageUri }}
-                className="w-full h-60 rounded-lg my-4 border border-[#8BC34A]"
-              /> :
-              <Image
-                source={{ uri: "https://via.placeholder.com/150" }}
-                className="w-full h-60 rounded-lg my-4 border border-[#8BC34A]"
-              />
-              }
+              {imageUri ? (
+                <Image
+                  source={{ uri: imageUri }}
+                  className="w-full h-60 rounded-lg my-4 border border-[#8BC34A]"
+                />
+              ) : (
+                <Image
+                  source={{ uri: "https://via.placeholder.com/150" }}
+                  className="w-full h-60 rounded-lg my-4 border border-[#8BC34A]"
+                />
+              )}
             </View>
             <TextInput
-              className="w-full bg-white text-lg p-3 rounded-lg mt-4 mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+              className="w-full bg-white text-md p-4 rounded-lg mt-4 mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
               placeholderTextColor="#888"
               placeholder="Location"
             />
             <TextInput
-              className="w-full bg-white text-lg p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+              className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
               placeholderTextColor="#888"
               placeholder="Emergency (yes/no)"
             />
             <TouchableOpacity
               onPress={toggleDropdown}
-              className="w-full bg-white p-3 rounded-lg mb-4 border border-[#0C3B2D] justify-center"
+              className="w-full bg-white p-4 rounded-lg mb-4 border border-[#0C3B2D] justify-center"
             >
-              <Text className="text-lg text-[#0C3B2D] font-semibold">
+              <Text className="text-md text-[#0C3B2D] font-semibold">
                 {selectedItem ? selectedItem : "Select a type of Report"}
               </Text>
             </TouchableOpacity>
@@ -147,7 +151,7 @@ export default function PictureForm() {
             </Modal>
 
             <TextInput
-              className="w-full bg-white text-lg p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+              className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
               placeholderTextColor="#888"
               placeholder="Description"
               multiline={true}
@@ -190,6 +194,6 @@ export default function PictureForm() {
           />
         </ScrollView>
       </SafeAreaView>
-    </KeyboardAvoidingView>
+    </ImageBackground>
   );
 }

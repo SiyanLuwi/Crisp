@@ -20,7 +20,7 @@ import { useAuth } from "@/AuthContext/AuthContext";
 const bgImage = require("@/assets/images/landing_page.png");
 // Get screen dimensions
 const { height } = Dimensions.get("window");
-import * as SecureStore from 'expo-secure-store'
+import * as SecureStore from "expo-secure-store";
 
 export default function Login() {
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -28,33 +28,35 @@ export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
-  const { onLogin } = useAuth()
-  const IS_EMAIL_VERIFIED = 'is_email_verified'
+  const { onLogin } = useAuth();
+  const IS_EMAIL_VERIFIED = "is_email_verified";
 
   const handleLogin = async () => {
     setLoading(true);
-    try {   
-        const result = await onLogin!(username, password);    
-        const is_email_verified = await SecureStore.getItemAsync(IS_EMAIL_VERIFIED)
-        if (!result){
-            throw new Error("Error While Logging in!")
-        }
-        if(is_email_verified !== 'true'){
-            router.push('/pages/verifyPage')
-            return;
-        }
-        router.push('/(tabs)/home');
+    try {
+      const result = await onLogin!(username, password);
+      const is_email_verified = await SecureStore.getItemAsync(
+        IS_EMAIL_VERIFIED
+      );
+      if (!result) {
+        throw new Error("Error While Logging in!");
+      }
+      if (is_email_verified !== "true") {
+        router.push("/pages/verifyPage");
+        return;
+      }
+      router.push("/(tabs)/home");
     } catch (error: any) {
-          if (error.message === 'Invalid username or password') {
-            alert('Login failed: Invalid username or password');  
-          } else {
-              alert('An unexpected error occurred. Please try again.');
-          }
+      if (error.message === "Invalid username or password") {
+        alert("Login failed: Invalid username or password");
+      } else {
+        alert("An unexpected error occurred. Please try again.");
+      }
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
-  
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}

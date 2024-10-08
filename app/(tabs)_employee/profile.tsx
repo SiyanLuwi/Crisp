@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  ImageBackground,
 } from "react-native";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -19,6 +20,8 @@ import ChangePasswordModal from "@/components/changePassword";
 import SaveConfirmationModal from "@/components/saveConfirmModal";
 import CancelModal from "@/components/cancelModal";
 import { router } from "expo-router";
+const bgImage = require("@/assets/images/bgImage.png");
+
 const { width, height } = Dimensions.get("window");
 import {
   QueryClient,
@@ -60,7 +63,7 @@ function App() {
   });
 
   const handleLogout = () => {
-    console.log("Employee logged out");
+    console.log("User logged out");
     setLogoutModalVisible(false);
   };
 
@@ -117,12 +120,12 @@ function App() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+    <ImageBackground
+      source={bgImage}
+      className="flex-1 justify-center items-center"
+      resizeMode="cover"
     >
-      <SafeAreaView className="w-full h-full flex-1 justify-start items-center absolute bg-[#0C3B2D]">
+      <SafeAreaView className="flex-1">
         <View className="flex flex-row w-full items-center justify-between px-6">
           <Text className="font-bold text-4xl text-white mt-3 mb-2">
             Account
@@ -135,7 +138,7 @@ function App() {
             />
           </TouchableOpacity>
         </View>
-        <ScrollView className="w-full h-full flex bg-[#0C3B2D]">
+        <ScrollView className="w-full h-full flex">
           <View className="flex flex-col w-full h-full items-center ">
             <Image
               source={{ uri: "https://via.placeholder.com/150" }}
@@ -175,7 +178,7 @@ function App() {
                 placeholder="Phone Number"
               />
               <View className="w-full flex flex-row justify-between items-center bg-white mx-3 mb-4 rounded-lg">
-                <Text className="text-md font-bold text-[#888] p-4">
+                <Text className="text-md p-4 font-bold text-[#888]">
                   Not Yet Verified
                 </Text>
                 <TouchableOpacity
@@ -256,6 +259,6 @@ function App() {
           </View>
         </ScrollView>
       </SafeAreaView>
-    </KeyboardAvoidingView>
+    </ImageBackground>
   );
 }
