@@ -3,6 +3,7 @@ import React, { useState, createContext, useEffect, useContext } from "react";
 import * as SecureStore from "expo-secure-store";
 import { router } from "expo-router";
 import api from "@/app/api/axios";
+import * as FileSystem from 'expo-file-system';
 interface AuthProps {
   authState?: { token: string | null; authenticated: boolean | null };
   onRegister?: (
@@ -56,6 +57,7 @@ export const AuthProvider = ({ children }: any) => {
         });
       }
     };
+    loadToken()
   }, []);
 
   //register function
@@ -186,6 +188,7 @@ export const AuthProvider = ({ children }: any) => {
     }
   };
 
+ 
   const createReport = async (
     type_of_report: string,
     report_description: string,
@@ -194,29 +197,45 @@ export const AuthProvider = ({ children }: any) => {
     category: string,
     image_path: string) => {
     
-    const report = {
-      type_of_report: type_of_report,
-      report_description: report_description,
-      longitude: longitude,
-      latitude: latitude,
-      category: category,
-      image_path: image_path,
-    }
-
+      console.log(type_of_report,
+        report_description,
+        longitude,
+        latitude,
+        category,
+        image_path,)
+    const formData = new FormData();
+    formData.append('type_of_report', type_of_report);
+    formData.append('report_description', report_description);
+    formData.append('longitude', longitude);
+    formData.append('latitude', latitude);
+    formData.append('category', category);
+  
+    const imageBase64 = await FileSystem.readAsStringAsync(image_path, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    formData.append('image_path', `data:image/jpeg;base64,${imageBase64}`);
     try {
-      const res = await api.post('api/create-report/', report)
-
-      if(res.status === 201 || res.status === 200){
-          alert("Created Report!") 
-          return
+      const res = await api.post('api/create-report/', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${authState.token}`,
+        },
+    });
+    if(res.status === 201 || res.status === 200){
+        alert("Report Created!")
+        router.push('/(tabs)/reports')
+        return res;
+    }
+    
+    }catch (error: any) {
+      console.error("Error details:", error); // Log the complete error object
+      if (error.response) {
+          console.error("Error response data:", error.response.data); // Log the response data if available
+          console.error("Error response status:", error.response.status); // Log the status code
+          throw new Error(`An unexpected error occurred: ${error.response.data.message || error.message}`);
+      } else {
+          throw new Error(`An unexpected error occurred: ${error.message}`);
       }
-      throw new Error("Error on createReport Function!")
-    } catch (error: any) {
-        if (error.response.status === 401) {
-          throw new Error("You are unauthorized for this page");
-        } else {
-          throw new Error("An unexpected error occurred");
-        }
     }
 
 

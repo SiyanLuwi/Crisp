@@ -18,6 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import CancelModal from "@/components/cancelModal";
 import * as SecureStore from 'expo-secure-store'
+import { useAuth } from "@/AuthContext/AuthContext";
 
 const { width, height } = Dimensions.get("window");
 
@@ -27,6 +28,45 @@ export default function PictureForm() {
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [location, setLocation] = useState<string | null>(null);
+  const [description, setDescription] = useState<string | null>(null);
+  const [emergency, setEmergency] = useState<string | null>(null);
+  const { createReport } = useAuth()
+
+
+  const report = async () => {
+    try {
+      
+      if (!location) {
+        throw new Error("Location is missing");
+      }
+
+      const [longitude, latitude] = location.split(',');
+
+      let category = emergency?.toLocaleLowerCase() === 'yes' ? 'emergency' : 'not emergency';
+
+      if (!selectedItem || !description || !longitude || !latitude || !category) {
+        throw new Error("Some required fields are missing");
+      }
+
+      if (!createReport) {
+        throw new Error("createReport function is not defined");
+      }
+
+      if(!imageUri){
+        throw new Error("Image Uri is not valid! or Null")
+      }
+
+      const res = await createReport(selectedItem, description, longitude, latitude, category, imageUri);
+  
+      if (res) {
+        console.log("Report created successfully:", res);
+      }
+  
+    } catch (error: any) {
+      console.error("Error creating report:", error.message || error);
+    }
+  };
+
   const fetchImageUri = async () => {
     try {
       const uri = await SecureStore.getItemAsync('imageUri');
@@ -112,6 +152,7 @@ export default function PictureForm() {
               className="w-full bg-white text-lg p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
               placeholderTextColor="#888"
               placeholder="Emergency (yes/no)"
+              onChangeText={setEmergency}
             />
             <TouchableOpacity
               onPress={toggleDropdown}
@@ -172,13 +213,11 @@ export default function PictureForm() {
                 maxHeight: 150,
                 height: 150,
               }}
+              onChangeText={setDescription}
             />
             <TouchableOpacity
               className="mt-12 w-full bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center border-2 border-[#8BC34A]"
-              onPress={() => {
-                router.push("/(tabs)/reports"); // Call the onClose function
-                console.log("Report Submitted"); // Log the message
-              }}
+              onPress={report}
             >
               <Text className="text-xl py-1 font-bold text-white">
                 Submit Report

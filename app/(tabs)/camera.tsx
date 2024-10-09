@@ -59,11 +59,11 @@ export default function CameraComp() {
             const photo = await cameraRef.current.takePictureAsync({
                 quality: 1, 
                 base64: true, 
-                skipProcessing: false, 
             });
-            if (photo && photo.uri) { 
+
+            if (photo && photo.uri && photo.base64) { 
                 console.log("Photo captured:", photo.uri);
-                await SecureStore.setItemAsync('imageUri', photo.uri);                            
+                await SecureStore.setItemAsync('imageUri', photo.uri);                                                   
                 router.push('/pages/pictureForm');
             } else {
                 console.error("Photo capturing failed: photo is undefined.");
