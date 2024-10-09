@@ -13,6 +13,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useAuth } from "@/AuthContext/AuthContext";
 import * as SecureStore from 'expo-secure-store'
+import * as Location from "expo-location";
 
 // Get screen dimensions
 const { height, width } = Dimensions.get("window");
@@ -45,16 +46,24 @@ export default function CameraComp() {
   }
   const capturePhoto = async () => {
     try {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Permission to access location was denied');
+        return;
+      }
+      let location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+      await SecureStore.setItemAsync('currentLocation', `${latitude.toString()},${longitude.toString()}`); 
         if (cameraRef.current) {
             setLoading(true); 
             const photo = await cameraRef.current.takePictureAsync({
                 quality: 1, 
                 base64: true, 
-                skipProcessing: false, 
             });
-            if (photo && photo.uri) { 
-                console.log("Photo captured:", photo);
-                await SecureStore.setItemAsync('imageUri', photo.uri);
+
+            if (photo && photo.uri && photo.base64) { 
+                console.log("Photo captured:", photo.uri);
+                await SecureStore.setItemAsync('imageUri', photo.uri);                                                   
                 router.push('/pages/pictureForm');
             } else {
                 console.error("Photo capturing failed: photo is undefined.");
