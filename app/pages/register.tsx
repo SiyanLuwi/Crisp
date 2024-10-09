@@ -46,6 +46,13 @@ export default function Register() {
     }
   };
 
+  const isPasswordComplex = (text: string) => {
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    return hasUpperCase && hasNumber && hasSymbol;
+  };
+
   const handleLocationSelect = (location: {
     latitude: number;
     longitude: number;
@@ -54,32 +61,49 @@ export default function Register() {
     setAddress(`${location.latitude}, ${location.longitude}`);
     setShowMapPicker(false); // Close the map picker
   };
+
   const emptyFieldChecker = () => {
     if (!username || !email || !password || !password_confirm || !address) {
       alert("Empty fields must be filled up!");
-      return false; 
+      return false;
     }
-      return true;
-  }
+    return true;
+  };
+
   const handleRegister = async () => {
     try {
-      const validatedFields = emptyFieldChecker()     
-      if(!validatedFields) return;
-      setLoading(true);
-      const res = await onRegister!(
-          username,
-          email,
-          password,
-          password_confirm,
-          address,
-          contact_number
+      const validatedFields = emptyFieldChecker();
+      if (!validatedFields) return;
+
+      // Check password complexity
+      if (!isPasswordComplex(password)) {
+        alert(
+          "Password must contain at least one uppercase letter, one number, and one special character."
         );
-        console.log(res.status);
-        if (res.status !== 200 && res.status !== 201) {
-          console.log(res.data);
-          throw new Error("Register Error!");
-        }
-        router.push("/pages/verifyEmail");
+        return;
+      }
+
+      if (password !== password_confirm) {
+        alert("Passwords do not match.");
+        return;
+      }
+      setLoading(true);
+
+      const res = await onRegister!(
+        username,
+        email,
+        password,
+        password_confirm,
+        address,
+        contact_number
+      );
+      console.log(res.status);
+
+      if (res.status !== 200 && res.status !== 201) {
+        console.log(res.data);
+        throw new Error("Register Error!");
+      }
+      router.push("/pages/verifyEmail");
     } catch (error: any) {
       alert(error);
     } finally {
@@ -108,10 +132,7 @@ export default function Register() {
             placeholderTextColor="#888"
             onChangeText={setUsername}
           />
-          <TouchableOpacity
-            onPress={() => setShowMapPicker(true)}
-            className="w-4/5 bg-white mb-2 rounded-lg flex flex-row items-center border border-[#0C3B2D]"
-          >
+          <View className="w-4/5 bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
             <TextInput
               className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
               placeholder="Enter your address"
@@ -120,12 +141,17 @@ export default function Register() {
               editable={false} // Make it non-editable
               onChangeText={setAddress}
             />
-            <MaterialCommunityIcons
-              name="map-marker"
-              size={24}
-              color="#0C3B2D"
-            />
-          </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setShowMapPicker(true)}
+              className="text-lg p-3 items-center justify-center"
+            >
+              <MaterialCommunityIcons
+                name="map-marker"
+                size={24}
+                color="#0C3B2D"
+              />
+            </TouchableOpacity>
+          </View>
           <TextInput
             className="w-4/5 bg-white text-md p-4 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
             placeholder="Enter your email"
@@ -156,7 +182,7 @@ export default function Register() {
               <MaterialCommunityIcons
                 name={passwordVisible ? "eye-off" : "eye"}
                 size={24}
-                color="#888"
+                color="#0C3B2D"
               />
             </TouchableOpacity>
           </View>
@@ -176,13 +202,28 @@ export default function Register() {
               <MaterialCommunityIcons
                 name={confirmPasswordVisible ? "eye-off" : "eye"}
                 size={24}
-                color="#888"
+                color="#0C3B2D"
               />
             </TouchableOpacity>
           </View>
           {password.length > 0 && password.length < 6 && (
             <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
               Password must be at least 6 characters long.
+            </Text>
+          )}
+          {password.length > 0 && !/[A-Z]/.test(password) && (
+            <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
+              Password must contain at least one uppercase letter.
+            </Text>
+          )}
+          {password.length > 0 && !/\d/.test(password) && (
+            <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
+              Password must contain at least one number.
+            </Text>
+          )}
+          {password.length > 0 && !/[!@#$%^&*(),.?":{}|<>]/.test(password) && (
+            <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
+              Password must contain at least one special character.
             </Text>
           )}
           {password_confirm.length > 0 && password_confirm !== password && (
