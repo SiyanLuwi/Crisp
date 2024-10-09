@@ -7,9 +7,8 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import TabBar from "@/components/navigation/TabBar";
 import { RFPercentage } from "react-native-responsive-fontsize";
 
-export default function NavLayout() {
+const ScreenTabs = () => {
   const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
@@ -125,4 +124,7 @@ export default function NavLayout() {
       />
     </Tabs>
   );
+};
+export default function NavLayout() {
+  return <ScreenTabs />;
 }

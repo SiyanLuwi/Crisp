@@ -11,6 +11,8 @@ import {
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { useAuth } from "@/AuthContext/AuthContext";
+import * as SecureStore from 'expo-secure-store'
 
 // Get screen dimensions
 const { height, width } = Dimensions.get("window");
@@ -20,7 +22,7 @@ export default function CameraComp() {
   const [permission, requestPermission] = useCameraPermissions();
   const [loading, setLoading] = useState(false); // Add loading state
   const cameraRef = React.useRef<CameraView>(null);
-
+  
   if (!permission) {
     // Camera permissions are still loading.
     return <View />;
@@ -41,28 +43,31 @@ export default function CameraComp() {
   function toggleCameraFacing() {
     setFacing((current) => (current === "back" ? "front" : "back"));
   }
-
-  function capturePhoto() {
-    if (cameraRef.current) {
-      setLoading(true); // Set loading state to true
-      cameraRef.current
-        .takePictureAsync({
-          quality: 1, // Set the quality to 1 for high quality
-          base64: true, // Optional: Get the photo as a base64 string
-          skipProcessing: false, // Make sure processing is enabled
-        })
-        .then((photo) => {
-          console.log("Photo captured:", photo);
-          router.push("/pages/pictureForm");
-        })
-        .catch((error) => {
-          console.error("Error capturing photo:", error);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
+  const capturePhoto = async () => {
+    try {
+        if (cameraRef.current) {
+            setLoading(true); 
+            const photo = await cameraRef.current.takePictureAsync({
+                quality: 1, 
+                base64: true, 
+                skipProcessing: false, 
+            });
+            if (photo && photo.uri) { 
+                console.log("Photo captured:", photo);
+                await SecureStore.setItemAsync('imageUri', photo.uri);
+                router.push('/pages/pictureForm');
+            } else {
+                console.error("Photo capturing failed: photo is undefined.");
+            }
+        }
+    } catch (error) {
+        console.error("Error capturing photo:", error);
+        alert("Error capturing photo. Please try again.");
+    } finally {
+        setLoading(false); 
     }
-  }
+};
+
 
   return (
     <View className="w-full h-full flex justify-center items-center">
