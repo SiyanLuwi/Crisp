@@ -200,7 +200,7 @@ export default function Home() {
         <SafeAreaView className="bg-white w-full absolute p-0 flex-row rounded-b-3xl border-[#0C3B2D] border-4">
           <View className="flex-1 items-start justify-center p-5 ml-4">
             <View className="items-start justify-start">
-              <Text className="text-[#0C3B2D]  font-semibold text-4xl mb-2">
+              <Text className="text-[#0C3B2D]  font-bold text-3xl mb-2">
                 {getLocalDay()}
               </Text>
             </View>
@@ -210,7 +210,7 @@ export default function Home() {
               </Text>
             </View>
             <View className="items-start justify-start">
-              <Text className="text-[#0C3B2D]  font-normal text-5xl">
+              <Text className="text-[#0C3B2D]  font-semibold text-5xl">
                 {`${currentWeather.temperature}°C`}
               </Text>
             </View>

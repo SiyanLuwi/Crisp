@@ -3,7 +3,7 @@ import React, { useState, createContext, useEffect, useContext } from "react";
 import * as SecureStore from "expo-secure-store";
 import { router } from "expo-router";
 import api from "@/app/api/axios";
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from "expo-file-system";
 interface AuthProps {
   authState?: { token: string | null; authenticated: boolean | null };
   onRegister?: (
@@ -22,8 +22,10 @@ interface AuthProps {
     longitude: string,
     latitude: string,
     category: string,
-    image_path: string) => Promise<any>;
+    image_path: string
+  ) => Promise<any>;
   onLogout?: () => Promise<any>;
+  getUserInfo?: () => Promise<any>;
 }
 import * as Network from "expo-network";
 const TOKEN_KEY = "my-jwt";
@@ -57,7 +59,7 @@ export const AuthProvider = ({ children }: any) => {
         });
       }
     };
-    loadToken()
+    loadToken();
   }, []);
 
   //register function
@@ -188,59 +190,79 @@ export const AuthProvider = ({ children }: any) => {
     }
   };
 
- 
   const createReport = async (
     type_of_report: string,
     report_description: string,
     longitude: string,
     latitude: string,
     category: string,
-    image_path: string) => {
-    
-      console.log(type_of_report,
-        report_description,
-        longitude,
-        latitude,
-        category,
-        image_path,)
+    image_path: string
+  ) => {
+    console.log(
+      type_of_report,
+      report_description,
+      longitude,
+      latitude,
+      category,
+      image_path
+    );
     const formData = new FormData();
-    formData.append('type_of_report', type_of_report);
-    formData.append('report_description', report_description);
-    formData.append('longitude', longitude);
-    formData.append('latitude', latitude);
-    formData.append('category', category);
-  
+    formData.append("type_of_report", type_of_report);
+    formData.append("report_description", report_description);
+    formData.append("longitude", longitude);
+    formData.append("latitude", latitude);
+    formData.append("category", category);
+
     const imageBase64 = await FileSystem.readAsStringAsync(image_path, {
       encoding: FileSystem.EncodingType.Base64,
     });
-    formData.append('image_path', `data:image/jpeg;base64,${imageBase64}`);
+    formData.append("image_path", `data:image/jpeg;base64,${imageBase64}`);
     try {
-      const res = await api.post('api/create-report/', formData, {
+      const res = await api.post("api/create-report/", formData, {
         headers: {
-            'Content-Type': 'multipart/form-data',
-            Authorization: `Bearer ${authState.token}`,
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${authState.token}`,
         },
-    });
-    if(res.status === 201 || res.status === 200){
-        alert("Report Created!")
-        router.push('/(tabs)/reports')
+      });
+      if (res.status === 201 || res.status === 200) {
+        alert("Report Created!");
+        router.push("/(tabs)/reports");
         return res;
-    }
-    
-    }catch (error: any) {
+      }
+    } catch (error: any) {
       console.error("Error details:", error); // Log the complete error object
       if (error.response) {
-          console.error("Error response data:", error.response.data); // Log the response data if available
-          console.error("Error response status:", error.response.status); // Log the status code
-          throw new Error(`An unexpected error occurred: ${error.response.data.message || error.message}`);
+        console.error("Error response data:", error.response.data); // Log the response data if available
+        console.error("Error response status:", error.response.status); // Log the status code
+        throw new Error(
+          `An unexpected error occurred: ${
+            error.response.data.message || error.message
+          }`
+        );
       } else {
-          throw new Error(`An unexpected error occurred: ${error.message}`);
+        throw new Error(`An unexpected error occurred: ${error.message}`);
       }
     }
+  };
 
+  const getUserInfo = async () => {
+    try {
+      const username = await SecureStore.getItemAsync("username");
+      const email = await SecureStore.getItemAsync("email");
+      const address = await SecureStore.getItemAsync("address");
+      const contact_number = await SecureStore.getItemAsync("contact_number");
 
-
-  }
+      return {
+        username,
+        email,
+        address,
+        contact_number,
+      };
+    } catch (error) {
+      console.error("Error retrieving user information:", error);
+      return null;
+    }
+  };
 
   const value = {
     onRegister: register,
@@ -248,7 +270,8 @@ export const AuthProvider = ({ children }: any) => {
     onLogout: logout,
     onVerifyEmail: onVerifyEmail,
     authState,
-    createReport: createReport
+    createReport: createReport,
+    getUserInfo,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
