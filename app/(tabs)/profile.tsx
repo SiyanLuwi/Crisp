@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   View,
@@ -15,33 +15,23 @@ import {
 } from "react-native";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import MapPicker from "@/components/mapPicker";
 import LogoutModal from "@/components/logout";
 import ChangePasswordModal from "@/components/changePassword";
 import SaveConfirmationModal from "@/components/saveConfirmModal";
 import CancelModal from "@/components/cancelModal";
 import { router } from "expo-router";
 const bgImage = require("@/assets/images/bgImage.png");
+import { useAuth } from "@/AuthContext/AuthContext";
 
 const { width, height } = Dimensions.get("window");
-import {
-  QueryClient,
-  QueryClientProvider,
-  useQuery,
-} from "@tanstack/react-query";
-import { citizenProfile } from "../api/apiService";
-
-const queryClient = new QueryClient();
 
 export default function Profile() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
-  );
+  return <App />;
 }
 
 function App() {
-  const { data } = useQuery({ queryKey: ["groups"], queryFn: citizenProfile });
+  const { getUserInfo } = useAuth();
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [changePasswordModalVisible, setChangePasswordModalVisible] =
     useState(false);
@@ -49,10 +39,25 @@ function App() {
   const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
 
-  const [name, setName] = useState(data?.username || "");
-  const [address, setAddress] = useState(data?.address || "");
-  const [email, setEmail] = useState(data?.email || "");
-  const [contact, setContact] = useState(data?.contact_number || "");
+  const [name, setName] = useState("");
+  const [address, setAddress] = useState("");
+  const [email, setEmail] = useState("");
+  const [contact, setContact] = useState("");
+  const [showMapPicker, setShowMapPicker] = useState(false);
+
+  useEffect(() => {
+    const loadUserInfo = async () => {
+      const userInfo = await (getUserInfo
+        ? getUserInfo()
+        : Promise.resolve({}));
+      setName(userInfo?.username || "");
+      setAddress(userInfo?.address || "");
+      setEmail(userInfo?.email || "");
+      setContact(userInfo?.contact_number || "");
+    };
+
+    loadUserInfo();
+  }, [getUserInfo]);
 
   // State to hold previous values
   const [prevValues, setPrevValues] = useState({
@@ -119,6 +124,15 @@ function App() {
     setIsEditing(false); // Exit edit mode
   };
 
+  const handleLocationSelect = (location: {
+    latitude: number;
+    longitude: number;
+  }) => {
+    // Convert coordinates to address if needed
+    setAddress(`${location.latitude}, ${location.longitude}`);
+    setShowMapPicker(false); // Close the map picker
+  };
+
   return (
     <ImageBackground
       source={bgImage}
@@ -153,18 +167,32 @@ function App() {
                 placeholderTextColor="#888"
                 placeholder="Name"
               />
-              <TextInput
-                className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
-                value={address}
-                editable={isEditing}
-                onChangeText={setAddress}
-                placeholderTextColor="#888"
-                placeholder="Address"
-              />
+              <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
+                <TextInput
+                  className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
+                  value={address}
+                  editable={isEditing}
+                  onChangeText={setAddress}
+                  placeholderTextColor="#888"
+                  placeholder="Address"
+                />
+                {isEditing && (
+                  <TouchableOpacity
+                    onPress={() => setShowMapPicker(true)}
+                    className="text-lg p-3 items-center justify-center"
+                  >
+                    <MaterialCommunityIcons
+                      name="map-marker"
+                      size={24}
+                      color="#0C3B2D"
+                    />
+                  </TouchableOpacity>
+                )}
+              </View>
               <TextInput
                 className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                 value={email}
-                editable={isEditing}
+                editable={false}
                 onChangeText={setEmail}
                 placeholderTextColor="#888"
                 placeholder="Email Address"
@@ -259,6 +287,16 @@ function App() {
           </View>
         </ScrollView>
       </SafeAreaView>
+      {showMapPicker && (
+        <View className="absolute top-0 left-0 right-0 bottom-10 justify-center items-center">
+          <MapPicker
+            onLocationSelect={handleLocationSelect}
+            onClose={() => setShowMapPicker(false)}
+          />
+        </View>
+      )}
     </ImageBackground>
   );
 }
+
+//Oks na yung paglabas ng data edit na next na lang yung pag save at cancel
