@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useAuth } from "@/AuthContext/AuthContext";
 
 const { width } = Dimensions.get("window");
 
@@ -29,6 +30,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
   onConfirm,
   onCancel,
 }) => {
+  const { verifyCurrentPassword, changePassword } = useAuth();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -38,6 +40,8 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isCurrentPasswordValid, setIsCurrentPasswordValid] = useState(false);
+  const [successMessage, setSuccessMessage] = useState(null);
 
   useEffect(() => {
     if (visible) {
@@ -47,31 +51,58 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
       setLoading(false);
       setSuccess(false);
       setErrorMessage(null);
+      setIsCurrentPasswordValid(false); // Reset this state when modal opens
     }
   }, [visible]);
 
-  const handleConfirm = async () => {
+  const handleCurrentPasswordCheck = async () => {
+    if (!verifyCurrentPassword) {
+      setErrorMessage("Verify current password function is not available.");
+      return;
+    }
+
     setLoading(true);
-    setSuccess(false);
-    setErrorMessage(null); // Clear previous errors
+    setErrorMessage(null);
+    setSuccessMessage(null);
 
     try {
-      if (newPassword !== confirmPassword) {
-        throw new Error("Passwords do not match");
+      const valid = await verifyCurrentPassword(currentPassword);
+      setIsCurrentPasswordValid(valid);
+      if (!valid) {
+        setErrorMessage("Current password is incorrect.");
       }
-      // Add any additional validation here (e.g., password length)
-
-      await onConfirm(currentPassword, newPassword, confirmPassword);
-      setSuccess(true);
     } catch (error) {
-      if (error instanceof Error) {
-        setErrorMessage(error.message); // Capture the error message
-      } else {
-        setErrorMessage("An unknown error occurred");
-      }
-      console.error(error);
+      setErrorMessage("Error verifying password.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleConfirm = async () => {
+    if (isCurrentPasswordValid) {
+      if (newPassword !== confirmPassword) {
+        setErrorMessage("New passwords do not match.");
+        return;
+      }
+      if (!changePassword) {
+        setErrorMessage("Change password function is not available.");
+        return;
+      }
+      setLoading(true);
+      setErrorMessage(null);
+      setSuccessMessage(null);
+
+      try {
+        await changePassword(currentPassword, newPassword);
+        setSuccess(true); // Set success to true here
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+      } catch (error) {
+        // setErrorMessage(error.message);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -108,49 +139,105 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                   </TouchableOpacity>
                 </View>
 
-                {/* New Password Input */}
-                <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between items-center border border-[#0C3B2D]">
-                  <TextInput
-                    className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center h-full justify-center"
-                    placeholder="New Password"
-                    placeholderTextColor={"#0C3B2D"}
-                    secureTextEntry={!showNew}
-                    value={newPassword}
-                    onChangeText={setNewPassword}
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowNew(!showNew)}
-                    className="text-lg p-3 items-center justify-center"
-                  >
-                    <MaterialCommunityIcons
-                      name={showNew ? "eye" : "eye-off"}
-                      size={RFPercentage(2.5)}
-                      color="#0C3B2D"
-                    />
-                  </TouchableOpacity>
-                </View>
+                {isCurrentPasswordValid ? (
+                  <>
+                    {/* New Password Input */}
+                    <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between items-center border border-[#0C3B2D]">
+                      <TextInput
+                        className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center h-full justify-center"
+                        placeholder="New Password"
+                        placeholderTextColor={"#0C3B2D"}
+                        secureTextEntry={!showNew}
+                        value={newPassword}
+                        onChangeText={setNewPassword}
+                      />
+                      <TouchableOpacity
+                        onPress={() => setShowNew(!showNew)}
+                        className="text-lg p-3 items-center justify-center"
+                      >
+                        <MaterialCommunityIcons
+                          name={showNew ? "eye" : "eye-off"}
+                          size={RFPercentage(2.5)}
+                          color="#0C3B2D"
+                        />
+                      </TouchableOpacity>
+                    </View>
 
-                {/* Confirm New Password Input */}
-                <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between items-center border border-[#0C3B2D]">
-                  <TextInput
-                    className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center h-full justify-center"
-                    placeholder="Confirm New Password"
-                    placeholderTextColor={"#0C3B2D"}
-                    secureTextEntry={!showConfirm}
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowConfirm(!showConfirm)}
-                    className="text-lg p-3 items-center justify-center"
-                  >
-                    <MaterialCommunityIcons
-                      name={showConfirm ? "eye" : "eye-off"}
-                      size={RFPercentage(2.5)}
-                      color="#0C3B2D"
-                    />
-                  </TouchableOpacity>
-                </View>
+                    {/* Confirm New Password Input */}
+                    <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between items-center border border-[#0C3B2D]">
+                      <TextInput
+                        className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center h-full justify-center"
+                        placeholder="Confirm New Password"
+                        placeholderTextColor={"#0C3B2D"}
+                        secureTextEntry={!showConfirm}
+                        value={confirmPassword}
+                        onChangeText={setConfirmPassword}
+                      />
+                      <TouchableOpacity
+                        onPress={() => setShowConfirm(!showConfirm)}
+                        className="text-lg p-3 items-center justify-center"
+                      >
+                        <MaterialCommunityIcons
+                          name={showConfirm ? "eye" : "eye-off"}
+                          size={RFPercentage(2.5)}
+                          color="#0C3B2D"
+                        />
+                      </TouchableOpacity>
+                    </View>
+
+                    {newPassword.length > 0 && newPassword.length < 6 && (
+                      <Text className="text-md text-red-800 font-semibold flex text-left w-full mt-2">
+                        Password must be at least 6 characters long.
+                      </Text>
+                    )}
+                    {newPassword.length > 0 && !/[A-Z]/.test(newPassword) && (
+                      <Text className="text-md text-red-800 font-semibold flex text-left w-full mt-2">
+                        Password must contain at least one uppercase letter.
+                      </Text>
+                    )}
+                    {newPassword.length > 0 && !/\d/.test(newPassword) && (
+                      <Text className="text-md text-red-800 font-semibold flex text-left w-full mt-2">
+                        Password must contain at least one number.
+                      </Text>
+                    )}
+                    {newPassword.length > 0 &&
+                      !/[!@#$%^&*(),.?":{}|<>]/.test(newPassword) && (
+                        <Text className="text-md text-red-800 font-semibold flex text-left w-full mt-2">
+                          Password must contain at least one special character.
+                        </Text>
+                      )}
+                    {confirmPassword.length > 0 &&
+                      confirmPassword !== newPassword && (
+                        <Text className="text-md text-red-800 font-semibold flex text-left w-full mt-2">
+                          Passwords do not match.
+                        </Text>
+                      )}
+                  </>
+                ) : (
+                  <View className="flex flex-row justify-end w-full">
+                    <TouchableOpacity
+                      className="bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center mb-4"
+                      onPress={handleCurrentPasswordCheck}
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <ActivityIndicator size="small" color="#ffffff" />
+                      ) : (
+                        <Text className="text-md font-semibold text-white px-4">
+                          Continue
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      className="bg-white border-[#0C3B2D] border-2 p-2 rounded-lg h-auto items-center justify-center ml-3 mb-4"
+                      onPress={onCancel}
+                    >
+                      <Text className="text-md font-semibold text-[#0C3B2D] px-4">
+                        Cancel
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
 
                 {errorMessage && (
                   <View className="w-full flex items-start">
@@ -160,29 +247,31 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                   </View>
                 )}
 
-                <View className="flex flex-row justify-end w-full">
-                  <TouchableOpacity
-                    className="bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center"
-                    onPress={handleConfirm}
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <ActivityIndicator size="small" color="#ffffff" />
-                    ) : (
-                      <Text className="text-md font-semibold text-white px-4">
-                        Confirm
+                {isCurrentPasswordValid && (
+                  <View className="flex flex-row justify-end w-full">
+                    <TouchableOpacity
+                      className="bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center"
+                      onPress={handleConfirm}
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <ActivityIndicator size="small" color="#ffffff" />
+                      ) : (
+                        <Text className="text-md font-semibold text-white px-4">
+                          Confirm
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      className="bg-white border-[#0C3B2D] border-2 p-2 rounded-lg h-auto items-center justify-center ml-3"
+                      onPress={onCancel}
+                    >
+                      <Text className="text-md font-semibold text-[#0C3B2D] px-4">
+                        Cancel
                       </Text>
-                    )}
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    className="bg-white border-[#0C3B2D] border-2 p-2 rounded-lg h-auto items-center justify-center ml-3"
-                    onPress={onCancel}
-                  >
-                    <Text className="text-md font-semibold text-[#0C3B2D] px-4">
-                      Cancel
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             </>
           ) : (
