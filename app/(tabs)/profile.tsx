@@ -31,7 +31,7 @@ export default function Profile() {
 }
 
 function App() {
-  const { getUserInfo } = useAuth();
+  const { getUserInfo, updateProfile } = useAuth();
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [changePasswordModalVisible, setChangePasswordModalVisible] =
     useState(false);
@@ -107,11 +107,24 @@ function App() {
     router.push("/(tabs)/profile");
   };
 
-  const confirmSave = () => {
-    console.log("Saved changes:", { name, address, email, contact });
-    setPrevValues({ name, address, email, contact }); // Update previous values
-    setShowSaveConfirmation(false);
-    setIsEditing(false);
+  const confirmSave = async () => {
+    if (updateProfile) {
+      // Ensure updateProfile is defined
+      try {
+        const updatedUser = await updateProfile(name, address, contact);
+        console.log("Profile updated successfully:", updatedUser);
+        setPrevValues({ name, address, email, contact }); // Update previous values
+        setShowSaveConfirmation(false);
+        setIsEditing(false);
+        // You can show a success message or redirect the user if needed
+      } catch (error) {
+        console.error("Error updating profile:", error);
+        // Handle the error (e.g., show an error message)
+      }
+    } else {
+      console.error("updateProfile function is not available");
+      // Handle the case when updateProfile is undefined
+    }
   };
 
   const cancelSave = () => {

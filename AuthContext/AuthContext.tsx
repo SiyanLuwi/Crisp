@@ -26,6 +26,16 @@ interface AuthProps {
   ) => Promise<any>;
   onLogout?: () => Promise<any>;
   getUserInfo?: () => Promise<any>;
+  updateProfile?: (
+    username: string,
+    address: string,
+    contact_no: string
+  ) => Promise<any>;
+  verifyCurrentPassword?: (currentPassword: string) => Promise<any>;
+  changePassword?: (
+    currentPassword: string,
+    newPassword: string
+  ) => Promise<any>;
 }
 import * as Network from "expo-network";
 const TOKEN_KEY = "my-jwt";
@@ -264,6 +274,94 @@ export const AuthProvider = ({ children }: any) => {
     }
   };
 
+  const updateProfile = async (
+    username: string,
+    address: string,
+    contact_no: string
+  ) => {
+    try {
+      const ipv = await Network.getIpAddressAsync(); // Get the current IP address if required
+      const res = await api.put(
+        `api/user/profile/`,
+        {
+          username,
+          address,
+          contact_number: contact_no,
+          ipv, // Include the IP address if it's required for the update
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${authState.token}`,
+          },
+        }
+      );
+
+      // Update the SecureStore with the new information
+      await SecureStore.setItemAsync("username", username);
+      await SecureStore.setItemAsync("address", address);
+      await SecureStore.setItemAsync("contact_number", contact_no);
+
+      return res.data; // Return the updated user data
+    } catch (error: any) {
+      console.error("Update profile error:", error);
+
+      if (error.response) {
+        throw new Error(
+          error.response.data.message || "Failed to update profile"
+        );
+      } else {
+        throw new Error("Network error or server not reachable");
+      }
+    }
+  };
+
+  const verifyCurrentPassword = async (currentPassword: string) => {
+    try {
+      const response = await api.post(
+        "api/verify-password/",
+        {
+          password: currentPassword,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${authState.token}`,
+          },
+        }
+      );
+
+      return response.data.valid; // Assume the API returns { valid: true/false }
+    } catch (error) {
+      console.error("Error verifying password:", error);
+      throw new Error("Could not verify current password.");
+    }
+  };
+
+  const changePassword = async (
+    currentPassword: string,
+    newPassword: string
+  ) => {
+    try {
+      const response = await api.put(
+        "api/change-password/",
+        {
+          current_password: currentPassword,
+          new_password: newPassword,
+          new_password_confirm: newPassword, // Include this field
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${authState.token}`,
+          },
+        }
+      );
+
+      return response.data; // Return the response from the server
+    } catch (error) {
+      console.error("Error changing password:", error);
+      throw new Error("Could not change password.");
+    }
+  };
+
   const value = {
     onRegister: register,
     onLogin: login,
@@ -272,6 +370,9 @@ export const AuthProvider = ({ children }: any) => {
     authState,
     createReport: createReport,
     getUserInfo,
+    updateProfile,
+    verifyCurrentPassword,
+    changePassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
