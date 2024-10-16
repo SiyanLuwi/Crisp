@@ -10,6 +10,7 @@ import {
   Platform,
   ScrollView,
   Modal,
+  TouchableWithoutFeedback,
   ImageBackground,
 } from "react-native";
 import React, { useState, useEffect } from "react";
@@ -18,8 +19,11 @@ import { RFPercentage } from "react-native-responsive-fontsize";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import CancelModal from "@/components/cancelModal";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 const bgImage = require("@/assets/images/bgImage.png");
+import MapPicker from "@/components/mapPicker";
 import * as SecureStore from "expo-secure-store";
+import { useAuth } from "@/AuthContext/AuthContext";
 
 const { width, height } = Dimensions.get("window");
 
@@ -28,6 +32,61 @@ export default function PictureForm() {
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [imageUri, setImageUri] = useState<string | null>(null);
+  const [location, setLocation] = useState<string | null>(null);
+  const [description, setDescription] = useState<string | null>(null);
+  const [emergency, setEmergency] = useState<string | null>(null);
+  const [showMapPicker, setShowMapPicker] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [fullImageModalVisible, setFullImageModalVisible] = useState(false);
+  const { createReport } = useAuth();
+
+  const report = async () => {
+    try {
+      if (!location) {
+        throw new Error("Location is missing");
+      }
+
+      const [longitude, latitude] = location.split(",");
+
+      let category =
+        emergency?.toLocaleLowerCase() === "yes"
+          ? "emergency"
+          : "not emergency";
+
+      if (
+        !selectedItem ||
+        !description ||
+        !longitude ||
+        !latitude ||
+        !category
+      ) {
+        throw new Error("Some required fields are missing");
+      }
+
+      if (!createReport) {
+        throw new Error("createReport function is not defined");
+      }
+
+      if (!imageUri) {
+        throw new Error("Image Uri is not valid! or Null");
+      }
+
+      const res = await createReport(
+        selectedItem,
+        description,
+        longitude,
+        latitude,
+        category,
+        imageUri
+      );
+
+      if (res) {
+        console.log("Report created successfully:", res);
+      }
+    } catch (error: any) {
+      console.error("Error creating report:", error.message || error);
+    }
+  };
 
   const fetchImageUri = async () => {
     try {
@@ -38,13 +97,24 @@ export default function PictureForm() {
       return null;
     }
   };
+  const fetchCurrentLocation = async () => {
+    try {
+      const latlong = await SecureStore.getItemAsync("currentLocation");
+      return latlong ? latlong : null;
+    } catch (error) {
+      console.error("Error fetching current location:", error);
+      return null;
+    }
+  };
 
   useEffect(() => {
-    const getImageUri = async () => {
+    const getImageUriAndLocation = async () => {
       const uri = await fetchImageUri();
+      const locations = await fetchCurrentLocation();
+      setLocation(locations);
       setImageUri(uri);
     };
-    getImageUri();
+    getImageUriAndLocation();
   }, []);
   const toggleDropdown = () => {
     setIsOpen((prev) => !prev);
@@ -57,22 +127,34 @@ export default function PictureForm() {
   };
 
   const data = [
-    { id: "1", name: "Option 1" },
-    { id: "2", name: "Option 2" },
-    { id: "3", name: "Option 3" },
+    { id: "1", name: "Street Light" },
+    { id: "2", name: "Pot Hole" },
+    { id: "3", name: "Fire" },
+    { id: "4", name: "Health and Safety Concerns" },
+    { id: "5", name: "Road Incidents" },
+    { id: "6", name: "Crime" },
   ];
 
   const confirmCancel = () => {
     setCancelModalVisible(false);
   };
 
+  const handleLocationSelect = (location: {
+    latitude: number;
+    longitude: number;
+  }) => {
+    // Convert coordinates to address if needed
+    setLocation(`${location.latitude}, ${location.longitude}`);
+    setShowMapPicker(false); // Close the map picker
+  };
+
   return (
     <ImageBackground
       source={bgImage}
-      className="flex-1 justify-center items-center w-full h-full"
+      className="flex-1 justify-center items-center"
       resizeMode="cover"
     >
-      <SafeAreaView className="flex-1  w-full h-full">
+      <SafeAreaView className="flex-1">
         <ScrollView className="w-full h-full flex p-6">
           <Text className="font-bold text-4xl text-white mt-3 mb-4 ml-4">
             Make a Report
@@ -80,10 +162,17 @@ export default function PictureForm() {
           <View className="justify-center items-center px-3 mt-3">
             <View className="w-full h-auto">
               {imageUri ? (
-                <Image
-                  source={{ uri: imageUri }}
-                  className="w-full h-60 rounded-lg my-4 border border-[#8BC34A]"
-                />
+                <TouchableOpacity
+                  onPress={() => {
+                    setSelectedImage(imageUri);
+                    setFullImageModalVisible(true);
+                  }}
+                >
+                  <Image
+                    source={{ uri: imageUri }}
+                    className="w-full h-60 rounded-lg my-4 border border-[#8BC34A]"
+                  />
+                </TouchableOpacity>
               ) : (
                 <Image
                   source={{ uri: "https://via.placeholder.com/150" }}
@@ -91,15 +180,30 @@ export default function PictureForm() {
                 />
               )}
             </View>
-            <TextInput
-              className="w-full bg-white text-md p-4 rounded-lg mt-4 mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
-              placeholderTextColor="#888"
-              placeholder="Location"
-            />
+            <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
+              <TextInput
+                className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
+                placeholderTextColor="#888"
+                placeholder="Location"
+                value={location?.toString()}
+              />
+              <TouchableOpacity
+                onPress={() => setShowMapPicker(true)}
+                className="text-lg p-3 items-center justify-center"
+              >
+                <MaterialCommunityIcons
+                  name="map-marker"
+                  size={24}
+                  color="#0C3B2D"
+                />
+              </TouchableOpacity>
+            </View>
+
             <TextInput
               className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
               placeholderTextColor="#888"
               placeholder="Emergency (yes/no)"
+              onChangeText={setEmergency}
             />
             <TouchableOpacity
               onPress={toggleDropdown}
@@ -160,13 +264,11 @@ export default function PictureForm() {
                 maxHeight: 150,
                 height: 150,
               }}
+              onChangeText={setDescription}
             />
             <TouchableOpacity
               className="mt-12 w-full bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center border-2 border-[#8BC34A]"
-              onPress={() => {
-                router.push("/(tabs)/reports"); // Call the onClose function
-                console.log("Report Submitted"); // Log the message
-              }}
+              onPress={report}
             >
               <Text className="text-xl py-1 font-bold text-white">
                 Submit Report
@@ -193,7 +295,47 @@ export default function PictureForm() {
             onCancel={() => setCancelModalVisible(false)}
           />
         </ScrollView>
+
+        {/* Full Screen Image Modal */}
+        <Modal
+          visible={fullImageModalVisible}
+          transparent={true}
+          animationType="fade"
+        >
+          <TouchableWithoutFeedback
+            onPress={() => setFullImageModalVisible(false)}
+          >
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: "rgba(0, 0, 0, 0.7)",
+                justifyContent: "center",
+                alignItems: "center",
+                padding: 10,
+              }}
+            >
+              {selectedImage && (
+                <Image
+                  source={{ uri: selectedImage }}
+                  style={{
+                    width: width * 0.9, // 90% of screen width
+                    height: height * 0.55, // 60% of screen height
+                    borderRadius: 10,
+                  }}
+                />
+              )}
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
       </SafeAreaView>
+      {showMapPicker && (
+        <View className="absolute top-0 left-0 right-0 bottom-0 justify-center items-center bg-black/50">
+          <MapPicker
+            onLocationSelect={handleLocationSelect}
+            onClose={() => setShowMapPicker(false)}
+          />
+        </View>
+      )}
     </ImageBackground>
   );
 }

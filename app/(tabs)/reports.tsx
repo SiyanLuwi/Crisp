@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   Dimensions,
   FlatList,
   ImageBackground,
+  Modal,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -14,20 +16,56 @@ import { RFPercentage } from "react-native-responsive-fontsize";
 import ReportReportModal from "@/components/reportReport";
 const bgImage = require("@/assets/images/bgImage.png");
 import { router } from "expo-router";
-
+import { getFirestore, collection, getDocs } from "firebase/firestore";
+import { getStorage, ref, getDownloadURL } from "firebase/storage";
+import { useQuery } from "@tanstack/react-query";
+import { app } from "@/firebase/firebaseConfig";
+import * as SecureStore from "expo-secure-store";
 const { height, width } = Dimensions.get("window");
 
-const posts = Array.from({ length: 10 }, (_, index) => ({
-  id: index.toString(),
-  imageUri: "https://via.placeholder.com/150",
-  location: `Image Location ${index + 1}`,
-  type: `Image Type ${index + 1}`,
-  description: `Image Description ${index + 1}`,
-}));
+const db = getFirestore(app);
+const storage = getStorage();
+
+interface Report {
+  id: string;
+  type_of_report: string;
+  report_description: string;
+  longitude: number;
+  latitude: number;
+  category: string;
+  image_path: string;
+  upvote: 0;
+  downvote: 0;
+}
+
+const fetchDocuments = async () => {
+  const querySnapshot = await getDocs(collection(db, "reports"));
+  return querySnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...(doc.data() as Omit<Report, "id">),
+  }));
+};
 
 export default function Reports() {
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [fullImageModalVisible, setFullImageModalVisible] = useState(false);
+  const [username, setUsername] = useState<string | null>("");
   const [reportModalVisible, setReportModalVisible] = useState(false);
-
+  const [reports, setReports] = useState<Report[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { data, isLoading, error } = useQuery<Report[], Error>({
+    queryKey: ["reports"],
+    queryFn: fetchDocuments,
+  });
+  const fetchUsername = async () => {
+    const username = await SecureStore.getItemAsync("username");
+    setUsername(username);
+  };
+  useEffect(() => {
+    fetchUsername();
+  }, []);
+  if (isLoading) return <Text>Loading..</Text>;
+  if (error) return <Text>Error: {error.message}</Text>;
   return (
     <ImageBackground
       source={bgImage}
@@ -48,7 +86,7 @@ export default function Reports() {
           </TouchableOpacity>
         </View>
         <FlatList
-          data={posts}
+          data={data}
           keyExtractor={(item) => item.id}
           className="w-full h-auto flex p-4 "
           showsVerticalScrollIndicator={false}
@@ -61,7 +99,7 @@ export default function Reports() {
                   style={{ padding: 5, color: "#0C3B2D" }}
                 />
                 <View className="flex flex-col items-start">
-                  <Text className="pl-3 text-xl font-bold">John Doe</Text>
+                  <Text className="pl-3 text-xl font-bold">{username}</Text>
                   <Text className="pl-3 text-md font-bold text-slate-500">
                     12:51
                   </Text>
@@ -70,27 +108,38 @@ export default function Reports() {
               <View className="w-full flex flex-row mt-2">
                 <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
                   Location:
+                  <Text className="text-lg font-normal text-black ml-2">
+                    {" " + item.latitude + ", " + item.longitude}
+                  </Text>
                 </Text>
-                <Text className="text-lg text-left">{item.location}</Text>
               </View>
               <View className="w-full flex flex-row">
                 <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
                   Type of Report:
+                  <Text className="text-lg font-normal text-black ml-2">
+                    {" " + item.type_of_report}
+                  </Text>
                 </Text>
-                <Text className="text-lg text-left">{item.type}</Text>
               </View>
               <View className="w-full flex flex-row">
                 <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
                   Description:
-                </Text>
-                <Text className="text-lg text-left flex-1">
-                  {item.description}
+                  <Text className="text-lg font-normal text-black ml-2">
+                    {" " + item.report_description}
+                  </Text>
                 </Text>
               </View>
-              <Image
-                source={{ uri: item.imageUri }}
-                className="w-full h-72 rounded-lg my-1"
-              />
+              <TouchableOpacity
+                onPress={() => {
+                  setSelectedImage(item.image_path);
+                  setFullImageModalVisible(true);
+                }}
+              >
+                <Image
+                  source={{ uri: item.image_path }}
+                  className="w-full h-72 rounded-lg my-1 border-2 border-[#0C3B2D]"
+                />
+              </TouchableOpacity>
               <View className="w-full flex flex-row mt-2 justify-between">
                 <View className="flex flex-row items-center">
                   <TouchableOpacity className="p-2">
@@ -100,7 +149,7 @@ export default function Reports() {
                       color="#0C3B2D"
                     />
                   </TouchableOpacity>
-                  <Text className="text-lg mx-1">121</Text>
+                  <Text className="text-lg mx-1">{item.downvote}</Text>
                   <TouchableOpacity className="p-2">
                     <MaterialCommunityIcons
                       name="thumb-down-outline"
@@ -108,7 +157,7 @@ export default function Reports() {
                       color="#0C3B2D"
                     />
                   </TouchableOpacity>
-                  <Text className="text-lg mx-1">121</Text>
+                  <Text className="text-lg mx-1">{item.upvote}</Text>
                 </View>
                 <View className="flex flex-row items-center">
                   <TouchableOpacity
@@ -138,6 +187,38 @@ export default function Reports() {
           visible={reportModalVisible}
           onClose={() => setReportModalVisible(false)} // Hide modal
         />
+
+        {/* Full Screen Image Modal */}
+        <Modal
+          visible={fullImageModalVisible}
+          transparent={true}
+          animationType="fade"
+        >
+          <TouchableWithoutFeedback
+            onPress={() => setFullImageModalVisible(false)}
+          >
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: "rgba(0, 0, 0, 0.7)",
+                justifyContent: "center",
+                alignItems: "center",
+                padding: 10,
+              }}
+            >
+              {selectedImage && (
+                <Image
+                  source={{ uri: selectedImage }}
+                  style={{
+                    width: width * 0.9, // 90% of screen width
+                    height: height * 0.55, // 60% of screen height
+                    borderRadius: 10,
+                  }}
+                />
+              )}
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
       </SafeAreaView>
     </ImageBackground>
   );

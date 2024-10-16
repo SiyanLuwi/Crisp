@@ -6,7 +6,8 @@ import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import TabBar from "@/components/navigation/TabBar";
 import { RFPercentage } from "react-native-responsive-fontsize";
-
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+const queryClient = new QueryClient();
 const ScreenTabs = () => {
   const colorScheme = useColorScheme();
   return (
@@ -126,5 +127,5 @@ const ScreenTabs = () => {
   );
 };
 export default function NavLayout() {
-  return <ScreenTabs />;
+  return <QueryClientProvider client={queryClient}><ScreenTabs /></QueryClientProvider>;
 }
