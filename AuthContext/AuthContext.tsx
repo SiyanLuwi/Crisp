@@ -36,6 +36,17 @@ interface AuthProps {
     currentPassword: string,
     newPassword: string
   ) => Promise<any>;
+  verifyAccount?: (
+    firstName: string,
+    middleName: string,
+    lastName: string,
+    address: string,
+    // birthday: string,
+    idNumber: string,
+    selfie: string,
+    photo: string,
+    idPicture: string
+  ) => Promise<void>;
 }
 import * as Network from "expo-network";
 const TOKEN_KEY = "my-jwt";
@@ -362,6 +373,69 @@ export const AuthProvider = ({ children }: any) => {
     }
   };
 
+  const verifyAccount = async (
+    firstName: string,
+    middleName: string,
+    lastName: string,
+    address: string,
+    // birthday: string,
+    idNumber: string,
+    selfie: string,
+    photo: string,
+    idPicture: string
+  ) => {
+    const formData = new FormData();
+    formData.append("first_name", firstName);
+    formData.append("middle_name", middleName);
+    formData.append("last_name", lastName);
+    formData.append("text_address", address);
+    // formData.append("birthday", birthday);
+    formData.append("id_number", idNumber);
+
+    const selfieBase64 = await FileSystem.readAsStringAsync(selfie, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    const photoBase64 = await FileSystem.readAsStringAsync(photo, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    const idPictureBase64 = await FileSystem.readAsStringAsync(idPicture, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+
+    formData.append(
+      "id_selfie_image_path",
+      `data:image/jpeg;base64,${selfieBase64}`
+    );
+    formData.append(
+      "photo_image_path",
+      `data:image/jpeg;base64,${photoBase64}`
+    );
+    formData.append(
+      "id_picture_image_path",
+      `data:image/jpeg;base64,${idPictureBase64}`
+    );
+
+    try {
+      const res = await api.post("api/verify-account/", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${authState.token}`,
+        },
+      });
+      if (res.status === 201 || res.status === 200) {
+        alert("Verification request has been sent!");
+        router.push("/(tabs)/profile");
+      }
+    } catch (error: any) {
+      console.error("Verification error:", error);
+      if (error.response) {
+        alert(`Error: ${error.response.data.message || error.message}`);
+      } else {
+        alert(`Error: ${error.message}`);
+      }
+    }
+  };
+
   const value = {
     onRegister: register,
     onLogin: login,
@@ -373,6 +447,7 @@ export const AuthProvider = ({ children }: any) => {
     updateProfile,
     verifyCurrentPassword,
     changePassword,
+    verifyAccount,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

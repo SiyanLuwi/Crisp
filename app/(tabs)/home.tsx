@@ -6,8 +6,32 @@ import axios from "axios";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { getFirestore, collection, getDocs } from "firebase/firestore";
+import { getStorage, ref, getDownloadURL } from "firebase/storage";
+import { useQuery } from "@tanstack/react-query";
+import { app } from "@/firebase/firebaseConfig";
+import * as SecureStore from "expo-secure-store";
 
 const { width, height } = Dimensions.get("window");
+const db = getFirestore(app);
+const storage = getStorage();
+
+interface Report {
+  id: string;
+  type_of_report: string;
+  longitude: number;
+  latitude: number;
+}
+
+const fetchDocuments = async () => {
+  const querySnapshot = await getDocs(collection(db, "reports"));
+  const reports = querySnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...(doc.data() as Omit<Report, "id">),
+  }));
+  // console.log("Fetched reports:", reports); // Log the fetched reports
+  return reports;
+};
 
 export default function Home() {
   const initialRegion = {
@@ -23,6 +47,10 @@ export default function Home() {
     useState(false);
   const [userLocation, setUserLocation] = useState<any>(null);
   const mapRef = useRef<MapView>(null); // Add a ref to the MapView
+  const { data } = useQuery<Report[], Error>({
+    queryKey: ["reports"],
+    queryFn: fetchDocuments,
+  });
 
   useEffect(() => {
     const requestLocationPermission = async () => {
@@ -103,7 +131,7 @@ export default function Home() {
   const getWeatherImage = (code: number) => {
     const weatherConditions: { [key: number]: { image: any } } = {
       0: { image: require("../../assets/images/weather/Clear-sky.png") },
-      // 1: { image: require('./../assets/images/weather/Unknown.png') },
+      1: { image: require("../../assets/images/weather/Clear-sky.png") },
       2: { image: require("../../assets/images/weather/partly-cloudy.png") },
       3: { image: require("../../assets/images/weather/Overcast.png") },
       45: { image: require("../../assets/images/weather/Fog.png") },
@@ -183,7 +211,21 @@ export default function Home() {
               title={"University of Caloocan City - South Campus"}
               description="South Campus"
             />
+
+            {data &&
+              data.map((item) => (
+                // console.log(item.latitude, item.longitude),
+                <Marker
+                  key={item.id}
+                  coordinate={{
+                    latitude: item.longitude,
+                    longitude: item.latitude,
+                  }}
+                  title={item.type_of_report}
+                />
+              ))}
           </MapView>
+
           <TouchableOpacity
             className="absolute bottom-28 right-5 bg-[#0C3B2D] rounded-full p-2 shadow-lg"
             onPress={centerOnUserLocation}
@@ -197,7 +239,7 @@ export default function Home() {
         </View>
       )}
       {currentWeather && (
-        <SafeAreaView className="bg-white w-full absolute p-0 flex-row rounded-b-3xl border-[#0C3B2D] border-4">
+        <SafeAreaView className="bg-white w-full absolute p-0 flex-row rounded-b-3xl border-[#0C3B2D] border-4 border-t-0">
           <View className="flex-1 items-start justify-center p-5 ml-4">
             <View className="items-start justify-start">
               <Text className="text-[#0C3B2D]  font-bold text-3xl mb-2">
