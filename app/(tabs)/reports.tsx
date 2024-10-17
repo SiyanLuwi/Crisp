@@ -11,6 +11,7 @@ import {
   TouchableWithoutFeedback,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import MapView, { Marker } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import ReportReportModal from "@/components/reportReport";
@@ -51,8 +52,10 @@ export default function Reports() {
   const [fullImageModalVisible, setFullImageModalVisible] = useState(false);
   const [username, setUsername] = useState<string | null>("");
   const [reportModalVisible, setReportModalVisible] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
   const { data, isLoading, error } = useQuery<Report[], Error>({
     queryKey: ["reports"],
     queryFn: fetchDocuments,
@@ -105,14 +108,20 @@ export default function Reports() {
                   </Text>
                 </View>
               </View>
-              <View className="w-full flex flex-row mt-2">
+              <TouchableOpacity
+                onPress={() => {
+                  setSelectedReport(item);
+                  setModalVisible(true);
+                }}
+                className="w-full flex flex-row mt-2"
+              >
                 <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
                   Location:
                   <Text className="text-lg font-normal text-black ml-2">
                     {" " + item.latitude + ", " + item.longitude}
                   </Text>
                 </Text>
-              </View>
+              </TouchableOpacity>
               <View className="w-full flex flex-row">
                 <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
                   Type of Report:
@@ -216,6 +225,60 @@ export default function Reports() {
                   }}
                 />
               )}
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+
+        <Modal
+          visible={modalVisible}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: "rgba(0, 0, 0, 0.7)",
+                justifyContent: "center",
+                alignItems: "center",
+                padding: 10,
+              }}
+            >
+              <TouchableWithoutFeedback onPress={() => {}}>
+                <View
+                  style={{
+                    width: width * 0.9,
+                    height: height * 0.55,
+                    backgroundColor: "white", // Optional: background for modal content
+                    borderRadius: 10,
+                  }}
+                >
+                  {selectedReport && (
+                    <MapView
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: 10,
+                      }}
+                      initialRegion={{
+                        latitude: selectedReport.longitude, // Corrected to latitude
+                        longitude: selectedReport.latitude, // Corrected to longitude
+                        latitudeDelta: 0.01,
+                        longitudeDelta: 0.01,
+                      }}
+                    >
+                      <Marker
+                        coordinate={{
+                          latitude: selectedReport.longitude, // Corrected to latitude
+                          longitude: selectedReport.latitude, // Corrected to longitude
+                        }}
+                        title={selectedReport.type_of_report}
+                      />
+                    </MapView>
+                  )}
+                </View>
+              </TouchableWithoutFeedback>
             </View>
           </TouchableWithoutFeedback>
         </Modal>
