@@ -1,6 +1,14 @@
 import React, { useEffect, useState, useRef } from "react";
-import MapView, { Marker, Region } from "react-native-maps";
-import { View, Dimensions, Image, Text, TouchableOpacity } from "react-native";
+import MapView, { Marker, Region, Callout } from "react-native-maps";
+import {
+  View,
+  Dimensions,
+  Image,
+  Text,
+  TouchableOpacity,
+  Modal,
+  TouchableWithoutFeedback,
+} from "react-native";
 import * as Location from "expo-location";
 import axios from "axios";
 import { RFPercentage } from "react-native-responsive-fontsize";
@@ -21,6 +29,8 @@ interface Report {
   type_of_report: string;
   longitude: number;
   latitude: number;
+  report_description: string;
+  image_path: string;
 }
 
 const fetchDocuments = async () => {
@@ -49,6 +59,8 @@ export default function Home() {
     useState(false);
   const [userLocation, setUserLocation] = useState<any>(null);
   const mapRef = useRef<MapView>(null); // Add a ref to the MapView
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const { data } = useQuery<Report[], Error>({
     queryKey: ["reports"],
     queryFn: fetchDocuments,
@@ -235,8 +247,21 @@ export default function Home() {
                     latitude: item.longitude,
                     longitude: item.latitude,
                   }}
-                  title={item.type_of_report}
-                />
+                >
+                  <Callout
+                    onPress={() => {
+                      setSelectedReport(item);
+                      setModalVisible(true);
+                    }}
+                  >
+                    <View className="w-auto justify-center items-center">
+                      <Text>{item.type_of_report}</Text>
+                      <Text className="text-xs text-slate-400 mt-1">
+                        More Info
+                      </Text>
+                    </View>
+                  </Callout>
+                </Marker>
               ))}
           </MapView>
 
@@ -256,17 +281,17 @@ export default function Home() {
         <SafeAreaView className="bg-white w-full absolute p-0 flex-row rounded-b-3xl border-[#0C3B2D] border-4 border-t-0">
           <View className="flex-1 items-start justify-center p-5 ml-4">
             <View className="items-start justify-start">
-              <Text className="text-[#0C3B2D]  font-bold text-3xl mb-2">
+              <Text className="text-[#0C3B2D] font-extrabold text-3xl mb-2">
                 {getLocalDay()}
               </Text>
             </View>
             <View className="items-start justify-start">
-              <Text className="text-[#0C3B2D]  font-semibold text-lg mb-2">
+              <Text className="text-[#0C3B2D] font-semibold text-lg mb-2">
                 {getLocalMonthAndDay()}
               </Text>
             </View>
             <View className="items-start justify-start">
-              <Text className="text-[#0C3B2D]  font-semibold text-5xl">
+              <Text className="text-[#0C3B2D] font-extrabold text-5xl">
                 {`${currentWeather.temperature}°C`}
               </Text>
             </View>
@@ -285,6 +310,46 @@ export default function Home() {
               </Text>
             </View>
           </View>
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => {
+              setModalVisible(!modalVisible);
+            }}
+          >
+            <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+              <View className="flex-1 justify-center items-center bg-black/50">
+                <View className="w-4/5 p-5 bg-white rounded-xl items-start border-2 border-[#0C3B2D]">
+                  {selectedReport && (
+                    <>
+                      <View className="w-full flex flex-row">
+                        <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
+                          Type of Report:
+                          <Text className="text-lg font-normal text-black ml-2">
+                            {" " + selectedReport.type_of_report}
+                          </Text>
+                        </Text>
+                      </View>
+                      <View className="w-full flex flex-row mb-3">
+                        <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
+                          Description:
+                          <Text className="text-lg font-normal text-black ml-2">
+                            {" " + selectedReport.report_description}
+                          </Text>
+                        </Text>
+                      </View>
+                      <Image
+                        source={{ uri: selectedReport.image_path }} // Assuming image_path is a URL
+                        style={{ width: "100%", height: 300, borderRadius: 15 }}
+                        resizeMode="contain"
+                      />
+                    </>
+                  )}
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </Modal>
         </SafeAreaView>
       )}
     </View>

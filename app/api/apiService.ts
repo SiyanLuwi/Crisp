@@ -1,4 +1,4 @@
-import { API_URL } from '../../AuthContext/AuthContext'
+// import { API_URL } from '../../AuthContext/AuthContext'
 import * as SecureStore from 'expo-secure-store';
 
 export type UserDataType = {

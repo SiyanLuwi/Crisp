@@ -23,9 +23,15 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 const bgImage = require("@/assets/images/bgImage.png");
 import MapPicker from "@/components/mapPicker";
 import * as SecureStore from "expo-secure-store";
+import * as FileSystem from 'expo-file-system';
 import { useAuth } from "@/AuthContext/AuthContext";
-
+import axios from "axios";
 const { width, height } = Dimensions.get("window");
+interface Prediction {
+  class: string;
+  class_id: number;
+  confidence: number;
+}
 
 export default function PictureForm() {
   const [isOpen, setIsOpen] = useState(false);
@@ -35,10 +41,54 @@ export default function PictureForm() {
   const [location, setLocation] = useState<string | null>(null);
   const [description, setDescription] = useState<string | null>(null);
   const [emergency, setEmergency] = useState<string | null>(null);
+  const [isEmergency, setIsEmergency] = useState<string | null>(null)
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [fullImageModalVisible, setFullImageModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState<any>(null)
+  const [isFetch, setFetch] = useState<any>(null)
   const { createReport } = useAuth();
+  
+  const getHighestConfidenceClass = (results: Prediction[]): Prediction => {
+    return results.reduce((prev, current) => {
+        return (prev.confidence > current.confidence) ? prev : current;
+    });
+} 
+
+
+  const classify_image = async (uri: any) => {
+    try {
+      setLoading(true)
+      const base64image = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      })
+      const res = await axios({
+        method: 'POST',
+        url: 'https://detect.roboflow.com/image_classification-wl7xe/1', 
+        params: {
+          api_key: "6IesEqkK0zYWQS6auxzl", 
+        },
+        data: base64image,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+      const results = getHighestConfidenceClass(res.data.predictions);     
+      setSelectedItem(results.class);
+      console.log(results.class)
+      if(result.class === 'Fires' || result.class === 'Floods'){
+          setIsEmergency('Yes')
+      }else{
+        setIsEmergency('No')
+      }
+
+      setLoading(false)
+    } catch (error:any) {
+        console.log(error.message)
+    }
+  }
+
 
   const report = async () => {
     try {
@@ -113,6 +163,8 @@ export default function PictureForm() {
       const locations = await fetchCurrentLocation();
       setLocation(locations);
       setImageUri(uri);
+      setFetch(true)
+      classify_image(uri)
     };
     getImageUriAndLocation();
   }, []);
@@ -204,6 +256,7 @@ export default function PictureForm() {
               placeholderTextColor="#888"
               placeholder="Emergency (yes/no)"
               onChangeText={setEmergency}
+              value={isEmergency?.toString()}  
             />
             <TouchableOpacity
               onPress={toggleDropdown}

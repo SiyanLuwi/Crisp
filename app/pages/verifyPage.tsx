@@ -95,8 +95,7 @@ export default function VerifyPage() {
         photo || "", // Use fallback
         idPicture || "" // Use fallback
       );
-
-      if (res) {
+      if (!res) {
         console.log("Account verified successfully.");
         setModalVisible(true); // Show success modal
 
