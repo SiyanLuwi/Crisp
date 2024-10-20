@@ -23,15 +23,10 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 const bgImage = require("@/assets/images/bgImage.png");
 import MapPicker from "@/components/mapPicker";
 import * as SecureStore from "expo-secure-store";
-import * as FileSystem from 'expo-file-system';
+
 import { useAuth } from "@/AuthContext/AuthContext";
-import axios from "axios";
+
 const { width, height } = Dimensions.get("window");
-interface Prediction {
-  class: string;
-  class_id: number;
-  confidence: number;
-}
 
 export default function PictureForm() {
   const [isOpen, setIsOpen] = useState(false);
@@ -50,44 +45,7 @@ export default function PictureForm() {
   const [isFetch, setFetch] = useState<any>(null)
   const { createReport } = useAuth();
   
-  const getHighestConfidenceClass = (results: Prediction[]): Prediction => {
-    return results.reduce((prev, current) => {
-        return (prev.confidence > current.confidence) ? prev : current;
-    });
-} 
-
-
-  const classify_image = async (uri: any) => {
-    try {
-      setLoading(true)
-      const base64image = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      })
-      const res = await axios({
-        method: 'POST',
-        url: 'https://detect.roboflow.com/image_classification-wl7xe/1', 
-        params: {
-          api_key: "6IesEqkK0zYWQS6auxzl", 
-        },
-        data: base64image,
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      });
-      const results = getHighestConfidenceClass(res.data.predictions);     
-      setSelectedItem(results.class);
-      console.log(results.class)
-      if(result.class === 'Fires' || result.class === 'Floods'){
-          setIsEmergency('Yes')
-      }else{
-        setIsEmergency('No')
-      }
-
-      setLoading(false)
-    } catch (error:any) {
-        console.log(error.message)
-    }
-  }
+  
 
 
   const report = async () => {
@@ -161,10 +119,13 @@ export default function PictureForm() {
     const getImageUriAndLocation = async () => {
       const uri = await fetchImageUri();
       const locations = await fetchCurrentLocation();
+      const report_type = await SecureStore.getItemAsync('report_type')
+      const isEmergency = await SecureStore.getItemAsync('isEmergency')
+      setIsEmergency(isEmergency)
+      setSelectedItem(report_type)
       setLocation(locations);
       setImageUri(uri);
       setFetch(true)
-      classify_image(uri)
     };
     getImageUriAndLocation();
   }, []);

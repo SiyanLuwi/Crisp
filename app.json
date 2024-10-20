@@ -7,6 +7,7 @@
     "icon": "./assets/images/android-icon.png",
     "scheme": "crisp",
     "userInterfaceStyle": "automatic",
+    "owner": "thesis-group",
     "splash": {
       "image": "./assets/images/splash_screen.png",
       "resizeMode": "cover"
@@ -56,6 +57,7 @@
       "ID": "25886713465",
       "APP_ID": "1:25886713465:web:021f343b5785e55c1d96a8",
       "MEASUREMENT_ID": "G-NSBZMHRT4X",
+      "ROBOFLOW_API_KEY": "6IesEqkK0zYWQS6auxzl",
       "router": {
         "origin": false
       },
