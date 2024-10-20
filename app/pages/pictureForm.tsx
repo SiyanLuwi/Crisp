@@ -41,6 +41,7 @@ export default function PictureForm() {
   const [location, setLocation] = useState<string | null>(null);
   const [description, setDescription] = useState<string | null>(null);
   const [emergency, setEmergency] = useState<string | null>(null);
+  const [isEmergency, setIsEmergency] = useState<string | null>(null)
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [fullImageModalVisible, setFullImageModalVisible] = useState(false);
@@ -76,7 +77,12 @@ export default function PictureForm() {
       const results = getHighestConfidenceClass(res.data.predictions);     
       setSelectedItem(results.class);
       console.log(results.class)
-      console.log(res.data.predictions)
+      if(result.class === 'Fires' || result.class === 'Floods'){
+          setIsEmergency('Yes')
+      }else{
+        setIsEmergency('No')
+      }
+
       setLoading(false)
     } catch (error:any) {
         console.log(error.message)
@@ -250,6 +256,7 @@ export default function PictureForm() {
               placeholderTextColor="#888"
               placeholder="Emergency (yes/no)"
               onChangeText={setEmergency}
+              value={isEmergency?.toString()}  
             />
             <TouchableOpacity
               onPress={toggleDropdown}
