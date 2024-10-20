@@ -147,6 +147,7 @@ export const AuthProvider = ({ children }: any) => {
         email: data.email,
         address: data.address,
         contact_number: data.contact_number,
+        account_type: data.account_type,
         is_email_verified: data.is_email_verified,
       };
 

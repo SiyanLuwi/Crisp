@@ -43,6 +43,8 @@ export default function Home() {
 
   const [region, setRegion] = useState<Region | null>(initialRegion);
   const [currentWeather, setCurrentWeather] = useState<any | null>(null);
+  const [altitude, setAltitude] = useState<any | null>(null);
+  const [estimatedFloor, setEstimatedFloor] = useState<any | null>(null);
   const [locationPermissionGranted, setLocationPermissionGranted] =
     useState(false);
   const [userLocation, setUserLocation] = useState<any>(null);
@@ -69,16 +71,34 @@ export default function Home() {
 
     const getCurrentLocation = async () => {
       try {
+        // Request location and altitude
         const location = await Location.getCurrentPositionAsync({});
-        const { latitude, longitude } = location.coords;
+        const { latitude, longitude, altitude } = location.coords; // Destructure latitude, longitude, and altitude
+
+        // Set the user location with latitude and longitude
         setUserLocation({ latitude, longitude });
+
+        // Set the map region
         setRegion({
           latitude,
           longitude,
           latitudeDelta: 0.01,
           longitudeDelta: 0.01,
         });
+
+        // Fetch weather data based on the location
         fetchCurrentWeather(latitude, longitude);
+
+        // Check if altitude is available (not null)
+        const floorHeight = 3; // average height per floor in meters
+        const estimatedFloor =
+          altitude !== null ? Math.round(altitude / floorHeight) : null; // If altitude is null, estimatedFloor is also null
+
+        console.log(`Estimated Floor: ${estimatedFloor}`); // Log the estimated floor
+
+        // Optionally update state with altitude and estimated floor
+        setAltitude(altitude); // Set altitude state if needed
+        setEstimatedFloor(estimatedFloor); // Assuming you have a state for the estimated floor
       } catch (error) {
         console.error("Error getting location:", error);
       }
@@ -155,16 +175,6 @@ export default function Home() {
     return weatherConditions[code] && weatherConditions[code].image;
   };
 
-  const getLocalTime = () => {
-    const timeString = new Date().toLocaleTimeString("en-PH", {
-      hour: "numeric",
-      minute: "numeric",
-      hour12: true,
-      timeZone: "Asia/Manila",
-    });
-    return timeString.replace(/am|pm/i, (match) => match.toUpperCase());
-  };
-
   const getLocalDay = () => {
     const optionsDay: Intl.DateTimeFormatOptions = { weekday: "long" }; // Correct type
     return new Date().toLocaleDateString("en-PH", optionsDay);
@@ -205,7 +215,11 @@ export default function Home() {
       ) : (
         <View className="w-full h-full flex-1 absolute">
           <MapView ref={mapRef} className="flex-1" region={region}>
-            <Marker coordinate={region} title={"You are here"} />
+            <Marker
+              coordinate={region}
+              title={"You are here"}
+              pinColor="blue"
+            />
             <Marker
               coordinate={{ latitude: 14.65344, longitude: 120.99473 }}
               title={"University of Caloocan City - South Campus"}
