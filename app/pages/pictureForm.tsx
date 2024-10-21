@@ -36,17 +36,14 @@ export default function PictureForm() {
   const [location, setLocation] = useState<string | null>(null);
   const [description, setDescription] = useState<string | null>(null);
   const [emergency, setEmergency] = useState<string | null>(null);
-  const [isEmergency, setIsEmergency] = useState<string | null>(null)
+  const [isEmergency, setIsEmergency] = useState<string | null>(null);
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [fullImageModalVisible, setFullImageModalVisible] = useState(false);
-  const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<any>(null)
-  const [isFetch, setFetch] = useState<any>(null)
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [isFetch, setFetch] = useState<any>(null);
   const { createReport } = useAuth();
-  
-  
-
 
   const report = async () => {
     try {
@@ -57,7 +54,7 @@ export default function PictureForm() {
       const [longitude, latitude] = location.split(",");
 
       let category =
-        emergency?.toLocaleLowerCase() === "yes"
+        isEmergency?.toLocaleLowerCase() === "yes"
           ? "emergency"
           : "not emergency";
 
@@ -119,13 +116,13 @@ export default function PictureForm() {
     const getImageUriAndLocation = async () => {
       const uri = await fetchImageUri();
       const locations = await fetchCurrentLocation();
-      const report_type = await SecureStore.getItemAsync('report_type')
-      const isEmergency = await SecureStore.getItemAsync('isEmergency')
-      setIsEmergency(isEmergency)
-      setSelectedItem(report_type)
+      const report_type = await SecureStore.getItemAsync("report_type");
+      const isEmergency = await SecureStore.getItemAsync("isEmergency");
+      setIsEmergency(isEmergency);
+      setSelectedItem(report_type);
       setLocation(locations);
       setImageUri(uri);
-      setFetch(true)
+      setFetch(true);
     };
     getImageUriAndLocation();
   }, []);
@@ -217,7 +214,7 @@ export default function PictureForm() {
               placeholderTextColor="#888"
               placeholder="Emergency (yes/no)"
               onChangeText={setEmergency}
-              value={isEmergency?.toString()}  
+              value={isEmergency?.toString()}
             />
             <TouchableOpacity
               onPress={toggleDropdown}

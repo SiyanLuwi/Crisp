@@ -30,6 +30,7 @@ const storage = getStorage();
 
 interface Report {
   id: string;
+  username: string;
   type_of_report: string;
   report_description: string;
   longitude: number;
@@ -85,13 +86,15 @@ export default function Reports() {
     queryFn: fetchDocuments,
     // Ensure you're using the correct types here
   });
-  const fetchUsername = async () => {
-    const username = await SecureStore.getItemAsync("username");
-    setUsername(username);
-  };
-  useEffect(() => {
-    fetchUsername();
-  }, []);
+
+  // const fetchUsername = async () => {
+  //   const username = await SecureStore.getItemAsync("username");
+  //   setUsername(username);
+  // };
+  // useEffect(() => {
+  //   fetchUsername();
+  // }, []);
+
   if (isLoading) return <Text>Loading..</Text>;
   if (error) return <Text>Error: {error.message}</Text>;
 
@@ -143,7 +146,7 @@ export default function Reports() {
             style={{ padding: 5, color: "#0C3B2D" }}
           />
           <View className="flex flex-col items-start">
-            <Text className="pl-3 text-xl font-bold">{username}</Text>
+            <Text className="pl-3 text-xl font-bold">{item.username}</Text>
             <Text className="pl-3 text-md font-bold text-slate-500">
               {formattedDate} {"\n"}
               <Text className="text-md font-normal text-slate-500">
