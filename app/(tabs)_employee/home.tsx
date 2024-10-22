@@ -103,7 +103,7 @@ export default function Home() {
   const getWeatherImage = (code: number) => {
     const weatherConditions: { [key: number]: { image: any } } = {
       0: { image: require("../../assets/images/weather/Clear-sky.png") },
-      // 1: { image: require('./../assets/images/weather/Unknown.png') },
+      1: { image: require("../../assets/images/weather/Clear-sky.png") },
       2: { image: require("../../assets/images/weather/partly-cloudy.png") },
       3: { image: require("../../assets/images/weather/Overcast.png") },
       45: { image: require("../../assets/images/weather/Fog.png") },
@@ -177,7 +177,11 @@ export default function Home() {
       ) : (
         <View className="w-full h-full flex-1 absolute">
           <MapView ref={mapRef} className="flex-1" region={region}>
-            <Marker coordinate={region} title={"You are here"} />
+            <Marker
+              coordinate={region}
+              title={"You are here"}
+              pinColor="blue"
+            />
             <Marker
               coordinate={{ latitude: 14.65344, longitude: 120.99473 }}
               title={"University of Caloocan City - South Campus"}
@@ -200,17 +204,17 @@ export default function Home() {
         <SafeAreaView className="bg-white w-full absolute p-0 flex-row rounded-b-3xl border-[#0C3B2D] border-4">
           <View className="flex-1 items-start justify-center p-5 ml-4">
             <View className="items-start justify-start">
-              <Text className="text-[#0C3B2D]  font-bold text-4xl mb-2">
+              <Text className="text-[#0C3B2D] font-extrabold text-3xl mb-2">
                 {getLocalDay()}
               </Text>
             </View>
             <View className="items-start justify-start">
-              <Text className="text-[#0C3B2D]  font-semibold text-lg mb-2">
+              <Text className="text-[#0C3B2D] font-semibold text-lg mb-2">
                 {getLocalMonthAndDay()}
               </Text>
             </View>
             <View className="items-start justify-start">
-              <Text className="text-[#0C3B2D]  font-normal text-5xl">
+              <Text className="text-[#0C3B2D] font-extrabold text-5xl">
                 {`${currentWeather.temperature}°C`}
               </Text>
             </View>

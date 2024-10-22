@@ -159,7 +159,7 @@ export const AuthProvider = ({ children }: any) => {
 
       return data;
     } catch (error: any) {
-      console.error("Login error occurred:", error);
+      // console.error("Login error occurred:", error);
       if (error.response) {
         console.log("Error response data:", error.response.data);
         if (error.response.status === 401) {

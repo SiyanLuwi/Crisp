@@ -27,6 +27,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const { onLogin } = useAuth();
   const IS_EMAIL_VERIFIED = "is_email_verified";
@@ -36,9 +37,8 @@ export default function Login() {
     setLoading(true);
     try {
       const result = await onLogin!(username, password);
-      const is_email_verified = await SecureStore.getItemAsync(
-        IS_EMAIL_VERIFIED
-      );
+      const is_email_verified =
+        await SecureStore.getItemAsync(IS_EMAIL_VERIFIED);
       const account_type = await SecureStore.getItemAsync(ACCOUNT_TYPE);
 
       if (!result) {
@@ -61,9 +61,9 @@ export default function Login() {
       }
     } catch (error: any) {
       if (error.message === "Invalid username or password") {
-        alert("Login failed: Invalid username or password");
+        setErrors("An unexpected error occurred. Please try again.");
       } else {
-        alert("An unexpected error occurred. Please try again.");
+        setErrors("Invalid Email or Password");
       }
     } finally {
       setLoading(false);
@@ -109,6 +109,9 @@ export default function Login() {
               />
             </TouchableOpacity>
           </View>
+          <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mb-2">
+            {errors}
+          </Text>
           <TouchableOpacity
             className="w-full flex items-end justify-end mr-24"
             onPress={() => setModalVisible(true)}
