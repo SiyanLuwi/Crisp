@@ -43,11 +43,19 @@ interface Report {
 }
 
 const fetchDocuments = async () => {
-  const categories = ['fires', 'floods', 'street lights', 'not related', 'road blockage'];
+  const categories = [
+    "fires",
+    "floods",
+    "street lights",
+    "not related",
+    "road blockage",
+  ];
   const allReports: Report[] = [];
 
   for (const category of categories) {
-    const querySnapshot = await getDocs(collection(db, `reports/${category}/reports`));
+    const querySnapshot = await getDocs(
+      collection(db, `reports/${category}/reports`)
+    );
     const reports = querySnapshot.docs.map((doc) => ({
       id: doc.id,
       ...(doc.data() as Omit<Report, "id">),
@@ -55,9 +63,11 @@ const fetchDocuments = async () => {
     allReports.push(...reports);
   }
 
-  return allReports.sort((a, b) => new Date(b.report_date).getTime() - new Date(a.report_date).getTime());
+  return allReports.sort(
+    (a, b) =>
+      new Date(b.report_date).getTime() - new Date(a.report_date).getTime()
+  );
 };
-
 
 export default function Reports() {
   const initialRegion = {
@@ -67,8 +77,8 @@ export default function Reports() {
     longitudeDelta: 0.01,
   };
 
-  const [region, setRegion] = useState<Region>(initialRegion);
-  const [userLocation, setUserLocation] = useState<any>('');
+  const [region, setRegion] = useState<Region | null>(initialRegion);
+  const [userLocation, setUserLocation] = useState<any>(null);
   const [locationPermissionGranted, setLocationPermissionGranted] =
     useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -88,6 +98,15 @@ export default function Reports() {
     queryFn: fetchDocuments,
     // Ensure you're using the correct types here
   });
+
+  // const fetchUsername = async () => {
+  //   const username = await SecureStore.getItemAsync("username");
+  //   setUsername(username);
+  // };
+  // useEffect(() => {
+  //   fetchUsername();
+  // }, []);
+
   if (isLoading) return <Text>Loading..</Text>;
   if (error) return <Text>Error: {error.message}</Text>;
 
@@ -102,6 +121,7 @@ export default function Reports() {
       } else {
         console.log("Location permission denied");
         setLocationPermissionGranted(false);
+        setRegion(null);
       }
     };
 
@@ -138,17 +158,19 @@ export default function Reports() {
             style={{ padding: 5, color: "#0C3B2D" }}
           />
           <View className="flex flex-col items-start">
-            <Text className="pl-3 text-xl font-bold">{username}</Text>
+            <Text className="pl-3 text-xl font-bold">{item.username}</Text>
             <Text className="pl-3 text-md font-bold text-slate-500">
               {formattedDate} {"\n"}
-              <Text className="text-md font-normal text-slate-500">{formattedTime}</Text>
+              <Text className="text-md font-normal text-slate-500">
+                {formattedTime}
+              </Text>
             </Text>
           </View>
         </View>
         <TouchableOpacity
           onPress={() => {
             setSelectedReport(item);
-            setReportModalVisible(true);
+            setModalVisible(true);
           }}
           className="w-full flex flex-row mt-2"
         >
@@ -175,7 +197,7 @@ export default function Reports() {
             </Text>
           </Text>
         </View>
-        {item.image_path && (
+        {item.image_path ? (
           <TouchableOpacity
             onPress={() => {
               setSelectedImage(item.image_path);
@@ -187,7 +209,7 @@ export default function Reports() {
               className="w-full h-72 rounded-lg my-1 border-2 border-[#0C3B2D]"
             />
           </TouchableOpacity>
-        )}
+        ) : null}
         <View className="w-full flex flex-row mt-2 justify-between">
           <View className="flex flex-row items-center">
             <TouchableOpacity className="p-2">
@@ -226,53 +248,134 @@ export default function Reports() {
 
   return (
     <ImageBackground
-      source={require("@/assets/images/bgImage.png")}
+      source={bgImage}
       className="flex-1 justify-center items-center"
       resizeMode="cover"
     >
-      <SafeAreaView className="flex-1 justify-start items-center mb-10">
-      <MapView
-        style={{ width, height: height * 0.4 }}
-        region={userLocation ? region : initialRegion} // This ensures it's never null
-        onRegionChangeComplete={setRegion} 
-        >
-          {data.map((item) => (
-            <Marker
-              key={item.id}
-              coordinate={{
-                latitude: item.latitude,
-                longitude: item.longitude,
-              }}
-              title={item.type_of_report}
-              description={item.report_description}
+      <SafeAreaView className="flex-1">
+        <View className="flex flex-row h-auto w-full items-center justify-between px-6">
+          <Text className="font-bold text-4xl text-white mt-3 mb-2">
+            Reports
+          </Text>
+          <TouchableOpacity onPress={() => router.push("/pages/notification")}>
+            <MaterialCommunityIcons
+              name="bell"
+              size={RFPercentage(3.5)}
+              color="#ffffff"
             />
-          ))}
-        </MapView>
+          </TouchableOpacity>
+        </View>
         <FlatList
           data={data}
-          renderItem={renderItem}
           keyExtractor={(item) => item.id}
+          className="w-full h-auto flex p-4"
           showsVerticalScrollIndicator={false}
-          style={{ marginBottom: 10 }}
+          renderItem={renderItem}
         />
+        <ReportReportModal
+          visible={reportModalVisible}
+          onClose={() => setReportModalVisible(false)}
+        />
+
+        {/* Full Screen Image Modal */}
+        <Modal
+          visible={fullImageModalVisible}
+          transparent={true}
+          animationType="fade"
+        >
+          <TouchableWithoutFeedback
+            onPress={() => setFullImageModalVisible(false)}
+          >
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: "rgba(0, 0, 0, 0.7)",
+                justifyContent: "center",
+                alignItems: "center",
+                padding: 10,
+              }}
+            >
+              {selectedImage && (
+                <Image
+                  source={{ uri: selectedImage }}
+                  style={{
+                    width: width * 0.9,
+                    height: height * 0.55,
+                    borderRadius: 10,
+                  }}
+                  resizeMode="contain"
+                />
+              )}
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+
+        <Modal
+          visible={modalVisible}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: "rgba(0, 0, 0, 0.7)",
+                justifyContent: "center",
+                alignItems: "center",
+                padding: 10,
+              }}
+            >
+              <TouchableWithoutFeedback onPress={() => {}}>
+                <View
+                  style={{
+                    width: width * 0.9,
+                    height: height * 0.55,
+                    backgroundColor: "white",
+                    borderRadius: 10,
+                  }}
+                >
+                  {selectedReport && (
+                    <MapView
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: 10,
+                      }}
+                      initialRegion={{
+                        latitude: selectedReport.longitude,
+                        longitude: selectedReport.latitude,
+                        latitudeDelta: 0.01,
+                        longitudeDelta: 0.01,
+                      }}
+                    >
+                      <Marker
+                        coordinate={userLocation}
+                        title={"You are here"}
+                        pinColor="blue"
+                      />
+                      <Marker
+                        coordinate={{
+                          latitude: selectedReport.longitude,
+                          longitude: selectedReport.latitude,
+                        }}
+                        title={selectedReport.type_of_report}
+                      />
+                    </MapView>
+                  )}
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+        <TouchableOpacity className="p-2">
+          <MaterialCommunityIcons
+            name="thumb-down-outline"
+            size={width * 0.15} // Responsive icon size
+            color="#0C3B2D"
+          />
+        </TouchableOpacity>
       </SafeAreaView>
-      <Modal visible={fullImageModalVisible} animationType="slide">
-        <TouchableWithoutFeedback onPress={() => setFullImageModalVisible(false)}>
-          <View className="flex-1 justify-center items-center bg-black">
-            {selectedImage && (
-              <Image
-                source={{ uri: selectedImage }}
-                className="h-full w-full"
-                resizeMode="contain"
-              />
-            )}
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-      <ReportReportModal
-        visible={reportModalVisible}
-        onClose={() => setReportModalVisible(false)}
-      />
     </ImageBackground>
   );
 }
