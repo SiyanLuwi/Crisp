@@ -62,8 +62,14 @@ export default function Login() {
     } catch (error: any) {
       if (error.message === "Invalid username or password") {
         setErrors("An unexpected error occurred. Please try again.");
+        setTimeout(() => {
+          setErrors("");
+        }, 2000);
       } else {
         setErrors("Invalid Email or Password");
+        setTimeout(() => {
+          setErrors("");
+        }, 2000);
       }
     } finally {
       setLoading(false);
@@ -109,9 +115,11 @@ export default function Login() {
               />
             </TouchableOpacity>
           </View>
-          <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mb-2">
-            {errors}
-          </Text>
+          {errors ? (
+            <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
+              {errors}
+            </Text>
+          ) : null}
           <TouchableOpacity
             className="w-full flex items-end justify-end mr-24"
             onPress={() => setModalVisible(true)}

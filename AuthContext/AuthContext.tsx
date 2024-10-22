@@ -21,7 +21,7 @@ interface AuthProps {
     report_description: string,
     longitude: string,
     latitude: string,
-    category: string,
+    is_emergency: string,
     image_path: string
   ) => Promise<any>;
   onLogout?: () => Promise<any>;
@@ -217,7 +217,7 @@ export const AuthProvider = ({ children }: any) => {
     report_description: string,
     longitude: string,
     latitude: string,
-    category: string,
+    is_emergency: string,
     image_path: string
   ) => {
     console.log(
@@ -225,7 +225,7 @@ export const AuthProvider = ({ children }: any) => {
       report_description,
       longitude,
       latitude,
-      category,
+      is_emergency,
       image_path
     );
     const formData = new FormData();
@@ -233,7 +233,7 @@ export const AuthProvider = ({ children }: any) => {
     formData.append("report_description", report_description);
     formData.append("longitude", longitude);
     formData.append("latitude", latitude);
-    formData.append("category", category);
+    formData.append("is_emergency", is_emergency);
 
     const imageBase64 = await FileSystem.readAsStringAsync(image_path, {
       encoding: FileSystem.EncodingType.Base64,
@@ -424,7 +424,7 @@ export const AuthProvider = ({ children }: any) => {
         },
       });
       if (res.status === 201 || res.status === 200) {
-        alert("Verification request has been sent!");
+        // alert("Verification request has been sent!");
         router.push("/(tabs)/profile");
       }
     } catch (error: any) {

@@ -43,18 +43,30 @@ interface Report {
 }
 
 const fetchDocuments = async () => {
-  const querySnapshot = await getDocs(collection(db, "reports"));
-  const reports = querySnapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...(doc.data() as Omit<Report, "id">),
-  }));
+  const categories = [
+    "fires",
+    "floods",
+    "street lights",
+    "not related",
+    "road blockage",
+  ];
+  const allReports: Report[] = [];
 
-  // Sort reports by report_date in descending order
-  return reports.sort((a, b) => {
-    return (
-      new Date(b.report_date).getTime() - new Date(a.report_date).getTime()
+  for (const category of categories) {
+    const querySnapshot = await getDocs(
+      collection(db, `reports/${category}/reports`)
     );
-  });
+    const reports = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...(doc.data() as Omit<Report, "id">),
+    }));
+    allReports.push(...reports);
+  }
+
+  return allReports.sort(
+    (a, b) =>
+      new Date(b.report_date).getTime() - new Date(a.report_date).getTime()
+  );
 };
 
 export default function Reports() {

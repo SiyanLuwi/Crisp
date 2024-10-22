@@ -53,7 +53,7 @@ export default function PictureForm() {
 
       const [longitude, latitude] = location.split(",");
 
-      let category =
+      let is_emergency =
         isEmergency?.toLocaleLowerCase() === "yes"
           ? "emergency"
           : "not emergency";
@@ -63,7 +63,7 @@ export default function PictureForm() {
         !description ||
         !longitude ||
         !latitude ||
-        !category
+        !is_emergency
       ) {
         throw new Error("Some required fields are missing");
       }
@@ -81,7 +81,7 @@ export default function PictureForm() {
         description,
         longitude,
         latitude,
-        category,
+        is_emergency,
         imageUri
       );
 
@@ -213,7 +213,7 @@ export default function PictureForm() {
               className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
               placeholderTextColor="#888"
               placeholder="Emergency (yes/no)"
-              onChangeText={setEmergency}
+              onChangeText={setIsEmergency}
               value={isEmergency?.toString()}
             />
             <TouchableOpacity

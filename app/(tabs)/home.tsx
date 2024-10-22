@@ -26,11 +26,13 @@ const storage = getStorage();
 
 interface Report {
   id: string;
+  username: string;
   type_of_report: string;
   longitude: number;
   latitude: number;
   report_description: string;
   image_path: string;
+  report_date: string;
 }
 
 const fetchDocuments = async () => {
@@ -324,13 +326,37 @@ export default function Home() {
                   {selectedReport && (
                     <>
                       <View className="w-full flex flex-row">
-                        <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
-                          Type of Report:
-                          <Text className="text-lg font-normal text-black ml-2">
-                            {" " + selectedReport.type_of_report}
+                        <View className="flex flex-col items-start">
+                          <Text className="text-xl font-bold">
+                            {selectedReport.username}
                           </Text>
-                        </Text>
+
+                          {/* Format and display the date and time */}
+                          {selectedReport.report_date && (
+                            <View className="flex flex-row">
+                              <Text className="text-md font-bold text-slate-500">
+                                {selectedReport.report_date
+                                  .split("T")[0]
+                                  .replace(/-/g, "/")}
+                              </Text>
+                              <Text className="ml-2 text-md font-bold text-slate-500">
+                                {
+                                  selectedReport.report_date
+                                    .split("T")[1]
+                                    .split(".")[0]
+                                }
+                              </Text>
+                            </View>
+                          )}
+                          <Text className="text-lg mt-3  text-left pr-2 font-semibold text-slate-500">
+                            Type of Report:
+                            <Text className="text-lg font-normal text-black ml-2">
+                              {" " + selectedReport.type_of_report}
+                            </Text>
+                          </Text>
+                        </View>
                       </View>
+
                       <View className="w-full flex flex-row mb-3">
                         <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
                           Description:
@@ -339,11 +365,12 @@ export default function Home() {
                           </Text>
                         </Text>
                       </View>
-                      <Image
-                        source={{ uri: selectedReport.image_path }} // Assuming image_path is a URL
-                        style={{ width: "100%", height: 300, borderRadius: 15 }}
-                        resizeMode="contain"
-                      />
+                      {selectedReport.image_path && (
+                        <Image
+                          source={{ uri: selectedReport.image_path }}
+                          className="w-full h-72 rounded-lg my-1 border-2 border-[#0C3B2D]"
+                        />
+                      )}
                     </>
                   )}
                 </View>
