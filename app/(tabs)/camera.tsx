@@ -74,17 +74,15 @@ export default function CameraComp() {
       if (cameraRef.current) {
         setLoading(true);
         const photo = await cameraRef.current.takePictureAsync({
-          quality: 1,
+          quality: 0.7,
           base64: true,
         });
 
         if (photo && photo.uri && photo.base64) {
           console.log("Photo captured:", photo.uri);
 
-          const [optimizedPhoto, isClassified] = await Promise.all([
-            resizeImage(photo.uri),
-            classify_image(photo.uri), // Classify original image without waiting for resize
-          ]);
+           const optimize_uri = await resizeImage(photo.uri)
+           const isClassified = await classify_image(optimize_uri)
 
           // Save the image URI
           await SecureStore.setItemAsync("imageUri", photo.uri);
@@ -109,8 +107,8 @@ export default function CameraComp() {
     try {
       const result = await manipulateAsync(
         uri,
-        [{ resize: { width: 150, height: 150 } }],
-        { compress: 1, format: SaveFormat.JPEG }
+        [{ resize: { width: 224, height: 224 } }],
+        { compress: 0.5, format: SaveFormat.JPEG }
       );
       return result.uri;
     } catch (error) {
@@ -145,6 +143,7 @@ export default function CameraComp() {
       return true; // Classification succeeded
     } catch (error: any) {
       console.error("Error during classification:", error.message);
+      alert("Error classifying image. Please try again.");
       return false; // Classification failed
     }
   };
