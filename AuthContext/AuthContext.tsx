@@ -163,7 +163,7 @@ export const AuthProvider = ({ children }: any) => {
       if (error.response) {
         console.log("Error response data:", error.response.data);
         if (error.response.status === 401) {
-          throw new Error("Invalid username or password");
+          throw new Error("Invalid username or password!");
         } else {
           throw new Error("An unexpected error occurred");
         }

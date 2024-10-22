@@ -17,9 +17,8 @@ import { RFPercentage } from "react-native-responsive-fontsize";
 import ReportReportModal from "@/components/reportReport";
 const bgImage = require("@/assets/images/bgImage.png");
 import { router } from "expo-router";
-import { getFirestore, collection, getDocs } from "firebase/firestore";
+import { getFirestore, collection, getDocs, onSnapshot } from "firebase/firestore";
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
-import { useQuery } from "@tanstack/react-query";
 import { app } from "@/firebase/firebaseConfig";
 import * as SecureStore from "expo-secure-store";
 import * as Location from "expo-location";
@@ -42,32 +41,7 @@ interface Report {
   report_date: string;
 }
 
-const fetchDocuments = async () => {
-  const categories = [
-    "fires",
-    "floods",
-    "street lights",
-    "not related",
-    "road blockage",
-  ];
-  const allReports: Report[] = [];
 
-  for (const category of categories) {
-    const querySnapshot = await getDocs(
-      collection(db, `reports/${category}/reports`)
-    );
-    const reports = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...(doc.data() as Omit<Report, "id">),
-    }));
-    allReports.push(...reports);
-  }
-
-  return allReports.sort(
-    (a, b) =>
-      new Date(b.report_date).getTime() - new Date(a.report_date).getTime()
-  );
-};
 
 export default function Reports() {
   const initialRegion = {
@@ -89,15 +63,6 @@ export default function Reports() {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
-  const {
-    data = [],
-    isLoading,
-    error,
-  } = useQuery<Report[], Error>({
-    queryKey: ["reports"],
-    queryFn: fetchDocuments,
-    // Ensure you're using the correct types here
-  });
 
   // const fetchUsername = async () => {
   //   const username = await SecureStore.getItemAsync("username");
@@ -106,9 +71,51 @@ export default function Reports() {
   // useEffect(() => {
   //   fetchUsername();
   // }, []);
+  const fetchDocuments = async () => {
+    const categories = [
+      "fires",
+      "floods",
+      "street light",
+      "not related",
+      "road blockage",
+    ];
+    const allReports: Report[] = [];
+  
+    for (const category of categories) {
+      const querySnapshot = await getDocs(
+        collection(db, `reports/${category}/reports`)
+      );
+      const reports = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Omit<Report, "id">),
+      }));
+      allReports.push(...reports);
+    }
+  
+    // Sort reports first by upvotes, then by report date
+    return allReports.sort((a, b) => {
+      if (b.upvote !== a.upvote) {
+        return b.upvote - a.upvote; // Sort by upvotes in descending order
+      }
+      return new Date(b.report_date).getTime() - new Date(a.report_date).getTime(); // Sort by date if upvotes are equal
+    });
+  };
 
-  if (isLoading) return <Text>Loading..</Text>;
-  if (error) return <Text>Error: {error.message}</Text>;
+  useEffect(() => {
+    const loadReports = async () => {
+      try {
+        const fetchedReports = await fetchDocuments();
+        setReports(fetchedReports);
+        setLoading(false); // Set loading to false when the data is fetched
+      } catch (error) {
+        console.error("Error fetching reports: ", error);
+        setLoading(false); // Also set loading to false if there is an error
+      }
+    };
+
+    loadReports();
+  }, []);
+
 
   useEffect(() => {
     const requestLocationPermission = async () => {
@@ -143,7 +150,10 @@ export default function Reports() {
 
     requestLocationPermission();
   }, []);
-
+  useEffect(()=>{
+    console.log("This is the reports")
+    console.log(reports)
+  }, [])
   const renderItem = ({ item }: { item: Report }) => {
     const [datePart, timePart] = item.report_date.split("T");
     const formattedDate = datePart.replace(/-/g, "/");
@@ -266,7 +276,7 @@ export default function Reports() {
           </TouchableOpacity>
         </View>
         <FlatList
-          data={data}
+          data={reports}
           keyExtractor={(item) => item.id}
           className="w-full h-auto flex p-4"
           showsVerticalScrollIndicator={false}
