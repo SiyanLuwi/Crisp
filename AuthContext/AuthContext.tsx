@@ -159,7 +159,7 @@ export const AuthProvider = ({ children }: any) => {
 
       return data;
     } catch (error: any) {
-      console.error("Login error occurred:", error);
+      // console.error("Login error occurred:", error);
       if (error.response) {
         console.log("Error response data:", error.response.data);
         if (error.response.status === 401) {
@@ -424,7 +424,7 @@ export const AuthProvider = ({ children }: any) => {
         },
       });
       if (res.status === 201 || res.status === 200) {
-        alert("Verification request has been sent!");
+        // alert("Verification request has been sent!");
         router.push("/(tabs)/profile");
       }
     } catch (error: any) {

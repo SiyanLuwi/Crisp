@@ -200,7 +200,7 @@ export default function VerifyPage() {
 
     // Navigate and close modal
     setCancelModalVisible(false);
-    router.push("/(tabs)/profile");
+    router.back();
   };
 
   return (

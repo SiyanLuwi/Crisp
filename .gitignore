@@ -14,7 +14,7 @@ android/
 ios/
 /android
 /ios
-api/axios.ts/
+
 # macOS
 .DS_Store
 
