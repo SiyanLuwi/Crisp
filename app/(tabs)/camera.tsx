@@ -125,7 +125,7 @@ export default function CameraComp() {
 
       // Send image for classification
       const res = await axios.post(
-        "https://detect.roboflow.com/image_classification_v1.5/1",
+        "https://detect.roboflow.com/image_classification_fv/1",
         base64image,
         {
           params: { api_key: Constants.expoConfig?.extra?.ROBOFLOW_API_KEY },
@@ -137,7 +137,7 @@ export default function CameraComp() {
       console.log("Classified result:", result.class);
 
       const emergencyStatus =
-        result.class === "Fires" || result.class === "Floods" ? "Yes" : "No";
+        result.class === "Fires" || result.class === "Floods" || result.class === "Road Accident" ? "Yes" : "No";
       await SecureStore.setItemAsync("isEmergency", emergencyStatus);
       await SecureStore.setItemAsync("report_type", result.class);
       return true; // Classification succeeded

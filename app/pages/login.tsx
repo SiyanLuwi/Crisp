@@ -130,6 +130,7 @@ export default function Login() {
             </Text>
           </TouchableOpacity>
           <LoadingButton
+            style="mt-3 w-full max-w-[80%] bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center"
             title="LOGIN"
             onPress={handleLogin}
             loading={loading}

@@ -36,8 +36,8 @@ interface Report {
   latitude: number;
   category: string;
   image_path: string;
-  upvote: 0;
-  downvote: 0;
+  upvote: number;
+  downvote: number;
   report_date: string;
 }
 
@@ -63,59 +63,66 @@ export default function Reports() {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
-
-  // const fetchUsername = async () => {
-  //   const username = await SecureStore.getItemAsync("username");
-  //   setUsername(username);
-  // };
-  // useEffect(() => {
-  //   fetchUsername();
-  // }, []);
-  const fetchDocuments = async () => {
+  
+  const fetchAllDocuments = async () => {
     const categories = [
       "fires",
+      "street lights",
+      "potholes",
       "floods",
-      "street light",
-      "not related",
-      "road blockage",
+      "others",
+      "road incidents",
     ];
-    const allReports: Report[] = [];
   
-    for (const category of categories) {
-      const querySnapshot = await getDocs(
-        collection(db, `reports/${category}/reports`)
+    const unsubscribeFunctions = categories.map((category) => {
+      // Create an unsubscribe function for each category
+      return onSnapshot(
+        collection(db, `reports/${category}/reports`), // Use the correct path for each category
+        (snapshot) => {
+          const reports: Report[] = snapshot.docs.map((doc) => {
+            const data = doc.data() as Omit<Report, "id">; // Omit the id when fetching data
+            return {
+              id: doc.id, // Include the document ID
+              username: data.username || "", // Default to empty string if missing
+              type_of_report: data.type_of_report || "",
+              report_description: data.report_description || "",
+              longitude: data.longitude || 0, // Default to 0 if missing
+              latitude: data.latitude || 0, // Default to 0 if missing
+              category: category, // Set the category based on the current loop
+              image_path: data.image_path || "", // Default to empty string if missing
+              upvote: data.upvote || 0, // Default to 0 if missing
+              downvote: data.downvote || 0, // Default to 0 if missing
+              report_date: data.report_date || "", // Default to empty string if missing
+            };
+          });
+  
+          console.log(`Fetched Reports from ${category}:`, reports);
+          // Update the reports state with new reports from this category
+          setReports((prevReports) => [
+            ...prevReports,
+            ...reports,
+          ]);
+        },
+        (error) => {
+          console.error(`Error fetching reports from ${category}:`, error);
+        }
       );
-      const reports = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as Omit<Report, "id">),
-      }));
-      allReports.push(...reports);
-    }
-  
-    // Sort reports first by upvotes, then by report date
-    return allReports.sort((a, b) => {
-      if (b.upvote !== a.upvote) {
-        return b.upvote - a.upvote; // Sort by upvotes in descending order
-      }
-      return new Date(b.report_date).getTime() - new Date(a.report_date).getTime(); // Sort by date if upvotes are equal
     });
+    return () => {
+      unsubscribeFunctions.forEach((unsubscribe) => unsubscribe());
+    };
   };
 
   useEffect(() => {
-    const loadReports = async () => {
-      try {
-        const fetchedReports = await fetchDocuments();
-        setReports(fetchedReports);
-        setLoading(false); // Set loading to false when the data is fetched
-      } catch (error) {
-        console.error("Error fetching reports: ", error);
-        setLoading(false); // Also set loading to false if there is an error
-      }
-    };
+  const fetchData = async () => {
+    const unsubscribe = await fetchAllDocuments();
+    return unsubscribe; // Return the unsubscribe function for cleanup
+  };
 
-    loadReports();
-  }, []);
-
+  fetchData().catch((error) => {
+    console.error("Error in fetching documents:", error);
+  });
+}, []); 
 
   useEffect(() => {
     const requestLocationPermission = async () => {
@@ -150,10 +157,7 @@ export default function Reports() {
 
     requestLocationPermission();
   }, []);
-  useEffect(()=>{
-    console.log("This is the reports")
-    console.log(reports)
-  }, [])
+
   const renderItem = ({ item }: { item: Report }) => {
     const [datePart, timePart] = item.report_date.split("T");
     const formattedDate = datePart.replace(/-/g, "/");

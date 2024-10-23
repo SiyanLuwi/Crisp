@@ -23,7 +23,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 const bgImage = require("@/assets/images/bgImage.png");
 import MapPicker from "@/components/mapPicker";
 import * as SecureStore from "expo-secure-store";
-
+import LoadingButton from "@/components/loadingButton";
 import { useAuth } from "@/AuthContext/AuthContext";
 
 const { width, height } = Dimensions.get("window");
@@ -47,6 +47,7 @@ export default function PictureForm() {
 
   const report = async () => {
     try {
+      setLoading(true)
       if (!location) {
         throw new Error("Location is missing");
       }
@@ -86,9 +87,13 @@ export default function PictureForm() {
       );
 
       if (res) {
+        setLoading(false)
+        alert("Report Created!");    
+        router.push("/(tabs)/reports");
         console.log("Report created successfully:", res);
       }
     } catch (error: any) {
+      setLoading(false)
       console.error("Error creating report:", error.message || error);
     }
   };
@@ -277,14 +282,20 @@ export default function PictureForm() {
               }}
               onChangeText={setDescription}
             />
-            <TouchableOpacity
+             <LoadingButton
+            style="mt-12 w-full bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center border-2 border-[#8BC34A]"
+            title="Submit Report"
+            onPress={report}
+            loading={loading}
+          />
+            {/* <TouchableOpacity
               className="mt-12 w-full bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center border-2 border-[#8BC34A]"
               onPress={report}
             >
               <Text className="text-xl py-1 font-bold text-white">
                 Submit Report
               </Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             <TouchableOpacity
               className="mt-3 w-full bg-[#8BC34A] rounded-xl p-2 shadow-lg justify-center items-center"

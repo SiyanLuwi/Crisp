@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -16,6 +16,26 @@ import { router } from "expo-router";
 import DeleteReportModal from "@/components/deleteReport";
 const bgImage = require("@/assets/images/bgImage.png");
 
+import { getFirestore, collection, getDocs, onSnapshot } from "firebase/firestore";
+import { getStorage, ref, getDownloadURL } from "firebase/storage";
+import { app } from "@/firebase/firebaseConfig";
+const db = getFirestore(app);
+const storage = getStorage();
+
+interface Report {
+  id: string;
+  username: string;
+  type_of_report: string;
+  report_description: string;
+  longitude: number;
+  latitude: number;
+  category: string;
+  image_path: string;
+  upvote: number;
+  downvote: number;
+  report_date: string;
+}
+
 const { height, width } = Dimensions.get("window");
 
 const posts = Array.from({ length: 10 }, (_, index) => ({
@@ -28,6 +48,69 @@ const posts = Array.from({ length: 10 }, (_, index) => ({
 
 export default function ManageReports() {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [loading, setLoading] = useState(true);
+  const fetchAllDocuments = async () => {
+    const categories = [
+      "fires",
+      "street lights",
+      "potholes",
+      "floods",
+      "others",
+      "road incidents",
+    ];
+  
+    const unsubscribeFunctions = categories.map((category) => {
+      // Create an unsubscribe function for each category
+      return onSnapshot(
+        collection(db, `reports/${category}/reports`), // Use the correct path for each category
+        (snapshot) => {
+          const reports: Report[] = snapshot.docs.map((doc) => {
+            const data = doc.data() as Omit<Report, "id">; // Omit the id when fetching data
+            return {
+              id: doc.id, // Include the document ID
+              username: data.username || "", // Default to empty string if missing
+              type_of_report: data.type_of_report || "",
+              report_description: data.report_description || "",
+              longitude: data.longitude || 0, // Default to 0 if missing
+              latitude: data.latitude || 0, // Default to 0 if missing
+              category: category, // Set the category based on the current loop
+              image_path: data.image_path || "", // Default to empty string if missing
+              upvote: data.upvote || 0, // Default to 0 if missing
+              downvote: data.downvote || 0, // Default to 0 if missing
+              report_date: data.report_date || "", // Default to empty string if missing
+            };
+          });
+  
+          console.log(`Fetched Reports from ${category}:`, reports);
+          // Update the reports state with new reports from this category
+          setReports((prevReports) => [
+            ...prevReports,
+            ...reports,
+          ]);
+        },
+        (error) => {
+          console.error(`Error fetching reports from ${category}:`, error);
+        }
+      );
+    });
+    return () => {
+      unsubscribeFunctions.forEach((unsubscribe) => unsubscribe());
+    };
+  };
+
+  useEffect(() => {
+  const fetchData = async () => {
+    const unsubscribe = await fetchAllDocuments();
+    return unsubscribe; // Return the unsubscribe function for cleanup
+  };
+
+  fetchData().catch((error) => {
+    console.error("Error in fetching documents:", error);
+  });
+}, []); 
+
+
 
   return (
     <ImageBackground
@@ -50,7 +133,7 @@ export default function ManageReports() {
           </TouchableOpacity>
         </View>
         <FlatList
-          data={posts}
+          data={reports}
           keyExtractor={(item) => item.id}
           className="w-full h-auto flex p-4 "
           showsVerticalScrollIndicator={false}
@@ -63,7 +146,7 @@ export default function ManageReports() {
                   style={{ padding: 5, color: "#0C3B2D" }}
                 />
                 <View className="flex flex-col items-start">
-                  <Text className="pl-3 text-xl font-bold">John Doe</Text>
+                  <Text className="pl-3 text-xl font-bold">{item.username}</Text>
                   <Text className="pl-3 text-md font-bold text-slate-500">
                     12:51
                   </Text>
@@ -73,24 +156,24 @@ export default function ManageReports() {
                 <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
                   Location:
                 </Text>
-                <Text className="text-lg text-left">{item.location}</Text>
+                <Text className="text-lg text-left">{item.longitude + ', ' + item.latitude }</Text>
               </View>
               <View className="w-full flex flex-row">
                 <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
                   Type of Report:
                 </Text>
-                <Text className="text-lg text-left">{item.type}</Text>
+                <Text className="text-lg text-left">{item.type_of_report}</Text>
               </View>
               <View className="w-full flex flex-row">
                 <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
                   Description:
                 </Text>
                 <Text className="text-lg text-left flex-1">
-                  {item.description}
+                  {item.report_description}
                 </Text>
               </View>
               <Image
-                source={{ uri: item.imageUri }}
+                source={{ uri: item.image_path }}
                 className="w-full h-72 rounded-lg my-1"
               />
               <View className="w-full flex flex-row mt-2 justify-between">

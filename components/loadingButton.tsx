@@ -15,7 +15,7 @@ interface LoadingButtonProps {
   title: string;
   onPress: () => void;
   loading?: boolean; // Accept loading state
-  style?: ViewStyle;
+  style?: string;
   textStyle?: ViewStyle;
 }
 
@@ -34,7 +34,7 @@ const LoadingButton: React.FC<LoadingButtonProps> = ({
 
   return (
     <TouchableOpacity
-      className="mt-3 w-full max-w-[80%] bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center"
+      className={style}
       onPress={handlePress}
       disabled={loading}
     >
