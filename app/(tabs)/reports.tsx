@@ -25,7 +25,6 @@ import * as Location from "expo-location";
 const { height, width } = Dimensions.get("window");
 
 const db = getFirestore(app);
-const storage = getStorage();
 
 interface Report {
   id: string;
@@ -75,14 +74,13 @@ export default function Reports() {
     ];
   
     const unsubscribeFunctions = categories.map((category) => {
-      // Create an unsubscribe function for each category
       return onSnapshot(
-        collection(db, `reports/${category}/reports`), // Use the correct path for each category
+        collection(db, `reports/${category}/reports`),
         (snapshot) => {
           const reports: Report[] = snapshot.docs.map((doc) => {
             const data = doc.data() as Omit<Report, "id">; // Omit the id when fetching data
             return {
-              id: doc.id, // Include the document ID
+              id: doc.id, // Include the document ID this is an UUID
               username: data.username || "", // Default to empty string if missing
               type_of_report: data.type_of_report || "",
               report_description: data.report_description || "",
@@ -95,12 +93,17 @@ export default function Reports() {
               report_date: data.report_date || "", // Default to empty string if missing
             };
           });
-  
-          console.log(`Fetched Reports from ${category}:`, reports);
+        
+          const sortedReports = reports.sort((a, b) => {
+            const dateA = new Date(a.report_date).getTime();
+            const dateB = new Date(b.report_date).getTime(); 
+            return dateB - dateA;
+          });
+          console.log(`Fetched Reports from ${category}:`, sortedReports);
           // Update the reports state with new reports from this category
           setReports((prevReports) => [
             ...prevReports,
-            ...reports,
+            ...sortedReports,
           ]);
         },
         (error) => {
@@ -281,7 +284,7 @@ export default function Reports() {
         </View>
         <FlatList
           data={reports}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => `${item.id}-${index}}`}
           className="w-full h-auto flex p-4"
           showsVerticalScrollIndicator={false}
           renderItem={renderItem}

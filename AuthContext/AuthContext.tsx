@@ -112,7 +112,7 @@ export const AuthProvider = ({ children }: any) => {
       return { error: true, msg: "Register error!" };
     }
   };
-
+ 
   //Login function
   const login = async (username: string, password: string) => {
     try {
@@ -134,7 +134,7 @@ export const AuthProvider = ({ children }: any) => {
         token: data.access,
         authenticated: true,
       });
-
+   
       const expirationTime = Date.now() + 60 * 60 * 1000;
       axios.defaults.headers.common["Authorization"] = `Bearer ${data.access}`;
 
@@ -143,6 +143,7 @@ export const AuthProvider = ({ children }: any) => {
         [REFRESH_KEY]: data.refresh,
         [ROLE]: data.account_type,
         [EXPIRATION]: expirationTime.toString(),
+        user_id: data.user_id,
         username: data.username,
         email: data.email,
         address: data.address,

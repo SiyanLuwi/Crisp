@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   View,
@@ -15,15 +15,23 @@ import { RFPercentage } from "react-native-responsive-fontsize";
 import { router } from "expo-router";
 import DeleteReportModal from "@/components/deleteReport";
 const bgImage = require("@/assets/images/bgImage.png");
-
-import { getFirestore, collection, getDocs, onSnapshot } from "firebase/firestore";
-import { getStorage, ref, getDownloadURL } from "firebase/storage";
 import { app } from "@/firebase/firebaseConfig";
-const db = getFirestore(app);
-const storage = getStorage();
+import { getFirestore,collection, onSnapshot } from "firebase/firestore";
+import * as SecureStore from "expo-secure-store";
 
+const db = getFirestore(app)
+const { height, width } = Dimensions.get("window");
+
+const posts = Array.from({ length: 10 }, (_, index) => ({
+  id: index.toString(),
+  imageUri: "https://via.placeholder.com/150",
+  location: `Image Location ${index + 1}`,
+  type: `Image Type ${index + 1}`,
+  description: `Image Description ${index + 1}`,
+}));
 interface Report {
   id: string;
+  user_id: string;
   username: string;
   type_of_report: string;
   report_description: string;
@@ -35,21 +43,11 @@ interface Report {
   downvote: number;
   report_date: string;
 }
-
-const { height, width } = Dimensions.get("window");
-
-const posts = Array.from({ length: 10 }, (_, index) => ({
-  id: index.toString(),
-  imageUri: "https://via.placeholder.com/150",
-  location: `Image Location ${index + 1}`,
-  type: `Image Type ${index + 1}`,
-  description: `Image Description ${index + 1}`,
-}));
-
 export default function ManageReports() {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
+
   const fetchAllDocuments = async () => {
     const categories = [
       "fires",
@@ -60,33 +58,47 @@ export default function ManageReports() {
       "road incidents",
     ];
   
-    const unsubscribeFunctions = categories.map((category) => {
-      // Create an unsubscribe function for each category
-      return onSnapshot(
-        collection(db, `reports/${category}/reports`), // Use the correct path for each category
-        (snapshot) => {
-          const reports: Report[] = snapshot.docs.map((doc) => {
-            const data = doc.data() as Omit<Report, "id">; // Omit the id when fetching data
-            return {
-              id: doc.id, // Include the document ID
-              username: data.username || "", // Default to empty string if missing
-              type_of_report: data.type_of_report || "",
-              report_description: data.report_description || "",
-              longitude: data.longitude || 0, // Default to 0 if missing
-              latitude: data.latitude || 0, // Default to 0 if missing
-              category: category, // Set the category based on the current loop
-              image_path: data.image_path || "", // Default to empty string if missing
-              upvote: data.upvote || 0, // Default to 0 if missing
-              downvote: data.downvote || 0, // Default to 0 if missing
-              report_date: data.report_date || "", // Default to empty string if missing
-            };
-          });
+    // Retrieve the user ID securely
+    const user_id = await SecureStore.getItemAsync('user_id');
+    console.log("User ID:", user_id);
   
-          console.log(`Fetched Reports from ${category}:`, reports);
+    // Create an array to hold unsubscribe functions
+    const unsubscribeFunctions = categories.map((category) => {
+      return onSnapshot(
+        collection(db, `reports/${category}/reports`),
+        (snapshot) => {
+          const reports: Report[] = snapshot.docs
+            .map((doc) => {
+              const data = doc.data() as Omit<Report, "id">; // Omit the id when fetching data
+              return {
+                id: doc.id, // Include the document ID (UUID)
+                user_id: data.user_id,
+                username: data.username || "", // Default to empty string if missing
+                type_of_report: data.type_of_report || "",
+                report_description: data.report_description || "",
+                longitude: data.longitude || 0, // Default to 0 if missing
+                latitude: data.latitude || 0, // Default to 0 if missing
+                category: category, // Set the category based on the current loop
+                image_path: data.image_path || "", // Default to empty string if missing
+                upvote: data.upvote || 0, // Default to 0 if missing
+                downvote: data.downvote || 0, // Default to 0 if missing
+                report_date: data.report_date || "", // Default to empty string if missing
+              };
+            })
+            .filter((report) => report.user_id.toString() == user_id?.toString()); // Filter by user_id
+  
+          // Sort reports by report_date in descending order
+          const sortedReports = reports.sort((a, b) => {
+            const dateA = new Date(a.report_date).getTime();
+            const dateB = new Date(b.report_date).getTime();
+            return dateB - dateA; // Sort in descending order
+          });
+
+  
           // Update the reports state with new reports from this category
           setReports((prevReports) => [
             ...prevReports,
-            ...reports,
+            ...sortedReports,
           ]);
         },
         (error) => {
@@ -94,22 +106,23 @@ export default function ManageReports() {
         }
       );
     });
+  
+    // Return a cleanup function to unsubscribe from all listeners
     return () => {
       unsubscribeFunctions.forEach((unsubscribe) => unsubscribe());
     };
   };
-
+  
   useEffect(() => {
-  const fetchData = async () => {
-    const unsubscribe = await fetchAllDocuments();
-    return unsubscribe; // Return the unsubscribe function for cleanup
-  };
-
-  fetchData().catch((error) => {
-    console.error("Error in fetching documents:", error);
-  });
-}, []); 
-
+    const fetchData = async () => {
+      const unsubscribe = await fetchAllDocuments();
+      return unsubscribe; // Return the unsubscribe function for cleanup
+    };
+  
+    fetchData().catch((error) => {
+      console.error("Error in fetching documents:", error);
+    });
+  }, []);
 
 
   return (
@@ -134,7 +147,7 @@ export default function ManageReports() {
         </View>
         <FlatList
           data={reports}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => `${item.id} - ${index}`}
           className="w-full h-auto flex p-4 "
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
@@ -156,7 +169,7 @@ export default function ManageReports() {
                 <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
                   Location:
                 </Text>
-                <Text className="text-lg text-left">{item.longitude + ', ' + item.latitude }</Text>
+                <Text className="text-lg text-left">{" " + item.latitude + ", " + item.longitude}</Text>
               </View>
               <View className="w-full flex flex-row">
                 <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
@@ -185,7 +198,7 @@ export default function ManageReports() {
                       color="#0C3B2D"
                     />
                   </TouchableOpacity>
-                  <Text className="text-lg mx-1">121</Text>
+                  <Text className="text-lg mx-1">{item.upvote}</Text>
                   <TouchableOpacity className="p-2">
                     <MaterialCommunityIcons
                       name="thumb-down-outline"
@@ -193,7 +206,7 @@ export default function ManageReports() {
                       color="#0C3B2D"
                     />
                   </TouchableOpacity>
-                  <Text className="text-lg mx-1">121</Text>
+                  <Text className="text-lg mx-1">{item.downvote}</Text>
                 </View>
                 <View className="flex flex-row items-center">
                   <TouchableOpacity
