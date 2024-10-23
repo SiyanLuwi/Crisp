@@ -247,8 +247,6 @@ export const AuthProvider = ({ children }: any) => {
         },
       });
       if (res.status === 201 || res.status === 200) {
-        alert("Report Created!");
-        router.push("/(tabs)/reports");
         return res;
       }
     } catch (error: any) {
