@@ -55,6 +55,7 @@ function App() {
       setAddress(userInfo?.address || "");
       setEmail(userInfo?.email || "");
       setContact(userInfo?.contact_number || "");
+      setIsVerified(userInfo?.is_verified || "");
     };
 
     loadUserInfo();
@@ -225,7 +226,7 @@ function App() {
                 placeholder="Phone Number"
               />
               <View className="w-full flex flex-row justify-between items-center bg-white mx-3 mb-4 rounded-lg">
-                {isVerified === false ? (
+                {!isVerified ? (
                   <>
                     <Text className="text-md p-4 font-bold text-[#0C3B2D]">
                       Not Yet Verified

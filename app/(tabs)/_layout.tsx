@@ -1,22 +1,40 @@
-import React from "react";
-import { View, Text } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, TouchableOpacity } from "react-native";
 import { Tabs } from "expo-router";
 import { TabBarIcon } from "@/components/navigation/TabBarIcon";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import TabBar from "@/components/navigation/TabBar";
 import { RFPercentage } from "react-native-responsive-fontsize";
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useAuth } from "@/AuthContext/AuthContext";
 const queryClient = new QueryClient();
+
 const ScreenTabs = () => {
   const colorScheme = useColorScheme();
+  const { getUserInfo } = useAuth();
+  const [isVerified, setIsVerified] = useState(false);
+
+  useEffect(() => {
+    const loadUserInfo = async () => {
+      const userInfo = await (getUserInfo
+        ? getUserInfo()
+        : Promise.resolve({}));
+      setIsVerified(userInfo?.is_verified || "");
+    };
+
+    loadUserInfo();
+  }, [getUserInfo]);
+
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
         headerShown: false,
       }}
-      tabBar={(props) => <TabBar {...props} />}
+      tabBar={(props) => (
+        <TabBar {...props} isVerified={!isVerified === false} />
+      )}
     >
       <Tabs.Screen
         name="home"
@@ -79,6 +97,13 @@ const ScreenTabs = () => {
               </Text>
             </View>
           ),
+          tabBarButton: (props) => (
+            <TouchableOpacity
+              {...props}
+              onPress={isVerified ? props.onPress : () => {}}
+              style={{ opacity: isVerified ? 1 : 0.5 }}
+            />
+          ),
         }}
       />
       <Tabs.Screen
@@ -99,6 +124,13 @@ const ScreenTabs = () => {
                 Manage
               </Text>
             </View>
+          ),
+          tabBarButton: (props) => (
+            <TouchableOpacity
+              {...props}
+              onPress={isVerified ? props.onPress : undefined}
+              style={{ opacity: isVerified ? 1 : 0.5 }}
+            />
           ),
         }}
       />
@@ -127,5 +159,9 @@ const ScreenTabs = () => {
   );
 };
 export default function NavLayout() {
-  return <QueryClientProvider client={queryClient}><ScreenTabs /></QueryClientProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ScreenTabs />
+    </QueryClientProvider>
+  );
 }

@@ -9,6 +9,7 @@ import {
   ImageBackground,
   Modal,
   TouchableWithoutFeedback,
+  RefreshControl,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import MapView, { Marker, Region } from "react-native-maps";
@@ -17,7 +18,12 @@ import { RFPercentage } from "react-native-responsive-fontsize";
 import ReportReportModal from "@/components/reportReport";
 const bgImage = require("@/assets/images/bgImage.png");
 import { router } from "expo-router";
-import { getFirestore, collection, getDocs, onSnapshot } from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  onSnapshot,
+} from "firebase/firestore";
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
 import { app } from "@/firebase/firebaseConfig";
 import * as SecureStore from "expo-secure-store";
@@ -40,8 +46,6 @@ interface Report {
   report_date: string;
 }
 
-
-
 export default function Reports() {
   const initialRegion = {
     latitude: 13.4125,
@@ -62,7 +66,8 @@ export default function Reports() {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
-  
+  const [refreshing, setRefreshing] = useState(false);
+
   const fetchAllDocuments = async () => {
     const categories = [
       "fires",
@@ -72,7 +77,7 @@ export default function Reports() {
       "others",
       "road incidents",
     ];
-  
+
     const unsubscribeFunctions = categories.map((category) => {
       return onSnapshot(
         collection(db, `reports/${category}/reports`),
@@ -93,18 +98,20 @@ export default function Reports() {
               report_date: data.report_date || "", // Default to empty string if missing
             };
           });
-        
+
           const sortedReports = reports.sort((a, b) => {
             const dateA = new Date(a.report_date).getTime();
-            const dateB = new Date(b.report_date).getTime(); 
+            const dateB = new Date(b.report_date).getTime();
             return dateB - dateA;
           });
-          console.log(`Fetched Reports from ${category}:`, sortedReports);
+          // console.log(`Fetched Reports from ${category}:`, sortedReports);
           // Update the reports state with new reports from this category
-          setReports((prevReports) => [
-            ...prevReports,
-            ...sortedReports,
-          ]);
+          setReports((prevReports) => {
+            const existingReports = prevReports.filter(
+              (report) => report.category !== category
+            );
+            return [...existingReports, ...sortedReports]; // Replace old reports of this category and add the sorted new ones
+          });
         },
         (error) => {
           console.error(`Error fetching reports from ${category}:`, error);
@@ -117,15 +124,25 @@ export default function Reports() {
   };
 
   useEffect(() => {
-  const fetchData = async () => {
-    const unsubscribe = await fetchAllDocuments();
-    return unsubscribe; // Return the unsubscribe function for cleanup
+    const fetchData = async () => {
+      const unsubscribe = await fetchAllDocuments();
+      return unsubscribe; // Return the unsubscribe function for cleanup
+    };
+
+    fetchData().catch((error) => {
+      console.error("Error in fetching documents:", error);
+    });
+  }, []);
+
+  const loadReports = async () => {
+    setRefreshing(true); // Start refreshing
+    await fetchAllDocuments(); // Fetch the reports
+    setRefreshing(false); // Stop refreshing
   };
 
-  fetchData().catch((error) => {
-    console.error("Error in fetching documents:", error);
-  });
-}, []); 
+  useEffect(() => {
+    loadReports(); // Load reports on component mount
+  }, []);
 
   useEffect(() => {
     const requestLocationPermission = async () => {
@@ -288,6 +305,12 @@ export default function Reports() {
           className="w-full h-auto flex p-4"
           showsVerticalScrollIndicator={false}
           renderItem={renderItem}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing} // Control refreshing state
+              onRefresh={loadReports} // Trigger loadReports on refresh
+            />
+          }
         />
         <ReportReportModal
           visible={reportModalVisible}
