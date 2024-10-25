@@ -23,6 +23,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 const bgImage = require("@/assets/images/bgImage.png");
 import MapPicker from "@/components/mapPicker";
 import * as SecureStore from "expo-secure-store";
+import LoadingButton from "@/components/loadingButton";
 import { useAuth } from "@/AuthContext/AuthContext";
 
 const { width, height } = Dimensions.get("window");
@@ -35,21 +36,26 @@ export default function PictureForm() {
   const [location, setLocation] = useState<string | null>(null);
   const [description, setDescription] = useState<string | null>(null);
   const [emergency, setEmergency] = useState<string | null>(null);
+  const [isEmergency, setIsEmergency] = useState<string | null>(null);
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [fullImageModalVisible, setFullImageModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [isFetch, setFetch] = useState<any>(null);
   const { createReport } = useAuth();
 
   const report = async () => {
     try {
+      setLoading(true)
       if (!location) {
         throw new Error("Location is missing");
       }
 
       const [longitude, latitude] = location.split(",");
 
-      let category =
-        emergency?.toLocaleLowerCase() === "yes"
+      let is_emergency =
+        isEmergency?.toLocaleLowerCase() === "yes"
           ? "emergency"
           : "not emergency";
 
@@ -58,7 +64,7 @@ export default function PictureForm() {
         !description ||
         !longitude ||
         !latitude ||
-        !category
+        !is_emergency
       ) {
         throw new Error("Some required fields are missing");
       }
@@ -76,14 +82,18 @@ export default function PictureForm() {
         description,
         longitude,
         latitude,
-        category,
+        is_emergency,
         imageUri
       );
 
       if (res) {
+        setLoading(false)
+        alert("Report Created!");    
+        router.push("/(tabs)/reports");
         console.log("Report created successfully:", res);
       }
     } catch (error: any) {
+      setLoading(false)
       console.error("Error creating report:", error.message || error);
     }
   };
@@ -111,8 +121,13 @@ export default function PictureForm() {
     const getImageUriAndLocation = async () => {
       const uri = await fetchImageUri();
       const locations = await fetchCurrentLocation();
+      const report_type = await SecureStore.getItemAsync("report_type");
+      const isEmergency = await SecureStore.getItemAsync("isEmergency");
+      setIsEmergency(isEmergency);
+      setSelectedItem(report_type);
       setLocation(locations);
       setImageUri(uri);
+      setFetch(true);
     };
     getImageUriAndLocation();
   }, []);
@@ -203,7 +218,8 @@ export default function PictureForm() {
               className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
               placeholderTextColor="#888"
               placeholder="Emergency (yes/no)"
-              onChangeText={setEmergency}
+              onChangeText={setIsEmergency}
+              value={isEmergency?.toString()}
             />
             <TouchableOpacity
               onPress={toggleDropdown}
@@ -266,14 +282,20 @@ export default function PictureForm() {
               }}
               onChangeText={setDescription}
             />
-            <TouchableOpacity
+             <LoadingButton
+            style="mt-12 w-full bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center border-2 border-[#8BC34A]"
+            title="Submit Report"
+            onPress={report}
+            loading={loading}
+          />
+            {/* <TouchableOpacity
               className="mt-12 w-full bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center border-2 border-[#8BC34A]"
               onPress={report}
             >
               <Text className="text-xl py-1 font-bold text-white">
                 Submit Report
               </Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
             <TouchableOpacity
               className="mt-3 w-full bg-[#8BC34A] rounded-xl p-2 shadow-lg justify-center items-center"

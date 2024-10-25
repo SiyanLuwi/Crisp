@@ -1,13 +1,49 @@
 import React, { useEffect, useState, useRef } from "react";
-import MapView, { Marker, Region } from "react-native-maps";
-import { View, Dimensions, Image, Text, TouchableOpacity } from "react-native";
+import MapView, { Marker, Region, Callout } from "react-native-maps";
+import {
+  View,
+  Dimensions,
+  Image,
+  Text,
+  TouchableOpacity,
+  Modal,
+  TouchableWithoutFeedback,
+} from "react-native";
 import * as Location from "expo-location";
 import axios from "axios";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { getFirestore, collection, getDocs } from "firebase/firestore";
+import { getStorage, ref, getDownloadURL } from "firebase/storage";
+import { useQuery } from "@tanstack/react-query";
+import { app } from "@/firebase/firebaseConfig";
+import * as SecureStore from "expo-secure-store";
 
 const { width, height } = Dimensions.get("window");
+const db = getFirestore(app);
+const storage = getStorage();
+
+interface Report {
+  id: string;
+  username: string;
+  type_of_report: string;
+  longitude: number;
+  latitude: number;
+  report_description: string;
+  image_path: string;
+  report_date: string;
+}
+
+const fetchDocuments = async () => {
+  const querySnapshot = await getDocs(collection(db, "reports"));
+  const reports = querySnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...(doc.data() as Omit<Report, "id">),
+  }));
+  // console.log("Fetched reports:", reports); // Log the fetched reports
+  return reports;
+};
 
 export default function Home() {
   const initialRegion = {
@@ -19,10 +55,18 @@ export default function Home() {
 
   const [region, setRegion] = useState<Region | null>(initialRegion);
   const [currentWeather, setCurrentWeather] = useState<any | null>(null);
+  const [altitude, setAltitude] = useState<any | null>(null);
+  const [estimatedFloor, setEstimatedFloor] = useState<any | null>(null);
   const [locationPermissionGranted, setLocationPermissionGranted] =
     useState(false);
   const [userLocation, setUserLocation] = useState<any>(null);
   const mapRef = useRef<MapView>(null); // Add a ref to the MapView
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const { data } = useQuery<Report[], Error>({
+    queryKey: ["reports"],
+    queryFn: fetchDocuments,
+  });
 
   useEffect(() => {
     const requestLocationPermission = async () => {
@@ -41,16 +85,34 @@ export default function Home() {
 
     const getCurrentLocation = async () => {
       try {
+        // Request location and altitude
         const location = await Location.getCurrentPositionAsync({});
-        const { latitude, longitude } = location.coords;
+        const { latitude, longitude, altitude } = location.coords; // Destructure latitude, longitude, and altitude
+
+        // Set the user location with latitude and longitude
         setUserLocation({ latitude, longitude });
+
+        // Set the map region
         setRegion({
           latitude,
           longitude,
           latitudeDelta: 0.01,
           longitudeDelta: 0.01,
         });
+
+        // Fetch weather data based on the location
         fetchCurrentWeather(latitude, longitude);
+
+        // Check if altitude is available (not null)
+        const floorHeight = 3; // average height per floor in meters
+        const estimatedFloor =
+          altitude !== null ? Math.round(altitude / floorHeight) : null; // If altitude is null, estimatedFloor is also null
+
+        console.log(`Estimated Floor: ${estimatedFloor}`); // Log the estimated floor
+
+        // Optionally update state with altitude and estimated floor
+        setAltitude(altitude); // Set altitude state if needed
+        setEstimatedFloor(estimatedFloor); // Assuming you have a state for the estimated floor
       } catch (error) {
         console.error("Error getting location:", error);
       }
@@ -103,7 +165,7 @@ export default function Home() {
   const getWeatherImage = (code: number) => {
     const weatherConditions: { [key: number]: { image: any } } = {
       0: { image: require("../../assets/images/weather/Clear-sky.png") },
-      // 1: { image: require('./../assets/images/weather/Unknown.png') },
+      1: { image: require("../../assets/images/weather/Clear-sky.png") },
       2: { image: require("../../assets/images/weather/partly-cloudy.png") },
       3: { image: require("../../assets/images/weather/Overcast.png") },
       45: { image: require("../../assets/images/weather/Fog.png") },
@@ -125,16 +187,6 @@ export default function Home() {
     };
 
     return weatherConditions[code] && weatherConditions[code].image;
-  };
-
-  const getLocalTime = () => {
-    const timeString = new Date().toLocaleTimeString("en-PH", {
-      hour: "numeric",
-      minute: "numeric",
-      hour12: true,
-      timeZone: "Asia/Manila",
-    });
-    return timeString.replace(/am|pm/i, (match) => match.toUpperCase());
   };
 
   const getLocalDay = () => {
@@ -177,13 +229,44 @@ export default function Home() {
       ) : (
         <View className="w-full h-full flex-1 absolute">
           <MapView ref={mapRef} className="flex-1" region={region}>
-            <Marker coordinate={region} title={"You are here"} />
+            <Marker
+              coordinate={region}
+              title={"You are here"}
+              pinColor="blue"
+            />
             <Marker
               coordinate={{ latitude: 14.65344, longitude: 120.99473 }}
               title={"University of Caloocan City - South Campus"}
               description="South Campus"
             />
+
+            {data &&
+              data.map((item) => (
+                // console.log(item.latitude, item.longitude),
+                <Marker
+                  key={item.id}
+                  coordinate={{
+                    latitude: item.longitude,
+                    longitude: item.latitude,
+                  }}
+                >
+                  <Callout
+                    onPress={() => {
+                      setSelectedReport(item);
+                      setModalVisible(true);
+                    }}
+                  >
+                    <View className="w-auto justify-center items-center">
+                      <Text>{item.type_of_report}</Text>
+                      <Text className="text-xs text-slate-400 mt-1">
+                        More Info
+                      </Text>
+                    </View>
+                  </Callout>
+                </Marker>
+              ))}
           </MapView>
+
           <TouchableOpacity
             className="absolute bottom-28 right-5 bg-[#0C3B2D] rounded-full p-2 shadow-lg"
             onPress={centerOnUserLocation}
@@ -197,20 +280,20 @@ export default function Home() {
         </View>
       )}
       {currentWeather && (
-        <SafeAreaView className="bg-white w-full absolute p-0 flex-row rounded-b-3xl border-[#0C3B2D] border-4">
+        <SafeAreaView className="bg-white w-full absolute p-0 flex-row rounded-b-3xl border-[#0C3B2D] border-4 border-t-0">
           <View className="flex-1 items-start justify-center p-5 ml-4">
             <View className="items-start justify-start">
-              <Text className="text-[#0C3B2D]  font-bold text-3xl mb-2">
+              <Text className="text-[#0C3B2D] font-extrabold text-3xl mb-2">
                 {getLocalDay()}
               </Text>
             </View>
             <View className="items-start justify-start">
-              <Text className="text-[#0C3B2D]  font-semibold text-lg mb-2">
+              <Text className="text-[#0C3B2D] font-semibold text-lg mb-2">
                 {getLocalMonthAndDay()}
               </Text>
             </View>
             <View className="items-start justify-start">
-              <Text className="text-[#0C3B2D]  font-semibold text-5xl">
+              <Text className="text-[#0C3B2D] font-extrabold text-5xl">
                 {`${currentWeather.temperature}°C`}
               </Text>
             </View>
@@ -229,6 +312,71 @@ export default function Home() {
               </Text>
             </View>
           </View>
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => {
+              setModalVisible(!modalVisible);
+            }}
+          >
+            <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+              <View className="flex-1 justify-center items-center bg-black/50">
+                <View className="w-4/5 p-5 bg-white rounded-xl items-start border-2 border-[#0C3B2D]">
+                  {selectedReport && (
+                    <>
+                      <View className="w-full flex flex-row">
+                        <View className="flex flex-col items-start">
+                          <Text className="text-xl font-bold">
+                            {selectedReport.username}
+                          </Text>
+
+                          {/* Format and display the date and time */}
+                          {selectedReport.report_date && (
+                            <View className="flex flex-row">
+                              <Text className="text-md font-bold text-slate-500">
+                                {selectedReport.report_date
+                                  .split("T")[0]
+                                  .replace(/-/g, "/")}
+                              </Text>
+                              <Text className="ml-2 text-md font-bold text-slate-500">
+                                {
+                                  selectedReport.report_date
+                                    .split("T")[1]
+                                    .split(".")[0]
+                                }
+                              </Text>
+                            </View>
+                          )}
+                          <Text className="text-lg mt-3  text-left pr-2 font-semibold text-slate-500">
+                            Type of Report:
+                            <Text className="text-lg font-normal text-black ml-2">
+                              {" " + selectedReport.type_of_report}
+                            </Text>
+                          </Text>
+                        </View>
+                      </View>
+
+                      <View className="w-full flex flex-row mb-3">
+                        <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
+                          Description:
+                          <Text className="text-lg font-normal text-black ml-2">
+                            {" " + selectedReport.report_description}
+                          </Text>
+                        </Text>
+                      </View>
+                      {selectedReport.image_path && (
+                        <Image
+                          source={{ uri: selectedReport.image_path }}
+                          className="w-full h-72 rounded-lg my-1 border-2 border-[#0C3B2D]"
+                        />
+                      )}
+                    </>
+                  )}
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </Modal>
         </SafeAreaView>
       )}
     </View>

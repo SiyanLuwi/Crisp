@@ -27,30 +27,50 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const { onLogin } = useAuth();
   const IS_EMAIL_VERIFIED = "is_email_verified";
+  const ACCOUNT_TYPE = "account_type";
 
   const handleLogin = async () => {
     setLoading(true);
     try {
       const result = await onLogin!(username, password);
-      const is_email_verified = await SecureStore.getItemAsync(
-        IS_EMAIL_VERIFIED
-      );
+      const is_email_verified =
+        await SecureStore.getItemAsync(IS_EMAIL_VERIFIED);
+      const account_type = await SecureStore.getItemAsync(ACCOUNT_TYPE);
+
       if (!result) {
         throw new Error("Error While Logging in!");
       }
+
       if (is_email_verified !== "true") {
         router.push("/pages/verifyPage");
         return;
       }
-      router.push("/(tabs)/home");
+
+      // Redirect based on account type
+      if (account_type === "citizen") {
+        router.push("/(tabs)/home");
+      } else if (account_type === "worker") {
+        router.push("/(tabs)_employee/home");
+      } else {
+        // Handle unexpected account types or default case
+        alert("Unexpected account type");
+      }
     } catch (error: any) {
       if (error.message === "Invalid username or password") {
-        alert("Login failed: Invalid username or password");
+        setErrors("An unexpected error occurred. Please try again.");
+        setTimeout(() => {
+          setErrors("");
+        }, 2000);
       } else {
-        alert("An unexpected error occurred. Please try again.");
+        setErrors("Invalid Email or Password");
+        console.log(error.message)
+        setTimeout(() => {
+          setErrors("");
+        }, 2000);
       }
     } finally {
       setLoading(false);
@@ -96,6 +116,11 @@ export default function Login() {
               />
             </TouchableOpacity>
           </View>
+          {errors ? (
+            <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
+              {errors}
+            </Text>
+          ) : null}
           <TouchableOpacity
             className="w-full flex items-end justify-end mr-24"
             onPress={() => setModalVisible(true)}
@@ -105,6 +130,7 @@ export default function Login() {
             </Text>
           </TouchableOpacity>
           <LoadingButton
+            style="mt-3 w-full max-w-[80%] bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center"
             title="LOGIN"
             onPress={handleLogin}
             loading={loading}

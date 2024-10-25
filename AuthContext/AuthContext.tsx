@@ -21,7 +21,7 @@ interface AuthProps {
     report_description: string,
     longitude: string,
     latitude: string,
-    category: string,
+    is_emergency: string,
     image_path: string
   ) => Promise<any>;
   onLogout?: () => Promise<any>;
@@ -36,6 +36,17 @@ interface AuthProps {
     currentPassword: string,
     newPassword: string
   ) => Promise<any>;
+  verifyAccount?: (
+    firstName: string,
+    middleName: string,
+    lastName: string,
+    address: string,
+    // birthday: string,
+    idNumber: string,
+    selfie: string,
+    photo: string,
+    idPicture: string
+  ) => Promise<void>;
 }
 import * as Network from "expo-network";
 const TOKEN_KEY = "my-jwt";
@@ -101,7 +112,7 @@ export const AuthProvider = ({ children }: any) => {
       return { error: true, msg: "Register error!" };
     }
   };
-
+ 
   //Login function
   const login = async (username: string, password: string) => {
     try {
@@ -123,7 +134,7 @@ export const AuthProvider = ({ children }: any) => {
         token: data.access,
         authenticated: true,
       });
-
+   
       const expirationTime = Date.now() + 60 * 60 * 1000;
       axios.defaults.headers.common["Authorization"] = `Bearer ${data.access}`;
 
@@ -132,10 +143,12 @@ export const AuthProvider = ({ children }: any) => {
         [REFRESH_KEY]: data.refresh,
         [ROLE]: data.account_type,
         [EXPIRATION]: expirationTime.toString(),
+        user_id: data.user_id,
         username: data.username,
         email: data.email,
         address: data.address,
         contact_number: data.contact_number,
+        account_type: data.account_type,
         is_email_verified: data.is_email_verified,
       };
 
@@ -147,11 +160,11 @@ export const AuthProvider = ({ children }: any) => {
 
       return data;
     } catch (error: any) {
-      console.error("Login error occurred:", error);
+      // console.error("Login error occurred:", error);
       if (error.response) {
         console.log("Error response data:", error.response.data);
         if (error.response.status === 401) {
-          throw new Error("Invalid username or password");
+          throw new Error("Invalid username or password!");
         } else {
           throw new Error("An unexpected error occurred");
         }
@@ -205,7 +218,7 @@ export const AuthProvider = ({ children }: any) => {
     report_description: string,
     longitude: string,
     latitude: string,
-    category: string,
+    is_emergency: string,
     image_path: string
   ) => {
     console.log(
@@ -213,7 +226,7 @@ export const AuthProvider = ({ children }: any) => {
       report_description,
       longitude,
       latitude,
-      category,
+      is_emergency,
       image_path
     );
     const formData = new FormData();
@@ -221,7 +234,7 @@ export const AuthProvider = ({ children }: any) => {
     formData.append("report_description", report_description);
     formData.append("longitude", longitude);
     formData.append("latitude", latitude);
-    formData.append("category", category);
+    formData.append("is_emergency", is_emergency);
 
     const imageBase64 = await FileSystem.readAsStringAsync(image_path, {
       encoding: FileSystem.EncodingType.Base64,
@@ -235,8 +248,6 @@ export const AuthProvider = ({ children }: any) => {
         },
       });
       if (res.status === 201 || res.status === 200) {
-        alert("Report Created!");
-        router.push("/(tabs)/reports");
         return res;
       }
     } catch (error: any) {
@@ -362,6 +373,69 @@ export const AuthProvider = ({ children }: any) => {
     }
   };
 
+  const verifyAccount = async (
+    firstName: string,
+    middleName: string,
+    lastName: string,
+    address: string,
+    // birthday: string,
+    idNumber: string,
+    selfie: string,
+    photo: string,
+    idPicture: string
+  ) => {
+    const formData = new FormData();
+    formData.append("first_name", firstName);
+    formData.append("middle_name", middleName);
+    formData.append("last_name", lastName);
+    formData.append("text_address", address);
+    // formData.append("birthday", birthday);
+    formData.append("id_number", idNumber);
+
+    const selfieBase64 = await FileSystem.readAsStringAsync(selfie, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    const photoBase64 = await FileSystem.readAsStringAsync(photo, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    const idPictureBase64 = await FileSystem.readAsStringAsync(idPicture, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+
+    formData.append(
+      "id_selfie_image_path",
+      `data:image/jpeg;base64,${selfieBase64}`
+    );
+    formData.append(
+      "photo_image_path",
+      `data:image/jpeg;base64,${photoBase64}`
+    );
+    formData.append(
+      "id_picture_image_path",
+      `data:image/jpeg;base64,${idPictureBase64}`
+    );
+
+    try {
+      const res = await api.post("api/verify-account/", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${authState.token}`,
+        },
+      });
+      if (res.status === 201 || res.status === 200) {
+        // alert("Verification request has been sent!");
+        router.push("/(tabs)/profile");
+      }
+    } catch (error: any) {
+      console.error("Verification error:", error);
+      if (error.response) {
+        alert(`Error: ${error.response.data.message || error.message}`);
+      } else {
+        alert(`Error: ${error.message}`);
+      }
+    }
+  };
+
   const value = {
     onRegister: register,
     onLogin: login,
@@ -373,6 +447,7 @@ export const AuthProvider = ({ children }: any) => {
     updateProfile,
     verifyCurrentPassword,
     changePassword,
+    verifyAccount,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

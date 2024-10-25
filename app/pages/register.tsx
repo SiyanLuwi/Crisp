@@ -28,6 +28,7 @@ export default function Register() {
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [errors, setErrors] = useState("");
   const [address, setAddress] = useState("");
   const [contact_number, setContactNumber] = useState("");
   const [showMapPicker, setShowMapPicker] = useState(false);
@@ -64,7 +65,10 @@ export default function Register() {
 
   const emptyFieldChecker = () => {
     if (!username || !email || !password || !password_confirm || !address) {
-      alert("Empty fields must be filled up!");
+      setErrors("Empty fields must be filled up!");
+      setTimeout(() => {
+        setErrors("");
+      }, 2000);
       return false;
     }
     return true;
@@ -206,6 +210,11 @@ export default function Register() {
               />
             </TouchableOpacity>
           </View>
+          {errors ? (
+            <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
+              {errors}
+            </Text>
+          ) : null}
           {password.length > 0 && password.length < 6 && (
             <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
               Password must be at least 6 characters long.

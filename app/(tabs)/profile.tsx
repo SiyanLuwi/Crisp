@@ -43,6 +43,7 @@ function App() {
   const [address, setAddress] = useState("");
   const [email, setEmail] = useState("");
   const [contact, setContact] = useState("");
+  const [isVerified, setIsVerified] = useState(false);
   const [showMapPicker, setShowMapPicker] = useState(false);
 
   useEffect(() => {
@@ -189,6 +190,11 @@ function App() {
                   placeholderTextColor="#888"
                   placeholder="Address"
                 />
+                <MaterialCommunityIcons
+                  name="map-marker"
+                  size={24}
+                  color="white"
+                />
                 {isEditing && (
                   <TouchableOpacity
                     onPress={() => setShowMapPicker(true)}
@@ -219,15 +225,25 @@ function App() {
                 placeholder="Phone Number"
               />
               <View className="w-full flex flex-row justify-between items-center bg-white mx-3 mb-4 rounded-lg">
-                <Text className="text-md p-4 font-bold text-[#888]">
-                  Not Yet Verified
-                </Text>
-                <TouchableOpacity
-                  className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg"
-                  onPress={() => router.push("/pages/verifyPage")}
-                >
-                  <Text className="text-white text-md font-normal">Verify</Text>
-                </TouchableOpacity>
+                {isVerified === false ? (
+                  <>
+                    <Text className="text-md p-4 font-bold text-[#0C3B2D]">
+                      Not Yet Verified
+                    </Text>
+                    <TouchableOpacity
+                      className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg"
+                      onPress={() => router.push("/pages/verifyPage")}
+                    >
+                      <Text className="text-white text-md font-normal">
+                        Verify
+                      </Text>
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <Text className="text-md p-4 font-bold text-[#0C3B2D]">
+                    Verified
+                  </Text>
+                )}
               </View>
               <TouchableOpacity
                 className="mt-12 w-full bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center border-2 border-[#8BC34A]"
