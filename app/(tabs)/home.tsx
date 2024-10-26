@@ -14,7 +14,12 @@ import axios from "axios";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getFirestore, collection, getDocs } from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  onSnapshot,
+} from "firebase/firestore";
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
 import { useQuery } from "@tanstack/react-query";
 import { app } from "@/firebase/firebaseConfig";
@@ -30,6 +35,7 @@ interface Report {
   type_of_report: string;
   longitude: number;
   latitude: number;
+  category: string;
   report_description: string;
   image_path: string;
   report_date: string;
@@ -63,10 +69,71 @@ export default function Home() {
   const mapRef = useRef<MapView>(null); // Add a ref to the MapView
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
-  const { data } = useQuery<Report[], Error>({
-    queryKey: ["reports"],
-    queryFn: fetchDocuments,
-  });
+  const [reports, setReports] = useState<Report[]>([]);
+
+  const fetchAllDocuments = async () => {
+    const categories = [
+      "fires",
+      "street lights",
+      "potholes",
+      "floods",
+      "others",
+      "road incidents",
+    ];
+
+    const unsubscribeFunctions = categories.map((category) => {
+      return onSnapshot(
+        collection(db, `reports/${category}/reports`),
+        (snapshot) => {
+          const reports: Report[] = snapshot.docs.map((doc) => {
+            const data = doc.data() as Omit<Report, "id">; // Omit the id when fetching data
+            return {
+              id: doc.id, // Include the document ID this is an UUID
+              username: data.username || "", // Default to empty string if missing
+              type_of_report: data.type_of_report || "",
+              report_description: data.report_description || "",
+              longitude: data.longitude || 0, // Default to 0 if missing
+              latitude: data.latitude || 0, // Default to 0 if missing
+              category: category, // Set the category based on the current loop
+              image_path: data.image_path || "", // Default to empty string if missing
+              report_date: data.report_date || "", // Default to empty string if missing
+            };
+          });
+
+          const sortedReports = reports.sort((a, b) => {
+            const dateA = new Date(a.report_date).getTime();
+            const dateB = new Date(b.report_date).getTime();
+            return dateB - dateA;
+          });
+          // console.log(`Fetched Reports from ${category}:`, sortedReports);
+          // Update the reports state with new reports from this category
+          setReports((prevReports) => {
+            const existingReports = prevReports.filter(
+              (report) => report.category !== category
+            );
+            return [...existingReports, ...sortedReports]; // Replace old reports of this category and add the sorted new ones
+          });
+        },
+        (error) => {
+          console.error(`Error fetching reports from ${category}:`, error);
+        }
+      );
+    });
+    return () => {
+      unsubscribeFunctions.forEach((unsubscribe) => unsubscribe());
+    };
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const unsubscribe = await fetchAllDocuments();
+      return unsubscribe; // Return the unsubscribe function for cleanup
+    };
+
+    fetchData().catch((error) => {
+      console.error("Error in fetching documents:", error);
+    });
+  }, []);
 
   useEffect(() => {
     const requestLocationPermission = async () => {
@@ -108,7 +175,7 @@ export default function Home() {
         const estimatedFloor =
           altitude !== null ? Math.round(altitude / floorHeight) : null; // If altitude is null, estimatedFloor is also null
 
-        console.log(`Estimated Floor: ${estimatedFloor}`); // Log the estimated floor
+        // console.log(`Estimated Floor: ${estimatedFloor}`); // Log the estimated floor
 
         // Optionally update state with altitude and estimated floor
         setAltitude(altitude); // Set altitude state if needed
@@ -217,7 +284,6 @@ export default function Home() {
       console.error("User location is not available"); // Debugging line ulet
     }
   };
-
   return (
     <View className="h-full w-full flex-1 absolute">
       {!locationPermissionGranted || region === null ? (
@@ -240,31 +306,29 @@ export default function Home() {
               description="South Campus"
             />
 
-            {data &&
-              data.map((item) => (
-                // console.log(item.latitude, item.longitude),
-                <Marker
-                  key={item.id}
-                  coordinate={{
-                    latitude: item.longitude,
-                    longitude: item.latitude,
+            {reports.map((item, index) => (
+              <Marker
+                key={`${item.id}-${index}`}
+                coordinate={{
+                  latitude: item.longitude,
+                  longitude: item.latitude,
+                }}
+              >
+                <Callout
+                  onPress={() => {
+                    setSelectedReport(item);
+                    setModalVisible(true);
                   }}
                 >
-                  <Callout
-                    onPress={() => {
-                      setSelectedReport(item);
-                      setModalVisible(true);
-                    }}
-                  >
-                    <View className="w-auto justify-center items-center">
-                      <Text>{item.type_of_report}</Text>
-                      <Text className="text-xs text-slate-400 mt-1">
-                        More Info
-                      </Text>
-                    </View>
-                  </Callout>
-                </Marker>
-              ))}
+                  <View className="w-auto justify-center items-center">
+                    <Text>{item.type_of_report}</Text>
+                    <Text className="text-xs text-slate-400 mt-1">
+                      More Info
+                    </Text>
+                  </View>
+                </Callout>
+              </Marker>
+            ))}
           </MapView>
 
           <TouchableOpacity

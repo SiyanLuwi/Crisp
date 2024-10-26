@@ -9,6 +9,7 @@ import {
   ImageBackground,
   Modal,
   TouchableWithoutFeedback,
+  RefreshControl,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import MapView, { Marker, Region } from "react-native-maps";
@@ -17,7 +18,14 @@ import { RFPercentage } from "react-native-responsive-fontsize";
 import ReportReportModal from "@/components/reportReport";
 const bgImage = require("@/assets/images/bgImage.png");
 import { router } from "expo-router";
-import { getFirestore, collection, getDocs, onSnapshot } from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  onSnapshot,
+  doc,
+  updateDoc,
+} from "firebase/firestore";
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
 import { app } from "@/firebase/firebaseConfig";
 import * as SecureStore from "expo-secure-store";
@@ -38,9 +46,10 @@ interface Report {
   upvote: number;
   downvote: number;
   report_date: string;
+  voted: "upvote" | "downvote" | null; // Add voted property
+  upvoteCount: number; // Add upvoteCount
+  downvoteCount: number; // Add downvoteCount
 }
-
-
 
 export default function Reports() {
   const initialRegion = {
@@ -62,7 +71,11 @@ export default function Reports() {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
-  
+  const [refreshing, setRefreshing] = useState(false);
+  const [upvoteCount, setUpvoteCount] = useState<number>(0);
+  const [downvoteCount, setDownvoteCount] = useState<number>(0);
+  const [voted, setVoted] = useState<"upvote" | "downvote" | null>(null);
+
   const fetchAllDocuments = async () => {
     const categories = [
       "fires",
@@ -72,60 +85,104 @@ export default function Reports() {
       "others",
       "road incidents",
     ];
-  
+
+    // Use an array to store unsubscribe functions
     const unsubscribeFunctions = categories.map((category) => {
       return onSnapshot(
         collection(db, `reports/${category}/reports`),
-        (snapshot) => {
-          const reports: Report[] = snapshot.docs.map((doc) => {
-            const data = doc.data() as Omit<Report, "id">; // Omit the id when fetching data
-            return {
-              id: doc.id, // Include the document ID this is an UUID
-              username: data.username || "", // Default to empty string if missing
-              type_of_report: data.type_of_report || "",
-              report_description: data.report_description || "",
-              longitude: data.longitude || 0, // Default to 0 if missing
-              latitude: data.latitude || 0, // Default to 0 if missing
-              category: category, // Set the category based on the current loop
-              image_path: data.image_path || "", // Default to empty string if missing
-              upvote: data.upvote || 0, // Default to 0 if missing
-              downvote: data.downvote || 0, // Default to 0 if missing
-              report_date: data.report_date || "", // Default to empty string if missing
-            };
-          });
-        
+        async (snapshot) => {
+          const reports: Report[] = await Promise.all(
+            snapshot.docs.map(async (doc) => {
+              const data = doc.data() as Omit<Report, "id">; // Omit the id when fetching data
+              const reportId = doc.id; // Store report ID to check vote status
+              const voted = await getVoteStatus(reportId); // Check if the user has voted
+
+              return {
+                id: reportId,
+                username: data.username || "",
+                type_of_report: data.type_of_report || "",
+                report_description: data.report_description || "",
+                longitude: data.longitude || 0,
+                latitude: data.latitude || 0,
+                category: category,
+                image_path: data.image_path || "",
+                upvote: data.upvote || 0,
+                downvote: data.downvote || 0,
+                report_date: data.report_date || "",
+                voted: voted, // Set the voted state based on retrieval
+                upvoteCount: data.upvote || 0,
+                downvoteCount: data.downvote || 0,
+              };
+            })
+          );
+
           const sortedReports = reports.sort((a, b) => {
             const dateA = new Date(a.report_date).getTime();
-            const dateB = new Date(b.report_date).getTime(); 
+            const dateB = new Date(b.report_date).getTime();
             return dateB - dateA;
           });
-          console.log(`Fetched Reports from ${category}:`, sortedReports);
-          // Update the reports state with new reports from this category
-          setReports((prevReports) => [
-            ...prevReports,
-            ...sortedReports,
-          ]);
+
+          setReports((prevReports) => {
+            const existingReports = prevReports.filter(
+              (report) => report.category !== category
+            );
+            return [...existingReports, ...sortedReports];
+          });
         },
         (error) => {
           console.error(`Error fetching reports from ${category}:`, error);
         }
       );
     });
+
+    // Return a cleanup function that unsubscribes all listeners
     return () => {
       unsubscribeFunctions.forEach((unsubscribe) => unsubscribe());
     };
   };
 
   useEffect(() => {
-  const fetchData = async () => {
-    const unsubscribe = await fetchAllDocuments();
-    return unsubscribe; // Return the unsubscribe function for cleanup
+    const fetchData = async () => {
+      const unsubscribe = await fetchAllDocuments(); // Await the Promise
+      return unsubscribe; // Return the unsubscribe function for cleanup
+    };
+
+    fetchData().catch((error) => {
+      console.error("Error in fetching documents:", error);
+    });
+
+    // Cleanup function returned from the inner async function
+    return () => {
+      // Handle cleanup if necessary, for example if unsubscribe is defined correctly
+    };
+  }, []);
+
+  const updateVoteCount = async (
+    reportId: string,
+    upvoteCount: number,
+    downvoteCount: number,
+    category: string // Add category as a parameter
+  ) => {
+    const reportRef = doc(db, `reports/${category}/reports`, reportId); // Use the passed category
+
+    await updateDoc(reportRef, {
+      upvote: upvoteCount,
+      downvote: downvoteCount,
+    }).catch((error) => {
+      console.error("Error updating vote counts:", error);
+    });
+    // console.log("Vote counts updated successfully");
   };
 
-  fetchData().catch((error) => {
-    console.error("Error in fetching documents:", error);
-  });
-}, []); 
+  const loadReports = async () => {
+    setRefreshing(true); // Start refreshing
+    await fetchAllDocuments(); // Fetch the reports
+    setRefreshing(false); // Stop refreshing
+  };
+
+  useEffect(() => {
+    loadReports(); // Load reports on component mount
+  }, []);
 
   useEffect(() => {
     const requestLocationPermission = async () => {
@@ -160,6 +217,103 @@ export default function Reports() {
 
     requestLocationPermission();
   }, []);
+
+  // Function to save vote status in SecureStore
+  const saveVoteStatus = async (
+    reportId: string,
+    voteType: "upvote" | "downvote"
+  ) => {
+    try {
+      await SecureStore.setItemAsync(reportId, voteType);
+    } catch (error) {
+      console.error("Error saving vote status:", error);
+    }
+  };
+
+  // Function to retrieve vote status from SecureStore
+  const getVoteStatus = async (
+    reportId: string
+  ): Promise<"upvote" | "downvote" | null> => {
+    try {
+      return (await SecureStore.getItemAsync(reportId)) as
+        | "upvote"
+        | "downvote"
+        | null;
+    } catch (error) {
+      console.error("Error retrieving vote status:", error);
+      return null;
+    }
+  };
+
+  const handleUpvote = async (reportId: string, category: string) => {
+    const existingVote = await getVoteStatus(reportId);
+    if (!existingVote || existingVote === "downvote") {
+      setReports((prevReports) =>
+        prevReports.map((report) => {
+          if (report.id === reportId) {
+            // Compute new counts
+            const newUpvoteCount = report.upvoteCount + 1;
+            const newDownvoteCount =
+              report.voted === "downvote"
+                ? report.downvoteCount - 1
+                : report.downvoteCount;
+
+            // Update Firestore and save vote status
+            updateVoteCount(
+              reportId,
+              newUpvoteCount,
+              newDownvoteCount,
+              category
+            );
+            saveVoteStatus(reportId, "upvote");
+
+            return {
+              ...report,
+              upvoteCount: newUpvoteCount,
+              downvoteCount: newDownvoteCount,
+              voted: "upvote",
+            };
+          }
+          return report;
+        })
+      );
+    }
+  };
+
+  const handleDownvote = async (reportId: string, category: string) => {
+    const existingVote = await getVoteStatus(reportId);
+    if (!existingVote || existingVote === "upvote") {
+      setReports((prevReports) =>
+        prevReports.map((report) => {
+          if (report.id === reportId) {
+            // Compute new counts
+            const newDownvoteCount = report.downvoteCount + 1;
+            const newUpvoteCount =
+              report.voted === "upvote"
+                ? report.upvoteCount - 1
+                : report.upvoteCount;
+
+            // Update Firestore and save vote status
+            updateVoteCount(
+              reportId,
+              newUpvoteCount,
+              newDownvoteCount,
+              category
+            );
+            saveVoteStatus(reportId, "downvote");
+
+            return {
+              ...report,
+              upvoteCount: newUpvoteCount,
+              downvoteCount: newDownvoteCount,
+              voted: "downvote",
+            };
+          }
+          return report;
+        })
+      );
+    }
+  };
 
   const renderItem = ({ item }: { item: Report }) => {
     const [datePart, timePart] = item.report_date.split("T");
@@ -229,22 +383,32 @@ export default function Reports() {
         ) : null}
         <View className="w-full flex flex-row mt-2 justify-between">
           <View className="flex flex-row items-center">
-            <TouchableOpacity className="p-2">
+            <TouchableOpacity
+              onPress={() => handleUpvote(item.id, item.category)}
+            >
               <MaterialCommunityIcons
-                name="thumb-up-outline"
+                name={item.voted === "upvote" ? "thumb-up" : "thumb-up-outline"}
                 size={width * 0.06}
                 color="#0C3B2D"
+                paddingHorizontal={10}
               />
             </TouchableOpacity>
-            <Text className="text-lg mx-1">{item.downvote}</Text>
-            <TouchableOpacity className="p-2">
+            <Text className="text-lg mx-1">{item.upvoteCount}</Text>
+            <TouchableOpacity
+              onPress={() => handleDownvote(item.id, item.category)}
+            >
               <MaterialCommunityIcons
-                name="thumb-down-outline"
+                name={
+                  item.voted === "downvote"
+                    ? "thumb-down"
+                    : "thumb-down-outline"
+                }
                 size={width * 0.06}
                 color="#0C3B2D"
+                paddingHorizontal={10}
               />
             </TouchableOpacity>
-            <Text className="text-lg mx-1">{item.upvote}</Text>
+            <Text className="text-lg mx-1">{item.downvoteCount}</Text>
           </View>
           <View className="flex flex-row items-center">
             <TouchableOpacity
@@ -288,6 +452,12 @@ export default function Reports() {
           className="w-full h-auto flex p-4"
           showsVerticalScrollIndicator={false}
           renderItem={renderItem}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing} // Control refreshing state
+              onRefresh={loadReports} // Trigger loadReports on refresh
+            />
+          }
         />
         <ReportReportModal
           visible={reportModalVisible}

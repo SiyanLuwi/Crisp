@@ -55,6 +55,7 @@ function App() {
       setAddress(userInfo?.address || "");
       setEmail(userInfo?.email || "");
       setContact(userInfo?.contact_number || "");
+      setIsVerified(userInfo?.is_verified || "");
     };
 
     loadUserInfo();
@@ -69,7 +70,7 @@ function App() {
   });
 
   const handleLogout = () => {
-    console.log("User logged out");
+    // console.log("User logged out");
     setLogoutModalVisible(false);
   };
 
@@ -79,14 +80,14 @@ function App() {
     confirmPassword: string
   ): Promise<void> => {
     return new Promise((resolve, reject) => {
-      console.log("Change password:", {
-        currentPassword,
-        newPassword,
-        confirmPassword,
-      });
+      // console.log("Change password:", {
+      //   currentPassword,
+      //   newPassword,
+      //   confirmPassword,
+      // });
       setTimeout(() => {
         if (newPassword === confirmPassword && newPassword.length > 0) {
-          console.log("Password changed successfully!");
+          // console.log("Password changed successfully!");
           resolve();
         } else {
           reject(new Error("Passwords do not match or are invalid."));
@@ -113,7 +114,7 @@ function App() {
       // Ensure updateProfile is defined
       try {
         const updatedUser = await updateProfile(name, address, contact);
-        console.log("Profile updated successfully:", updatedUser);
+        // console.log("Profile updated successfully:", updatedUser);
         setPrevValues({ name, address, email, contact }); // Update previous values
         setShowSaveConfirmation(false);
         setIsEditing(false);
@@ -225,7 +226,7 @@ function App() {
                 placeholder="Phone Number"
               />
               <View className="w-full flex flex-row justify-between items-center bg-white mx-3 mb-4 rounded-lg">
-                {isVerified === false ? (
+                {!isVerified ? (
                   <>
                     <Text className="text-md p-4 font-bold text-[#0C3B2D]">
                       Not Yet Verified

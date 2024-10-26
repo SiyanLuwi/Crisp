@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   FlatList,
   StyleSheet,
+  TextInput,
 } from "react-native";
 
 interface ReportReportModalProps {
@@ -26,6 +27,7 @@ const ReportReportModal: React.FC<ReportReportModalProps> = ({
   onClose,
 }) => {
   const [selectedReason, setSelectedReason] = useState<string | null>(null);
+  const [customReason, setCustomReason] = useState<string>("");
 
   const handleConfirm = () => {
     if (selectedReason) {
@@ -36,6 +38,7 @@ const ReportReportModal: React.FC<ReportReportModalProps> = ({
 
   const handleClose = () => {
     setSelectedReason(null); // Reset state when closing
+    setCustomReason(""); // Reset state when closing
     onClose();
   };
 
@@ -44,7 +47,12 @@ const ReportReportModal: React.FC<ReportReportModalProps> = ({
       className={`w-full p-2 border-b border-[#0C3B2D] ${
         selectedReason === item ? "bg-[#E0E0E0]" : ""
       }`}
-      onPress={() => setSelectedReason(item)}
+      onPress={() => {
+        setSelectedReason(item);
+        if (item !== "Other") {
+          setCustomReason(""); // Reset custom reason if not "Other"
+        }
+      }}
     >
       <Text className="text-md font-semibold py-2">{item}</Text>
     </TouchableOpacity>
@@ -63,6 +71,16 @@ const ReportReportModal: React.FC<ReportReportModalProps> = ({
               keyExtractor={(item) => item}
               renderItem={renderItem}
             />
+            {/* Conditionally render TextInput if "Other" is selected */}
+            {selectedReason === "Other" && (
+              <TextInput
+                className="w-full bg-white text-md py-4 px-2 mb-4 items-center justify-center text-[#0C3B2D] font-semibold border-b border-[#0C3B2D]"
+                placeholder="Please specify..."
+                placeholderTextColor={"#0C3B2D"}
+                value={customReason}
+                onChangeText={setCustomReason}
+              />
+            )}
           </View>
           <View className="flex flex-row justify-end w-full mt-3 px-3">
             <TouchableOpacity
