@@ -294,14 +294,14 @@ export const AuthProvider = ({ children }: any) => {
     contact_no: string
   ) => {
     try {
-      const ipv = await Network.getIpAddressAsync(); // Get the current IP address if required
+      // const ipv = await Network.getIpAddressAsync(); // Get the current IP address if required
       const res = await api.put(
         `api/user/profile/`,
         {
           username,
           address,
           contact_number: contact_no,
-          ipv, // Include the IP address if it's required for the update
+          // ipv, // Include the IP address if it's required for the update
         },
         {
           headers: {

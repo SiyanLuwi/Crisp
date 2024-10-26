@@ -20,7 +20,14 @@ import { router } from "expo-router";
 import DeleteReportModal from "@/components/deleteReport";
 const bgImage = require("@/assets/images/bgImage.png");
 import { app } from "@/firebase/firebaseConfig";
-import { getFirestore, collection, onSnapshot } from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  onSnapshot,
+  deleteDoc,
+  doc,
+  setDoc,
+} from "firebase/firestore";
 import * as SecureStore from "expo-secure-store";
 import * as Location from "expo-location";
 
@@ -66,6 +73,7 @@ export default function ManageReports() {
     useState(false);
   const [region, setRegion] = useState<Region | null>(initialRegion);
   const [refreshing, setRefreshing] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
 
   const fetchAllDocuments = async () => {
     const categories = [
@@ -190,6 +198,50 @@ export default function ManageReports() {
     requestLocationPermission();
   }, []);
 
+  // Fetch username when the component mounts
+  useEffect(() => {
+    const fetchUsername = async () => {
+      const storedUsername = await SecureStore.getItemAsync("username");
+      setUsername(storedUsername);
+    };
+
+    fetchUsername().catch((error) => {
+      console.error("Error fetching username:", error);
+    });
+  }, []);
+
+  // Add this function in ManageReports component
+  const handleDeleteReport = async (reportId: string) => {
+    if (!selectedReport) return;
+
+    try {
+      // Delete the report from the reports collection
+      const reportRef = doc(
+        db,
+        `reports/${selectedReport.category}/reports`,
+        reportId
+      );
+      await deleteDoc(reportRef);
+
+      // Create a new document in the deletedReports collection
+      const deletedReportRef = doc(db, "deletedReports", reportId);
+      await setDoc(deletedReportRef, {
+        ...selectedReport,
+        deleted_at: new Date().toISOString(), // Add a deletion timestamp
+        deleted_by: username, // Add the user who deleted the report
+      });
+
+      // Optionally, update the state to remove the deleted report from the UI
+      setReports((prevReports) =>
+        prevReports.filter((report) => report.id !== reportId)
+      );
+
+      console.log("Report deleted and moved to deletedReports successfully.");
+    } catch (error) {
+      console.error("Error deleting report:", error);
+    }
+  };
+
   const renderItem = ({ item }: { item: Report }) => {
     const [datePart, timePart] = item.report_date.split("T");
     const formattedDate = datePart.replace(/-/g, "/");
@@ -257,19 +309,22 @@ export default function ManageReports() {
               color={"#A0A0A0"}
               paddingHorizontal={10}
             />
-            <Text className="text-lg mx-1">{item.downvote}</Text>
+            <Text className="text-lg mx-1">{item.upvote}</Text>
             <MaterialCommunityIcons
               name="thumb-down-outline"
               size={width * 0.06}
               color={"#A0A0A0"}
               paddingHorizontal={10}
             />
-            <Text className="text-lg mx-1">{item.upvote}</Text>
+            <Text className="text-lg mx-1">{item.downvote}</Text>
           </View>
           <View className="flex flex-row items-center">
             <TouchableOpacity
               className="p-2"
-              onPress={() => setDeleteModalVisible(true)}
+              onPress={() => {
+                setSelectedReport(item); // Set the selected report
+                setDeleteModalVisible(true); // Show the delete modal
+              }}
             >
               <MaterialCommunityIcons
                 name="format-align-justify"
@@ -292,7 +347,7 @@ export default function ManageReports() {
       <SafeAreaView className="flex-1">
         <View className="flex flex-row h-auto w-full items-center justify-between px-6">
           <Text className="font-bold text-4xl text-white mt-3 mb-2">
-            Reports
+            Manage Reports
           </Text>
           <TouchableOpacity onPress={() => router.push("/pages/notification")}>
             <MaterialCommunityIcons
@@ -302,19 +357,25 @@ export default function ManageReports() {
             />
           </TouchableOpacity>
         </View>
-        <FlatList
-          data={reports}
-          keyExtractor={(item, index) => `${item.id}-${index}}`}
-          className="w-full h-auto flex p-4"
-          showsVerticalScrollIndicator={false}
-          renderItem={renderItem}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing} // Control refreshing state
-              onRefresh={loadReports} // Trigger loadReports on refresh
-            />
-          }
-        />
+        {reports.length === 0 ? (
+          <View className="flex-1 justify-center items-center">
+            <Text className="text-lg text-slate-500">No reports yet</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={reports}
+            keyExtractor={(item, index) => `${item.id}-${index}`}
+            className="w-full h-auto flex p-4"
+            showsVerticalScrollIndicator={false}
+            renderItem={renderItem}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing} // Control refreshing state
+                onRefresh={loadReports} // Trigger loadReports on refresh
+              />
+            }
+          />
+        )}
 
         <Modal
           visible={modalVisible}
@@ -385,6 +446,8 @@ export default function ManageReports() {
         <DeleteReportModal
           visible={deleteModalVisible}
           onClose={() => setDeleteModalVisible(false)} // Hide modal
+          onConfirm={handleDeleteReport} // Pass the delete handler
+          reportId={selectedReport?.id || null} // Pass the selected report's ID
         />
       </SafeAreaView>
     </ImageBackground>
