@@ -143,7 +143,7 @@ export const AuthProvider = ({ children }: any) => {
         [REFRESH_KEY]: data.refresh,
         [ROLE]: data.account_type,
         [EXPIRATION]: expirationTime.toString(),
-        user_id: data.user_id,
+        user_id: data.user_id.toString(),
         username: data.username,
         email: data.email,
         address: data.address,
