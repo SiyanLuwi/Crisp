@@ -112,7 +112,7 @@ export const AuthProvider = ({ children }: any) => {
       return { error: true, msg: "Register error!" };
     }
   };
- 
+
   //Login function
   const login = async (username: string, password: string) => {
     try {
@@ -134,7 +134,7 @@ export const AuthProvider = ({ children }: any) => {
         token: data.access,
         authenticated: true,
       });
-   
+
       const expirationTime = Date.now() + 60 * 60 * 1000;
       axios.defaults.headers.common["Authorization"] = `Bearer ${data.access}`;
 
@@ -150,6 +150,7 @@ export const AuthProvider = ({ children }: any) => {
         contact_number: data.contact_number,
         account_type: data.account_type,
         is_email_verified: data.is_email_verified,
+        is_verified: data.is_verified,
       };
 
       await Promise.all(
@@ -272,12 +273,14 @@ export const AuthProvider = ({ children }: any) => {
       const email = await SecureStore.getItemAsync("email");
       const address = await SecureStore.getItemAsync("address");
       const contact_number = await SecureStore.getItemAsync("contact_number");
+      const is_verified = await SecureStore.getItemAsync("is_verified");
 
       return {
         username,
         email,
         address,
         contact_number,
+        is_verified: is_verified === "true",
       };
     } catch (error) {
       console.error("Error retrieving user information:", error);
@@ -291,14 +294,14 @@ export const AuthProvider = ({ children }: any) => {
     contact_no: string
   ) => {
     try {
-      const ipv = await Network.getIpAddressAsync(); // Get the current IP address if required
+      // const ipv = await Network.getIpAddressAsync(); // Get the current IP address if required
       const res = await api.put(
         `api/user/profile/`,
         {
           username,
           address,
           contact_number: contact_no,
-          ipv, // Include the IP address if it's required for the update
+          // ipv, // Include the IP address if it's required for the update
         },
         {
           headers: {

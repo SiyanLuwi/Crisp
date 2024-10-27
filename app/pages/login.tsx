@@ -67,7 +67,7 @@ export default function Login() {
         }, 2000);
       } else {
         setErrors("Invalid Email or Password");
-        console.log(error.message)
+        console.log(error.message);
         setTimeout(() => {
           setErrors("");
         }, 2000);

@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  Alert,
 } from "react-native";
 import { RFPercentage } from "react-native-responsive-fontsize";
 
@@ -15,10 +16,12 @@ const TabBar = ({
   state,
   descriptors,
   navigation,
+  isVerified, // Add this line
 }: {
   state: any;
   descriptors: any;
   navigation: any;
+  isVerified: boolean; // Add this line
 }) => {
   return (
     <View className="absolute bottom-[2%] w-auto flex-row justify-center items-center bg-white mx-[2%] py-[2%] rounded-3xl shadow-xl border-[#0C3B2D] border-2">
@@ -28,12 +31,21 @@ const TabBar = ({
           options.tabBarLabel !== undefined
             ? options.tabBarLabel
             : options.title !== undefined
-            ? options.title
-            : route.name;
+              ? options.title
+              : route.name;
 
         const isFocused = state.index === index;
 
         const onPress = () => {
+          // Check if the route is one of the restricted ones
+          if (["manage", "camera"].includes(route.name) && !isVerified) {
+            Alert.alert(
+              "Verification Required",
+              "Please verify your account first."
+            );
+            return; // Do not navigate if not verified
+          }
+
           const event = navigation.emit({
             type: "tabPress",
             target: route.key,
