@@ -25,6 +25,10 @@ import {
   onSnapshot,
   doc,
   updateDoc,
+  addDoc,
+  setDoc,
+  arrayUnion,
+  increment,
 } from "firebase/firestore";
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
 import { app } from "@/firebase/firebaseConfig";
@@ -46,6 +50,8 @@ interface Report {
   upvote: number;
   downvote: number;
   report_date: string;
+  custom_type: string;
+  floor_number: string;
   voted: "upvote" | "downvote" | null; // Add voted property
   upvoteCount: number; // Add upvoteCount
   downvoteCount: number; // Add downvoteCount
@@ -79,11 +85,11 @@ export default function Reports() {
   const fetchAllDocuments = async () => {
     const categories = [
       "fires",
-      "street lights",
+      "street light",
       "potholes",
       "floods",
       "others",
-      "road incidents",
+      "road accident",
     ];
 
     // Use an array to store unsubscribe functions
@@ -109,6 +115,8 @@ export default function Reports() {
                 upvote: data.upvote || 0,
                 downvote: data.downvote || 0,
                 report_date: data.report_date || "",
+                custom_type: data.custom_type || "",
+                floor_number: data.floor_number || "",
                 voted: voted, // Set the voted state based on retrieval
                 upvoteCount: data.upvote || 0,
                 downvoteCount: data.downvote || 0,
@@ -315,6 +323,32 @@ export default function Reports() {
     }
   };
 
+  const handleReportSubmit = async (
+    reportId: string,
+    category: string,
+    reason: string
+  ) => {
+    try {
+      // Create a reference to the specific report document
+      const reportRef = doc(db, `reportedReports/${reportId}`);
+
+      // Set the report data
+      await setDoc(
+        reportRef,
+        {
+          report_count: increment(1), // Initialize count to 1 for the first report
+          report_reason: arrayUnion(reason), // Append the new reason
+          reported_date: arrayUnion(new Date().toISOString()), // Append the current date
+        },
+        { merge: true }
+      ); // Merge to update existing fields or create new
+
+      console.log("Report submitted successfully!");
+    } catch (error) {
+      console.error("Error reporting the post:", error);
+    }
+  };
+
   const renderItem = ({ item }: { item: Report }) => {
     const [datePart, timePart] = item.report_date.split("T");
     const formattedDate = datePart.replace(/-/g, "/");
@@ -357,9 +391,25 @@ export default function Reports() {
             Type of Report:
             <Text className="text-lg font-normal text-black ml-2">
               {" " + item.type_of_report}
+              {item.custom_type && item.custom_type.length > 0 && (
+                <Text className="text-lg font-normal text-black ml-2">
+                  {", " + item.custom_type}
+                </Text>
+              )}
             </Text>
           </Text>
         </View>
+        {item.floor_number ? (
+          <View className="w-full flex flex-row">
+            <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
+              Floor Number:
+              <Text className="text-lg font-normal text-black ml-2">
+                {" " + item.floor_number}
+              </Text>
+            </Text>
+          </View>
+        ) : null}
+
         <View className="w-full flex flex-row">
           <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
             Description:
@@ -413,7 +463,10 @@ export default function Reports() {
           <View className="flex flex-row items-center">
             <TouchableOpacity
               className="p-2"
-              onPress={() => setReportModalVisible(true)}
+              onPress={() => {
+                setSelectedReport(item); // Ensure the selected report is set
+                setReportModalVisible(true); // Then open the report modal
+              }}
             >
               <MaterialCommunityIcons
                 name="format-align-justify"
@@ -462,6 +515,17 @@ export default function Reports() {
         <ReportReportModal
           visible={reportModalVisible}
           onClose={() => setReportModalVisible(false)}
+          onConfirmReport={(reason) => {
+            if (selectedReport) {
+              handleReportSubmit(
+                selectedReport.id,
+                selectedReport.category,
+                reason
+              );
+            } else {
+              console.error("No report selected");
+            }
+          }}
         />
 
         {/* Full Screen Image Modal */}

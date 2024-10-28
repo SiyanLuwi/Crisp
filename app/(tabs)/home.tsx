@@ -39,6 +39,8 @@ interface Report {
   report_description: string;
   image_path: string;
   report_date: string;
+  custom_type: string;
+  floor_number: string;
 }
 
 const fetchDocuments = async () => {
@@ -74,11 +76,11 @@ export default function Home() {
   const fetchAllDocuments = async () => {
     const categories = [
       "fires",
-      "street lights",
+      "street light",
       "potholes",
       "floods",
       "others",
-      "road incidents",
+      "road accident",
     ];
 
     const unsubscribeFunctions = categories.map((category) => {
@@ -97,6 +99,8 @@ export default function Home() {
               category: category, // Set the category based on the current loop
               image_path: data.image_path || "", // Default to empty string if missing
               report_date: data.report_date || "", // Default to empty string if missing
+              custom_type: data.custom_type || "",
+              floor_number: data.floor_number || "",
             };
           });
 
@@ -321,7 +325,12 @@ export default function Home() {
                   }}
                 >
                   <View className="w-auto justify-center items-center">
-                    <Text>{item.type_of_report}</Text>
+                    <Text>
+                      {" " + item.type_of_report}
+                      {item.custom_type && item.custom_type.length > 0 && (
+                        <Text>{", " + item.custom_type}</Text>
+                      )}
+                    </Text>
                     <Text className="text-xs text-slate-400 mt-1">
                       More Info
                     </Text>
@@ -412,15 +421,31 @@ export default function Home() {
                               </Text>
                             </View>
                           )}
-                          <Text className="text-lg mt-3  text-left pr-2 font-semibold text-slate-500">
+                          <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
                             Type of Report:
                             <Text className="text-lg font-normal text-black ml-2">
                               {" " + selectedReport.type_of_report}
+                              {selectedReport.custom_type &&
+                                selectedReport.custom_type.length > 0 && (
+                                  <Text className="text-lg font-normal text-black ml-2">
+                                    {", " + selectedReport.custom_type}
+                                  </Text>
+                                )}
                             </Text>
                           </Text>
                         </View>
                       </View>
 
+                      {selectedReport.floor_number ? (
+                        <View className="w-full flex flex-row">
+                          <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
+                            Floor Number:
+                            <Text className="text-lg font-normal text-black ml-2">
+                              {" " + selectedReport.floor_number}
+                            </Text>
+                          </Text>
+                        </View>
+                      ) : null}
                       <View className="w-full flex flex-row mb-3">
                         <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
                           Description:

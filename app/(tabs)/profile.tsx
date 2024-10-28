@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import MapPicker from "@/components/mapPicker";
 import LogoutModal from "@/components/logout";
 import ChangePasswordModal from "@/components/changePassword";
@@ -38,6 +39,7 @@ function App() {
   const [isEditing, setIsEditing] = useState(false);
   const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
@@ -94,6 +96,29 @@ function App() {
         }
       }, 2000);
     });
+  };
+
+  const pickImage = async () => {
+    // Request permission to access the gallery
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (permissionResult.granted === false) {
+      alert("Permission to access camera roll is required!");
+      return;
+    }
+
+    // Open the image picker
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0].uri);
+    }
   };
 
   const toggleEdit = () => {
@@ -169,10 +194,14 @@ function App() {
         </View>
         <ScrollView className="w-full h-full flex">
           <View className="flex flex-col w-full h-full items-center ">
-            <Image
-              source={{ uri: "https://via.placeholder.com/150" }}
-              className="w-48 h-48 rounded-full border-4 border-white mb-8 mt-8"
-            />
+            <TouchableOpacity onPress={isEditing ? pickImage : undefined}>
+              <Image
+                source={{
+                  uri: selectedImage || "https://via.placeholder.com/150",
+                }}
+                className="w-48 h-48 rounded-full border-4 border-white mb-8 mt-8"
+              />
+            </TouchableOpacity>
             <View className="justify-center w-full items-center px-12 mt-6">
               <TextInput
                 className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
@@ -328,5 +357,3 @@ function App() {
     </ImageBackground>
   );
 }
-
-//Oks na yung paglabas ng data edit na next na lang yung pag save at cancel

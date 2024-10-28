@@ -78,11 +78,11 @@ export default function ManageReports() {
   const fetchAllDocuments = async () => {
     const categories = [
       "fires",
-      "street lights",
+      "street light",
       "potholes",
       "floods",
       "others",
-      "road incidents",
+      "road accident",
     ];
 
     // Retrieve the user ID securely
