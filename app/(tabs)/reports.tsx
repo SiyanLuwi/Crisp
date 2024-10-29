@@ -25,8 +25,9 @@ import {
   onSnapshot,
   doc,
   updateDoc,
-  addDoc,
   setDoc,
+  getDoc,
+  deleteDoc,
   arrayUnion,
   increment,
 } from "firebase/firestore";
@@ -34,8 +35,9 @@ import { getStorage, ref, getDownloadURL } from "firebase/storage";
 import { app } from "@/firebase/firebaseConfig";
 import * as SecureStore from "expo-secure-store";
 import * as Location from "expo-location";
+import { useAuth } from "@/AuthContext/AuthContext";
 const { height, width } = Dimensions.get("window");
-
+import { Vote } from "../utils/voteCounts";
 const db = getFirestore(app);
 
 interface Report {
@@ -52,9 +54,13 @@ interface Report {
   report_date: string;
   custom_type: string;
   floor_number: string;
-  voted: "upvote" | "downvote" | null; // Add voted property
-  upvoteCount: number; // Add upvoteCount
-  downvoteCount: number; // Add downvoteCount
+  upvoteCount: number | any;
+  downvoteCount: number | any;
+  voted: "upvote" | "downvote" | null;
+}
+interface Location {
+  latitude: number;
+  longitude: number;
 }
 
 export default function Reports() {
@@ -81,60 +87,84 @@ export default function Reports() {
   const [upvoteCount, setUpvoteCount] = useState<number>(0);
   const [downvoteCount, setDownvoteCount] = useState<number>(0);
   const [voted, setVoted] = useState<"upvote" | "downvote" | null>(null);
+  const { USER_ID } = useAuth();
 
-  const fetchAllDocuments = async () => {
+  async function fetchAllVotes() {
+    const AllVotes: any[] = [];
+    try {
+      const allVotes = await Vote.getAllVotes();
+
+      allVotes.forEach((report) => {
+        report.votes.forEach((vote) => {
+          AllVotes.push({
+            reportId: report.reportId,
+            userId: vote.user_id,
+            vote: vote.vote,
+          });
+        });
+      });
+      return AllVotes;
+    } catch (error) {
+      console.error("Error fetching all votes:", error);
+    }
+  }
+  const fetchAllDocuments = async (userId: string, votes: any[]) => {
     const categories = [
       "fires",
       "street light",
       "potholes",
       "floods",
       "others",
-      "road accident",
+      "road incidents",
     ];
-
-    // Use an array to store unsubscribe functions
     const unsubscribeFunctions = categories.map((category) => {
       return onSnapshot(
         collection(db, `reports/${category}/reports`),
         async (snapshot) => {
           const reports: Report[] = await Promise.all(
             snapshot.docs.map(async (doc) => {
-              const data = doc.data() as Omit<Report, "id">; // Omit the id when fetching data
-              const reportId = doc.id; // Store report ID to check vote status
-              const voted = await getVoteStatus(reportId); // Check if the user has voted
-
+              const data = doc.data() as Omit<Report, "id">;
+              const reportId = doc.id;
+              const reportVotes = votes?.filter(
+                (vote) => vote.reportId === reportId
+              );
+              const upvotes = reportVotes?.filter(
+                (vote) => vote.vote === "upvote"
+              ).length;
+              const downvotes = reportVotes?.filter(
+                (vote) => vote.vote === "downvote"
+              ).length;
+              const userVote = reportVotes?.find(
+                (vote) => vote.userId === userId
+              );
+              const voted = userVote ? userVote.vote : null;
               return {
                 id: reportId,
-                username: data.username || "",
-                type_of_report: data.type_of_report || "",
-                report_description: data.report_description || "",
-                longitude: data.longitude || 0,
-                latitude: data.latitude || 0,
-                category: category,
-                image_path: data.image_path || "",
-                upvote: data.upvote || 0,
-                downvote: data.downvote || 0,
-                report_date: data.report_date || "",
-                custom_type: data.custom_type || "",
-                floor_number: data.floor_number || "",
-                voted: voted, // Set the voted state based on retrieval
-                upvoteCount: data.upvote || 0,
-                downvoteCount: data.downvote || 0,
+                ...data,
+                upvoteCount: upvotes,
+                downvoteCount: downvotes,
+                voted: voted,
               };
             })
           );
 
-          const sortedReports = reports.sort((a, b) => {
-            const dateA = new Date(a.report_date).getTime();
-            const dateB = new Date(b.report_date).getTime();
-            return dateB - dateA;
-          });
-
           setReports((prevReports) => {
-            const existingReports = prevReports.filter(
-              (report) => report.category !== category
-            );
-            return [...existingReports, ...sortedReports];
+            // Combine previous reports with new ones
+            const combinedReports = [...prevReports, ...reports];
+
+            // Sort all reports by date
+            const sortedReports = combinedReports.sort((a, b) => {
+              return (
+                new Date(b.report_date).getTime() -
+                new Date(a.report_date).getTime()
+              );
+            });
+
+            // Return sorted reports only if they have changed
+            if (JSON.stringify(prevReports) !== JSON.stringify(sortedReports)) {
+              return sortedReports;
+            }
+            return prevReports; // Return previous state if no change
           });
         },
         (error) => {
@@ -143,59 +173,75 @@ export default function Reports() {
       );
     });
 
-    // Return a cleanup function that unsubscribes all listeners
     return () => {
       unsubscribeFunctions.forEach((unsubscribe) => unsubscribe());
     };
   };
-
   useEffect(() => {
     const fetchData = async () => {
-      const unsubscribe = await fetchAllDocuments(); // Await the Promise
+      if (!USER_ID) {
+        throw new Error("Cannot fetch USER_ID!");
+      }
+      const votes = await fetchAllVotes();
+      if (!votes) {
+        console.error("Votes is undefined");
+        return; // Early return instead of throwing an error
+      }
+      const unsubscribe = await fetchAllDocuments(USER_ID, votes); // Await the Promise
       return unsubscribe; // Return the unsubscribe function for cleanup
     };
-
     fetchData().catch((error) => {
       console.error("Error in fetching documents:", error);
     });
-
-    // Cleanup function returned from the inner async function
-    return () => {
-      // Handle cleanup if necessary, for example if unsubscribe is defined correctly
-    };
   }, []);
 
-  const updateVoteCount = async (
+  const handleReportSubmit = async (
     reportId: string,
-    upvoteCount: number,
-    downvoteCount: number,
-    category: string // Add category as a parameter
+    category: string,
+    reason: string
   ) => {
-    const reportRef = doc(db, `reports/${category}/reports`, reportId); // Use the passed category
-
-    await updateDoc(reportRef, {
-      upvote: upvoteCount,
-      downvote: downvoteCount,
-    }).catch((error) => {
-      console.error("Error updating vote counts:", error);
-    });
-    // console.log("Vote counts updated successfully");
+    try {
+      // Create a reference to the specific report document
+      const reportRef = doc(db, `reportedReports/${reportId}`);
+      // Set the report data
+      await setDoc(
+        reportRef,
+        {
+          report_count: increment(1), // Initialize count to 1 for the first report
+          report_reason: arrayUnion(reason), // Append the new reason
+          reported_date: arrayUnion(new Date().toISOString()), // Append the current date
+        },
+        { merge: true }
+      ); // Merge to update existing fields or create new
+      console.log("Report submitted successfully!");
+    } catch (error) {
+      console.error("Error reporting the post:", error);
+    }
   };
 
   const loadReports = async () => {
     setRefreshing(true); // Start refreshing
-    await fetchAllDocuments(); // Fetch the reports
+    if (!USER_ID) {
+      console.error("Cannot fetch USER_ID!");
+      setRefreshing(false);
+      return; // Early return
+    }
+
+    const votes = await fetchAllVotes();
+    if (!votes) {
+      console.error("Votes is undefined");
+      setRefreshing(false);
+      return; // Early return
+    }
+    setReports([]);
+    await fetchAllDocuments(USER_ID, votes); // Fetch the reports
     setRefreshing(false); // Stop refreshing
   };
 
   useEffect(() => {
-    loadReports(); // Load reports on component mount
-  }, []);
-
-  useEffect(() => {
     const requestLocationPermission = async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      console.log("Location permission status:", status);
+      // console.log("Location permission status:", status);
 
       if (status === "granted") {
         setLocationPermissionGranted(true);
@@ -226,126 +272,91 @@ export default function Reports() {
     requestLocationPermission();
   }, []);
 
-  // Function to save vote status in SecureStore
-  const saveVoteStatus = async (
-    reportId: string,
-    voteType: "upvote" | "downvote"
-  ) => {
-    try {
-      await SecureStore.setItemAsync(reportId, voteType);
-    } catch (error) {
-      console.error("Error saving vote status:", error);
-    }
-  };
+  const haversineDistance = (
+    userLocation: Location,
+    selectedReport: Report
+  ): number => {
+    const toRad = (value: number) => (value * Math.PI) / 180;
 
-  // Function to retrieve vote status from SecureStore
-  const getVoteStatus = async (
-    reportId: string
-  ): Promise<"upvote" | "downvote" | null> => {
-    try {
-      return (await SecureStore.getItemAsync(reportId)) as
-        | "upvote"
-        | "downvote"
-        | null;
-    } catch (error) {
-      console.error("Error retrieving vote status:", error);
-      return null;
-    }
+    const lat1 = toRad(userLocation.longitude);
+    const lon1 = toRad(userLocation.latitude);
+    const lat2 = toRad(selectedReport.latitude);
+    const lon2 = toRad(selectedReport.longitude);
+
+    const dLat = lat2 - lat1;
+    const dLon = lon2 - lon1;
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const radius = 6371000; // Earth's radius in meters
+    return radius * c; // Distance in meters
   };
 
   const handleUpvote = async (reportId: string, category: string) => {
-    const existingVote = await getVoteStatus(reportId);
-    if (!existingVote || existingVote === "downvote") {
-      setReports((prevReports) =>
-        prevReports.map((report) => {
-          if (report.id === reportId) {
-            // Compute new counts
-            const newUpvoteCount = report.upvoteCount + 1;
-            const newDownvoteCount =
-              report.voted === "downvote"
-                ? report.downvoteCount - 1
-                : report.downvoteCount;
-
-            // Update Firestore and save vote status
-            updateVoteCount(
-              reportId,
-              newUpvoteCount,
-              newDownvoteCount,
-              category
-            );
-            saveVoteStatus(reportId, "upvote");
-
-            return {
-              ...report,
-              upvoteCount: newUpvoteCount,
-              downvoteCount: newDownvoteCount,
-              voted: "upvote",
-            };
-          }
-          return report;
-        })
+    try {
+      const reportRef = doc(
+        db,
+        `reports/${category.toLowerCase()}/reports/${reportId}/votes/${USER_ID}`
       );
+      console.log("Document Reference:", reportRef.path);
+      const reportSnap = await getDoc(reportRef);
+      const data = {
+        user_id: USER_ID,
+        vote: "upvote",
+      };
+
+      if (reportSnap.exists()) {
+        const existingVote = reportSnap.data().vote;
+        if (existingVote === "upvote") {
+          await deleteDoc(reportRef);
+          console.log("Remove upvote!");
+        } else {
+          await deleteDoc(reportRef);
+          await setDoc(reportRef, data);
+          console.log("Update Vote!");
+        }
+      } else {
+        await setDoc(reportRef, data);
+        console.log("Upvote added successfully!", reportId);
+      }
+    } catch (error) {
+      console.error("Error handling upvote:", error);
     }
   };
 
   const handleDownvote = async (reportId: string, category: string) => {
-    const existingVote = await getVoteStatus(reportId);
-    if (!existingVote || existingVote === "upvote") {
-      setReports((prevReports) =>
-        prevReports.map((report) => {
-          if (report.id === reportId) {
-            // Compute new counts
-            const newDownvoteCount = report.downvoteCount + 1;
-            const newUpvoteCount =
-              report.voted === "upvote"
-                ? report.upvoteCount - 1
-                : report.upvoteCount;
-
-            // Update Firestore and save vote status
-            updateVoteCount(
-              reportId,
-              newUpvoteCount,
-              newDownvoteCount,
-              category
-            );
-            saveVoteStatus(reportId, "downvote");
-
-            return {
-              ...report,
-              upvoteCount: newUpvoteCount,
-              downvoteCount: newDownvoteCount,
-              voted: "downvote",
-            };
-          }
-          return report;
-        })
-      );
-    }
-  };
-
-  const handleReportSubmit = async (
-    reportId: string,
-    category: string,
-    reason: string
-  ) => {
     try {
-      // Create a reference to the specific report document
-      const reportRef = doc(db, `reportedReports/${reportId}`);
+      const reportRef = doc(
+        db,
+        `reports/${category.toLowerCase()}/reports/${reportId}/votes/${USER_ID}`
+      );
+      console.log("Document Reference:", reportRef.path);
+      const reportSnap = await getDoc(reportRef);
+      const data = {
+        user_id: USER_ID,
+        vote: "downvote",
+      };
 
-      // Set the report data
-      await setDoc(
-        reportRef,
-        {
-          report_count: increment(1), // Initialize count to 1 for the first report
-          report_reason: arrayUnion(reason), // Append the new reason
-          reported_date: arrayUnion(new Date().toISOString()), // Append the current date
-        },
-        { merge: true }
-      ); // Merge to update existing fields or create new
+      if (reportSnap.exists()) {
+        const existingVote = reportSnap.data().vote;
 
-      console.log("Report submitted successfully!");
+        if (existingVote === "downvote") {
+          await deleteDoc(reportRef);
+          console.log("Remove downvote!");
+        } else {
+          await deleteDoc(reportRef);
+          await setDoc(reportRef, data);
+          console.log("Update Vote!");
+        }
+      } else {
+        await setDoc(reportRef, data);
+        console.log("Upvote added successfully!", reportId);
+      }
     } catch (error) {
-      console.error("Error reporting the post:", error);
+      console.error("Error handling downvote:", error);
     }
   };
 
@@ -409,7 +420,6 @@ export default function Reports() {
             </Text>
           </View>
         ) : null}
-
         <View className="w-full flex flex-row">
           <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
             Description:
@@ -434,7 +444,7 @@ export default function Reports() {
         <View className="w-full flex flex-row mt-2 justify-between">
           <View className="flex flex-row items-center">
             <TouchableOpacity
-              onPress={() => handleUpvote(item.id, item.category)}
+              onPress={() => handleUpvote(item.id, item.type_of_report)}
             >
               <MaterialCommunityIcons
                 name={item.voted === "upvote" ? "thumb-up" : "thumb-up-outline"}
@@ -445,7 +455,7 @@ export default function Reports() {
             </TouchableOpacity>
             <Text className="text-lg mx-1">{item.upvoteCount}</Text>
             <TouchableOpacity
-              onPress={() => handleDownvote(item.id, item.category)}
+              onPress={() => handleDownvote(item.id, item.type_of_report)}
             >
               <MaterialCommunityIcons
                 name={
@@ -587,32 +597,48 @@ export default function Reports() {
                   }}
                 >
                   {selectedReport && (
-                    <MapView
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        borderRadius: 10,
-                      }}
-                      initialRegion={{
-                        latitude: selectedReport.longitude,
-                        longitude: selectedReport.latitude,
-                        latitudeDelta: 0.01,
-                        longitudeDelta: 0.01,
-                      }}
-                    >
-                      <Marker
-                        coordinate={userLocation}
-                        title={"You are here"}
-                        pinColor="blue"
-                      />
-                      <Marker
-                        coordinate={{
+                    <>
+                      <MapView
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          borderRadius: 10,
+                        }}
+                        initialRegion={{
                           latitude: selectedReport.longitude,
                           longitude: selectedReport.latitude,
+                          latitudeDelta: 0.01,
+                          longitudeDelta: 0.01,
                         }}
-                        title={selectedReport.type_of_report}
-                      />
-                    </MapView>
+                      >
+                        <Marker
+                          coordinate={userLocation}
+                          title={"You are here"}
+                          pinColor="blue"
+                        />
+                        <Marker
+                          coordinate={{
+                            latitude: selectedReport.longitude,
+                            longitude: selectedReport.latitude,
+                          }}
+                          title={selectedReport.type_of_report}
+                        />
+                      </MapView>
+                      <Text style={{ padding: 10, color: "white" }}>
+                        Distance from the Report:{" "}
+                        {userLocation
+                          ? (() => {
+                              const distance = haversineDistance(
+                                userLocation,
+                                selectedReport
+                              );
+                              return distance > 1000
+                                ? `${(distance / 1000).toFixed(2)} km` // Convert to kilometers
+                                : `${distance.toFixed(2)} m`; // Keep in meters
+                            })()
+                          : "Calculating..."}
+                      </Text>
+                    </>
                   )}
                 </View>
               </TouchableWithoutFeedback>

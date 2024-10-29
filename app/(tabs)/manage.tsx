@@ -20,6 +20,8 @@ import { router } from "expo-router";
 import DeleteReportModal from "@/components/deleteReport";
 const bgImage = require("@/assets/images/bgImage.png");
 import { app } from "@/firebase/firebaseConfig";
+import { useAuth } from "@/AuthContext/AuthContext";
+import { Vote } from "../utils/voteCounts";
 import {
   getFirestore,
   collection,
@@ -54,6 +56,12 @@ interface Report {
   upvote: number;
   downvote: number;
   report_date: string;
+  upvoteCount: number | any;
+  downvoteCount: number | any;
+}
+interface Location {
+  latitude: number;
+  longitude: number;
 }
 export default function ManageReports() {
   const initialRegion = {
@@ -74,61 +82,98 @@ export default function ManageReports() {
   const [region, setRegion] = useState<Region | null>(initialRegion);
   const [refreshing, setRefreshing] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
+  const { USER_ID } = useAuth();
 
-  const fetchAllDocuments = async () => {
+  async function fetchAllVotes() {
+    const AllVotes: any[] = [];
+    try {
+      const allVotes = await Vote.getAllVotes();
+
+      allVotes.forEach((report) => {
+        report.votes.forEach((vote) => {
+          AllVotes.push({
+            reportId: report.reportId,
+            userId: vote.user_id,
+            vote: vote.vote,
+          });
+        });
+      });
+      return AllVotes;
+    } catch (error) {
+      console.error("Error fetching all votes:", error);
+    }
+  }
+  const fetchAllDocuments = async (userId: string, votes: any[]) => {
     const categories = [
       "fires",
       "street light",
       "potholes",
       "floods",
       "others",
-      "road accident",
+      "road incidents",
     ];
 
     // Retrieve the user ID securely
-    const user_id = await SecureStore.getItemAsync("user_id");
-    // console.log("User ID:", user_id);
+    const users_id = await SecureStore.getItemAsync("user_id");
 
-    // Create an array to hold unsubscribe functions
     const unsubscribeFunctions = categories.map((category) => {
       return onSnapshot(
         collection(db, `reports/${category}/reports`),
-        (snapshot) => {
-          const reports: Report[] = snapshot.docs
-            .map((doc) => {
-              const data = doc.data() as Omit<Report, "id">; // Omit the id when fetching data
-              return {
-                id: doc.id, // Include the document ID (UUID)
-                user_id: data.user_id,
-                username: data.username || "", // Default to empty string if missing
-                type_of_report: data.type_of_report || "",
-                report_description: data.report_description || "",
-                longitude: data.longitude || 0, // Default to 0 if missing
-                latitude: data.latitude || 0, // Default to 0 if missing
-                category: category, // Set the category based on the current loop
-                image_path: data.image_path || "", // Default to empty string if missing
-                upvote: data.upvote || 0, // Default to 0 if missing
-                downvote: data.downvote || 0, // Default to 0 if missing
-                report_date: data.report_date || "", // Default to empty string if missing
-              };
+        async (snapshot) => {
+          const reports: (Report | null)[] = await Promise.all(
+            snapshot.docs.map(async (doc) => {
+              const data = doc.data() as Omit<Report, "id">;
+              const reportId = doc.id;
+              const reportVotes = votes?.filter(
+                (vote) => vote.reportId === reportId
+              );
+              const upvotes =
+                reportVotes?.filter((vote) => vote.vote === "upvote").length ||
+                0;
+              const downvotes =
+                reportVotes?.filter((vote) => vote.vote === "downvote")
+                  .length || 0;
+              const userVote = reportVotes?.find(
+                (vote) => vote.userId === userId
+              );
+              const voted = userVote ? userVote.vote : null;
+
+              // Only return the report if the user ID matches
+              if (data.user_id?.toString() === users_id?.toString()) {
+                return {
+                  id: reportId,
+                  ...data,
+                  upvoteCount: upvotes,
+                  downvoteCount: downvotes,
+                  voted: voted,
+                };
+              }
+              return null; // Exclude reports that don't match user_id
             })
-            .filter(
-              (report) => report.user_id.toString() == user_id?.toString()
-            ); // Filter by user_id
+          );
 
-          // Sort reports by report_date in descending order
-          const sortedReports = reports.sort((a, b) => {
-            const dateA = new Date(a.report_date).getTime();
-            const dateB = new Date(b.report_date).getTime();
-            return dateB - dateA; // Sort in descending order
-          });
+          // Filter out null values before updating the state
+          const filteredReports: Report[] = reports.filter(
+            (report): report is Report => report !== null
+          );
 
-          // Update the reports state with new reports from this category
           setReports((prevReports) => {
-            const existingReports = prevReports.filter(
-              (report) => report.category !== category
-            );
-            return [...existingReports, ...sortedReports]; // Replace old reports of this category and add the sorted new ones
+            // Combine previous reports with new ones
+            const combinedReports = [...prevReports, ...filteredReports];
+
+            // Sort all reports by date
+            const sortedReports = combinedReports.sort((a, b) => {
+              return (
+                new Date(b.report_date).getTime() -
+                new Date(a.report_date).getTime()
+              );
+            });
+
+            // Return sorted reports only if they have changed
+            if (JSON.stringify(prevReports) !== JSON.stringify(sortedReports)) {
+              return sortedReports;
+            }
+            return prevReports; // Return previous state if no change
           });
         },
         (error) => {
@@ -137,7 +182,6 @@ export default function ManageReports() {
       );
     });
 
-    // Return a cleanup function to unsubscribe from all listeners
     return () => {
       unsubscribeFunctions.forEach((unsubscribe) => unsubscribe());
     };
@@ -145,10 +189,17 @@ export default function ManageReports() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const unsubscribe = await fetchAllDocuments();
+      if (!USER_ID) {
+        throw new Error("Cannot fetch USER_ID!");
+      }
+      const votes = await fetchAllVotes();
+      if (!votes) {
+        console.error("Votes is undefined");
+        return; // Early return instead of throwing an error
+      }
+      const unsubscribe = await fetchAllDocuments(USER_ID, votes); // Await the Promise
       return unsubscribe; // Return the unsubscribe function for cleanup
     };
-
     fetchData().catch((error) => {
       console.error("Error in fetching documents:", error);
     });
@@ -156,18 +207,27 @@ export default function ManageReports() {
 
   const loadReports = async () => {
     setRefreshing(true); // Start refreshing
-    await fetchAllDocuments(); // Fetch the reports
+    if (!USER_ID) {
+      console.error("Cannot fetch USER_ID!");
+      setRefreshing(false);
+      return; // Early return
+    }
+
+    const votes = await fetchAllVotes();
+    if (!votes) {
+      console.error("Votes is undefined");
+      setRefreshing(false);
+      return; // Early return
+    }
+    setReports([]);
+    await fetchAllDocuments(USER_ID, votes); // Fetch the reports
     setRefreshing(false); // Stop refreshing
   };
 
   useEffect(() => {
-    loadReports(); // Load reports on component mount
-  }, []);
-
-  useEffect(() => {
     const requestLocationPermission = async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      console.log("Location permission status:", status);
+      // console.log("Location permission status:", status);
 
       if (status === "granted") {
         setLocationPermissionGranted(true);
@@ -197,6 +257,29 @@ export default function ManageReports() {
 
     requestLocationPermission();
   }, []);
+
+  const haversineDistance = (
+    userLocation: Location,
+    selectedReport: Report
+  ): number => {
+    const toRad = (value: number) => (value * Math.PI) / 180;
+
+    const lat1 = toRad(userLocation.longitude);
+    const lon1 = toRad(userLocation.latitude);
+    const lat2 = toRad(selectedReport.latitude);
+    const lon2 = toRad(selectedReport.longitude);
+
+    const dLat = lat2 - lat1;
+    const dLon = lon2 - lon1;
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const radius = 6371000; // Earth's radius in meters
+    return radius * c; // Distance in meters
+  };
 
   // Fetch username when the component mounts
   useEffect(() => {
@@ -309,14 +392,14 @@ export default function ManageReports() {
               color={"#A0A0A0"}
               paddingHorizontal={10}
             />
-            <Text className="text-lg mx-1">{item.upvote}</Text>
+            <Text className="text-lg mx-1">{item.upvoteCount}</Text>
             <MaterialCommunityIcons
               name="thumb-down-outline"
               size={width * 0.06}
               color={"#A0A0A0"}
               paddingHorizontal={10}
             />
-            <Text className="text-lg mx-1">{item.downvote}</Text>
+            <Text className="text-lg mx-1">{item.downvoteCount}</Text>
           </View>
           <View className="flex flex-row items-center">
             <TouchableOpacity
@@ -403,32 +486,48 @@ export default function ManageReports() {
                   }}
                 >
                   {selectedReport && (
-                    <MapView
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        borderRadius: 10,
-                      }}
-                      initialRegion={{
-                        latitude: selectedReport.longitude,
-                        longitude: selectedReport.latitude,
-                        latitudeDelta: 0.01,
-                        longitudeDelta: 0.01,
-                      }}
-                    >
-                      <Marker
-                        coordinate={userLocation}
-                        title={"You are here"}
-                        pinColor="blue"
-                      />
-                      <Marker
-                        coordinate={{
+                    <>
+                      <MapView
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          borderRadius: 10,
+                        }}
+                        initialRegion={{
                           latitude: selectedReport.longitude,
                           longitude: selectedReport.latitude,
+                          latitudeDelta: 0.01,
+                          longitudeDelta: 0.01,
                         }}
-                        title={selectedReport.type_of_report}
-                      />
-                    </MapView>
+                      >
+                        <Marker
+                          coordinate={userLocation}
+                          title={"You are here"}
+                          pinColor="blue"
+                        />
+                        <Marker
+                          coordinate={{
+                            latitude: selectedReport.longitude,
+                            longitude: selectedReport.latitude,
+                          }}
+                          title={selectedReport.type_of_report}
+                        />
+                      </MapView>
+                      <Text style={{ padding: 10, color: "white" }}>
+                        Distance from the Report:{" "}
+                        {userLocation
+                          ? (() => {
+                              const distance = haversineDistance(
+                                userLocation,
+                                selectedReport
+                              );
+                              return distance > 1000
+                                ? `${(distance / 1000).toFixed(2)} km` // Convert to kilometers
+                                : `${distance.toFixed(2)} m`; // Keep in meters
+                            })()
+                          : "Calculating..."}
+                      </Text>
+                    </>
                   )}
                 </View>
               </TouchableWithoutFeedback>

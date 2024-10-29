@@ -197,9 +197,11 @@ function App() {
             <TouchableOpacity onPress={isEditing ? pickImage : undefined}>
               <Image
                 source={{
-                  uri: selectedImage || "https://via.placeholder.com/150",
+                  uri:
+                    selectedImage ||
+                    "https://static.vecteezy.com/system/resources/thumbnails/020/911/740/small_2x/user-profile-icon-profile-avatar-user-icon-male-icon-face-icon-profile-icon-free-png.png",
                 }}
-                className="w-48 h-48 rounded-full border-4 border-white mb-8 mt-8"
+                className="w-48 h-48 rounded-full border-4 border-white mb-8 mt-8 bg-white"
               />
             </TouchableOpacity>
             <View className="justify-center w-full items-center px-12 mt-6">

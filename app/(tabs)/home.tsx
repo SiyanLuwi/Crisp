@@ -42,6 +42,10 @@ interface Report {
   custom_type: string;
   floor_number: string;
 }
+interface Location {
+  latitude: number;
+  longitude: number;
+}
 
 const fetchDocuments = async () => {
   const querySnapshot = await getDocs(collection(db, "reports"));
@@ -142,7 +146,7 @@ export default function Home() {
   useEffect(() => {
     const requestLocationPermission = async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      console.log("Location permission status:", status);
+      // console.log("Location permission status:", status);
 
       if (status === "granted") {
         setLocationPermissionGranted(true);
@@ -211,6 +215,29 @@ export default function Home() {
 
     requestLocationPermission();
   }, []);
+
+  const haversineDistance = (
+    userLocation: Location,
+    selectedReport: Report
+  ): number => {
+    const toRad = (value: number) => (value * Math.PI) / 180;
+
+    const lat1 = toRad(userLocation.longitude);
+    const lon1 = toRad(userLocation.latitude);
+    const lat2 = toRad(selectedReport.latitude);
+    const lon2 = toRad(selectedReport.longitude);
+
+    const dLat = lat2 - lat1;
+    const dLon = lon2 - lon1;
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const radius = 6371000; // Earth's radius in meters
+    return radius * c; // Distance in meters
+  };
 
   const getWeatherDescription = (code: number) => {
     const weatherConditions: { [key: number]: string } = {
@@ -282,7 +309,7 @@ export default function Home() {
         longitudeDelta: region?.longitudeDelta || 0.01,
       };
 
-      console.log("Centering on user location:", newRegion); // Debugging ayaw magitna nung location
+      // console.log("Centering on user location:", newRegion); // Debugging ayaw magitna nung location
       mapRef.current?.animateToRegion(newRegion, 1000); // Animate to the new region
     } else {
       console.error("User location is not available"); // Debugging line ulet
@@ -325,11 +352,26 @@ export default function Home() {
                   }}
                 >
                   <View className="w-auto justify-center items-center">
-                    <Text>
+                    <Text className="font-bold text-sm">
                       {" " + item.type_of_report}
                       {item.custom_type && item.custom_type.length > 0 && (
                         <Text>{", " + item.custom_type}</Text>
                       )}
+                    </Text>
+
+                    <Text className="text-xs text-slate-600 mt-1">
+                      Distance:{" "}
+                      {userLocation
+                        ? (() => {
+                            const distance = haversineDistance(
+                              userLocation,
+                              item
+                            );
+                            return distance > 1000
+                              ? `${(distance / 1000).toFixed(2)} km` // Convert to kilometers
+                              : `${distance.toFixed(2)} m`; // Keep in meters
+                          })()
+                        : "Calculating..."}
                     </Text>
                     <Text className="text-xs text-slate-400 mt-1">
                       More Info
