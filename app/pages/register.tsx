@@ -10,6 +10,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 import { router } from "expo-router";
 import React, { useState } from "react";
@@ -116,155 +118,160 @@ export default function Register() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
-    >
-      <View className="w-full h-full relative items-center justify-center">
-        <Image source={bgImage} className="w-full h-full absolute cover" />
-        <View className="w-full h-auto bg-[#F0F4C3] flex flex-col rounded-t-3xl justify-center items-center bottom-0 absolute">
-          {/* <View className="w-full h-auto bg-white flex flex-col rounded-t-3xl justify-center items-center bottom-0 absolute border-2 border-[#0C3B2D]"> */}
-          <View className="w-full flex justify-start items-start">
-            <Text className="text-3xl font-extrabold text-[#0C3B2D] my-10 ml-10">
-              Create an Account
-            </Text>
-          </View>
-          <TextInput
-            className="w-4/5 bg-white text-md p-4 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
-            placeholder="Enter your name"
-            placeholderTextColor="#888"
-            onChangeText={setUsername}
-          />
-          <View className="w-4/5 bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+      >
+        <View className="w-full h-full relative items-center justify-center">
+          <Image source={bgImage} className="w-full h-full absolute cover" />
+          <View className="w-full h-auto bg-[#F0F4C3] flex flex-col rounded-t-3xl justify-center items-center bottom-0 absolute">
+            {/* <View className="w-full h-auto bg-white flex flex-col rounded-t-3xl justify-center items-center bottom-0 absolute border-2 border-[#0C3B2D]"> */}
+            <View className="w-full flex justify-start items-start">
+              <Text className="text-3xl font-extrabold text-[#0C3B2D] my-10 ml-10">
+                Create an Account
+              </Text>
+            </View>
             <TextInput
-              className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
-              placeholder="Enter your address"
+              className="w-4/5 bg-white text-md p-4 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+              placeholder="Enter your name"
               placeholderTextColor="#888"
-              value={address}
-              editable={false} // Make it non-editable
-              onChangeText={setAddress}
+              onChangeText={setUsername}
+            />
+            <View className="w-4/5 bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
+              <TextInput
+                className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
+                placeholder="Enter your address"
+                placeholderTextColor="#888"
+                value={address}
+                editable={false} // Make it non-editable
+                onChangeText={setAddress}
+              />
+              <TouchableOpacity
+                onPress={() => setShowMapPicker(true)}
+                className="text-lg p-3 items-center justify-center"
+              >
+                <MaterialCommunityIcons
+                  name="map-marker"
+                  size={24}
+                  color="#0C3B2D"
+                />
+              </TouchableOpacity>
+            </View>
+            <TextInput
+              className="w-4/5 bg-white text-md p-4 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+              placeholder="Enter your email"
+              placeholderTextColor="#888"
+              onChangeText={setEmail}
+            />
+            <TextInput
+              className="w-4/5 bg-white text-md p-4 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+              placeholder="Enter your phone number"
+              placeholderTextColor="#888"
+              keyboardType="numeric"
+              maxLength={11}
+              onChangeText={setContactNumber}
+            />
+            <View className="w-4/5 bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
+              <TextInput
+                className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
+                placeholder="Enter your password"
+                placeholderTextColor="#888"
+                secureTextEntry={!passwordVisible}
+                maxLength={16}
+                onChangeText={handlePasswordChange}
+              />
+              <TouchableOpacity
+                className="text-lg p-3 items-center justify-center"
+                onPress={() => setPasswordVisible(!passwordVisible)}
+              >
+                <MaterialCommunityIcons
+                  name={passwordVisible ? "eye-off" : "eye"}
+                  size={24}
+                  color="#0C3B2D"
+                />
+              </TouchableOpacity>
+            </View>
+            <View className="w-4/5 bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
+              <TextInput
+                className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
+                placeholder="Confirm your password"
+                placeholderTextColor="#888"
+                secureTextEntry={!confirmPasswordVisible}
+                maxLength={16}
+                onChangeText={handleConfirmPasswordChange}
+              />
+              <TouchableOpacity
+                className="text-lg p-3 items-center justify-center"
+                onPress={() =>
+                  setConfirmPasswordVisible(!confirmPasswordVisible)
+                }
+              >
+                <MaterialCommunityIcons
+                  name={confirmPasswordVisible ? "eye-off" : "eye"}
+                  size={24}
+                  color="#0C3B2D"
+                />
+              </TouchableOpacity>
+            </View>
+            {errors ? (
+              <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
+                {errors}
+              </Text>
+            ) : null}
+            {password.length > 0 && password.length < 6 && (
+              <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
+                Password must be at least 6 characters long.
+              </Text>
+            )}
+            {password.length > 0 && !/[A-Z]/.test(password) && (
+              <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
+                Password must contain at least one uppercase letter.
+              </Text>
+            )}
+            {password.length > 0 && !/\d/.test(password) && (
+              <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
+                Password must contain at least one number.
+              </Text>
+            )}
+            {password.length > 0 &&
+              !/[!@#$%^&*(),.?":{}|<>]/.test(password) && (
+                <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
+                  Password must contain at least one special character.
+                </Text>
+              )}
+            {password_confirm.length > 0 && password_confirm !== password && (
+              <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
+                Passwords do not match.
+              </Text>
+            )}
+            <LoadingButton
+              style="mt-3 w-full max-w-[80%] bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center"
+              title="REGISTER"
+              onPress={handleRegister}
+              loading={loading}
             />
             <TouchableOpacity
-              onPress={() => setShowMapPicker(true)}
-              className="text-lg p-3 items-center justify-center"
+              className="w-full flex items-center justify-center flex-row mt-6"
+              onPress={() => router.navigate(`/pages/login`)}
             >
-              <MaterialCommunityIcons
-                name="map-marker"
-                size={24}
-                color="#0C3B2D"
-              />
+              <Text className="text-xl text-[#7e9778] mr-3 mt-1 mb-8 font-semibold flex">
+                Already an account?
+              </Text>
+              <Text className="text-xl text-[#0C3B2D] mt-1 mb-8 font-bold flex">
+                Login
+              </Text>
             </TouchableOpacity>
           </View>
-          <TextInput
-            className="w-4/5 bg-white text-md p-4 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
-            placeholder="Enter your email"
-            placeholderTextColor="#888"
-            onChangeText={setEmail}
-          />
-          <TextInput
-            className="w-4/5 bg-white text-md p-4 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
-            placeholder="Enter your phone number"
-            placeholderTextColor="#888"
-            keyboardType="numeric"
-            maxLength={11}
-            onChangeText={setContactNumber}
-          />
-          <View className="w-4/5 bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
-            <TextInput
-              className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
-              placeholder="Enter your password"
-              placeholderTextColor="#888"
-              secureTextEntry={!passwordVisible}
-              maxLength={16}
-              onChangeText={handlePasswordChange}
+          {showMapPicker && (
+            <MapPicker
+              onLocationSelect={handleLocationSelect}
+              onClose={() => setShowMapPicker(false)}
             />
-            <TouchableOpacity
-              className="text-lg p-3 items-center justify-center"
-              onPress={() => setPasswordVisible(!passwordVisible)}
-            >
-              <MaterialCommunityIcons
-                name={passwordVisible ? "eye-off" : "eye"}
-                size={24}
-                color="#0C3B2D"
-              />
-            </TouchableOpacity>
-          </View>
-          <View className="w-4/5 bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
-            <TextInput
-              className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
-              placeholder="Confirm your password"
-              placeholderTextColor="#888"
-              secureTextEntry={!confirmPasswordVisible}
-              maxLength={16}
-              onChangeText={handleConfirmPasswordChange}
-            />
-            <TouchableOpacity
-              className="text-lg p-3 items-center justify-center"
-              onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
-            >
-              <MaterialCommunityIcons
-                name={confirmPasswordVisible ? "eye-off" : "eye"}
-                size={24}
-                color="#0C3B2D"
-              />
-            </TouchableOpacity>
-          </View>
-          {errors ? (
-            <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
-              {errors}
-            </Text>
-          ) : null}
-          {password.length > 0 && password.length < 6 && (
-            <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
-              Password must be at least 6 characters long.
-            </Text>
           )}
-          {password.length > 0 && !/[A-Z]/.test(password) && (
-            <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
-              Password must contain at least one uppercase letter.
-            </Text>
-          )}
-          {password.length > 0 && !/\d/.test(password) && (
-            <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
-              Password must contain at least one number.
-            </Text>
-          )}
-          {password.length > 0 && !/[!@#$%^&*(),.?":{}|<>]/.test(password) && (
-            <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
-              Password must contain at least one special character.
-            </Text>
-          )}
-          {password_confirm.length > 0 && password_confirm !== password && (
-            <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
-              Passwords do not match.
-            </Text>
-          )}
-          <LoadingButton
-            style="mt-3 w-full max-w-[80%] bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center"
-            title="REGISTER"
-            onPress={handleRegister}
-            loading={loading}
-          />
-          <TouchableOpacity
-            className="w-full flex items-center justify-center flex-row mt-6"
-            onPress={() => router.navigate(`/pages/login`)}
-          >
-            <Text className="text-xl text-[#7e9778] mr-3 mt-1 mb-8 font-semibold flex">
-              Already an account?
-            </Text>
-            <Text className="text-xl text-[#0C3B2D] mt-1 mb-8 font-bold flex">
-              Login
-            </Text>
-          </TouchableOpacity>
         </View>
-        {showMapPicker && (
-          <MapPicker
-            onLocationSelect={handleLocationSelect}
-            onClose={() => setShowMapPicker(false)}
-          />
-        )}
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </TouchableWithoutFeedback>
   );
 }
