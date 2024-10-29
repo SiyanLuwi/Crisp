@@ -25,13 +25,17 @@ import {
   onSnapshot,
   doc,
   updateDoc,
+  setDoc,
+  getDoc,
+  deleteDoc,
 } from "firebase/firestore";
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
 import { app } from "@/firebase/firebaseConfig";
 import * as SecureStore from "expo-secure-store";
 import * as Location from "expo-location";
+import { useAuth } from "@/AuthContext/AuthContext";
 const { height, width } = Dimensions.get("window");
-
+import { Vote } from "../utils/voteCounts";
 const db = getFirestore(app);
 
 interface Report {
@@ -46,9 +50,9 @@ interface Report {
   upvote: number;
   downvote: number;
   report_date: string;
-  voted: "upvote" | "downvote" | null; // Add voted property
-  upvoteCount: number; // Add upvoteCount
-  downvoteCount: number; // Add downvoteCount
+  upvoteCount: number | any,
+  downvoteCount: number | any,
+  voted: 'upvote' | 'downvote' | null
 }
 
 export default function Reports() {
@@ -75,114 +79,118 @@ export default function Reports() {
   const [upvoteCount, setUpvoteCount] = useState<number>(0);
   const [downvoteCount, setDownvoteCount] = useState<number>(0);
   const [voted, setVoted] = useState<"upvote" | "downvote" | null>(null);
+  const { USER_ID } = useAuth()
 
-  const fetchAllDocuments = async () => {
+  async function fetchAllVotes() {
+    const AllVotes: any[] = [];
+    try {
+      const allVotes = await Vote.getAllVotes(); 
+      
+      allVotes.forEach((report) => {
+        report.votes.forEach((vote) => {
+          AllVotes.push({reportId: report.reportId, userId: vote.user_id, vote: vote.vote });
+        });
+      });
+      return AllVotes;
+    } catch (error) {
+      console.error("Error fetching all votes:", error);
+    }
+  }
+  const fetchAllDocuments = async (userId: string, votes: any[]) => {
     const categories = [
-      "fires",
-      "street lights",
-      "potholes",
-      "floods",
-      "others",
-      "road incidents",
+        "fires",
+        "street light",
+        "potholes",
+        "floods",
+        "others",
+        "road incidents",
     ];
-
-    // Use an array to store unsubscribe functions
     const unsubscribeFunctions = categories.map((category) => {
-      return onSnapshot(
-        collection(db, `reports/${category}/reports`),
-        async (snapshot) => {
-          const reports: Report[] = await Promise.all(
-            snapshot.docs.map(async (doc) => {
-              const data = doc.data() as Omit<Report, "id">; // Omit the id when fetching data
-              const reportId = doc.id; // Store report ID to check vote status
-              const voted = await getVoteStatus(reportId); // Check if the user has voted
+        return onSnapshot(
+            collection(db, `reports/${category}/reports`),
+            async (snapshot) => {
+                const reports: Report[] = await Promise.all(
+                    snapshot.docs.map(async (doc) => {
+                        const data = doc.data() as Omit<Report, "id">; 
+                        const reportId = doc.id;
+                        const reportVotes = votes?.filter(vote => vote.reportId === reportId);
+                        const upvotes = reportVotes?.filter(vote => vote.vote === 'upvote').length;
+                        const downvotes = reportVotes?.filter(vote => vote.vote === 'downvote').length;
+                        const userVote = reportVotes?.find(vote => vote.userId === userId);
+                        const voted = userVote ? userVote.vote : null;
+                        return {
+                            id: reportId,
+                            ...data,
+                            upvoteCount: upvotes,
+                            downvoteCount: downvotes,
+                            voted: voted
+                        };
+                    })
+                );
 
-              return {
-                id: reportId,
-                username: data.username || "",
-                type_of_report: data.type_of_report || "",
-                report_description: data.report_description || "",
-                longitude: data.longitude || 0,
-                latitude: data.latitude || 0,
-                category: category,
-                image_path: data.image_path || "",
-                upvote: data.upvote || 0,
-                downvote: data.downvote || 0,
-                report_date: data.report_date || "",
-                voted: voted, // Set the voted state based on retrieval
-                upvoteCount: data.upvote || 0,
-                downvoteCount: data.downvote || 0,
-              };
-            })
-          );
+                const sortedReports = reports.sort((a, b) => {
+                    return new Date(b.report_date).getTime() - new Date(a.report_date).getTime();
+                });
 
-          const sortedReports = reports.sort((a, b) => {
-            const dateA = new Date(a.report_date).getTime();
-            const dateB = new Date(b.report_date).getTime();
-            return dateB - dateA;
-          });
+                setReports((prevReports) => {
+                    const existingReports = prevReports.filter((report) => report.category !== category);
+                    const newReports = [...existingReports, ...sortedReports];
 
-          setReports((prevReports) => {
-            const existingReports = prevReports.filter(
-              (report) => report.category !== category
-            );
-            return [...existingReports, ...sortedReports];
-          });
-        },
-        (error) => {
-          console.error(`Error fetching reports from ${category}:`, error);
-        }
-      );
+                    // Compare newReports with prevReports
+                    if (JSON.stringify(prevReports) !== JSON.stringify(newReports)) {
+                        return newReports; // Update state only if reports have changed
+                    }
+                    return prevReports; // Return previous state if no change
+                });
+            },
+            (error) => {
+                console.error(`Error fetching reports from ${category}:`, error);
+            }
+        );
     });
 
-    // Return a cleanup function that unsubscribes all listeners
     return () => {
-      unsubscribeFunctions.forEach((unsubscribe) => unsubscribe());
+        unsubscribeFunctions.forEach((unsubscribe) => unsubscribe());
     };
-  };
-
+};
   useEffect(() => {
     const fetchData = async () => {
-      const unsubscribe = await fetchAllDocuments(); // Await the Promise
+      if(!USER_ID){
+        throw new Error("Cannot fetch USER_ID!")
+      }
+      const votes = await fetchAllVotes()
+      if(!votes){
+        console.error("Votes is undefined");
+        return; // Early return instead of throwing an error
+      }
+      const unsubscribe = await fetchAllDocuments(USER_ID, votes); // Await the Promise
       return unsubscribe; // Return the unsubscribe function for cleanup
     };
-
     fetchData().catch((error) => {
       console.error("Error in fetching documents:", error);
     });
-
-    // Cleanup function returned from the inner async function
-    return () => {
-      // Handle cleanup if necessary, for example if unsubscribe is defined correctly
-    };
   }, []);
 
-  const updateVoteCount = async (
-    reportId: string,
-    upvoteCount: number,
-    downvoteCount: number,
-    category: string // Add category as a parameter
-  ) => {
-    const reportRef = doc(db, `reports/${category}/reports`, reportId); // Use the passed category
-
-    await updateDoc(reportRef, {
-      upvote: upvoteCount,
-      downvote: downvoteCount,
-    }).catch((error) => {
-      console.error("Error updating vote counts:", error);
-    });
-    // console.log("Vote counts updated successfully");
-  };
 
   const loadReports = async () => {
     setRefreshing(true); // Start refreshing
-    await fetchAllDocuments(); // Fetch the reports
-    setRefreshing(false); // Stop refreshing
-  };
+    if (!USER_ID) {
+        console.error("Cannot fetch USER_ID!");
+        setRefreshing(false);
+        return; // Early return
+    }
 
-  useEffect(() => {
-    loadReports(); // Load reports on component mount
-  }, []);
+    const votes = await fetchAllVotes();
+    if (!votes) {
+        console.error("Votes is undefined");
+        setRefreshing(false);
+        return; // Early return
+    }
+    setReports([]); 
+    await fetchAllDocuments(USER_ID, votes); // Fetch the reports 
+    setRefreshing(false); // Stop refreshing
+};
+
 
   useEffect(() => {
     const requestLocationPermission = async () => {
@@ -218,100 +226,64 @@ export default function Reports() {
     requestLocationPermission();
   }, []);
 
-  // Function to save vote status in SecureStore
-  const saveVoteStatus = async (
-    reportId: string,
-    voteType: "upvote" | "downvote"
-  ) => {
-    try {
-      await SecureStore.setItemAsync(reportId, voteType);
-    } catch (error) {
-      console.error("Error saving vote status:", error);
-    }
-  };
-
-  // Function to retrieve vote status from SecureStore
-  const getVoteStatus = async (
-    reportId: string
-  ): Promise<"upvote" | "downvote" | null> => {
-    try {
-      return (await SecureStore.getItemAsync(reportId)) as
-        | "upvote"
-        | "downvote"
-        | null;
-    } catch (error) {
-      console.error("Error retrieving vote status:", error);
-      return null;
-    }
-  };
 
   const handleUpvote = async (reportId: string, category: string) => {
-    const existingVote = await getVoteStatus(reportId);
-    if (!existingVote || existingVote === "downvote") {
-      setReports((prevReports) =>
-        prevReports.map((report) => {
-          if (report.id === reportId) {
-            // Compute new counts
-            const newUpvoteCount = report.upvoteCount + 1;
-            const newDownvoteCount =
-              report.voted === "downvote"
-                ? report.downvoteCount - 1
-                : report.downvoteCount;
-
-            // Update Firestore and save vote status
-            updateVoteCount(
-              reportId,
-              newUpvoteCount,
-              newDownvoteCount,
-              category
-            );
-            saveVoteStatus(reportId, "upvote");
-
-            return {
-              ...report,
-              upvoteCount: newUpvoteCount,
-              downvoteCount: newDownvoteCount,
-              voted: "upvote",
-            };
-          }
-          return report;
-        })
-      );
+    try {
+      const reportRef = doc(db, `reports/${category.toLowerCase()}/reports/${reportId}/votes/${USER_ID}`);   
+      console.log("Document Reference:", reportRef.path);
+      const reportSnap = await getDoc(reportRef);
+      const data = {
+        user_id: USER_ID,
+        vote: 'upvote'
+      };
+      
+      if (reportSnap.exists()) {
+        const existingVote = reportSnap.data().vote;
+        if(existingVote === 'upvote'){
+            await deleteDoc(reportRef)
+            console.log("Remove upvote!")
+        }else{
+          await deleteDoc(reportRef)
+          await setDoc(reportRef, data)
+          console.log("Update Vote!")
+        }
+      } else {
+        await setDoc(reportRef, data);
+        console.log("Upvote added successfully!", reportId);
+      }
+    } catch (error) {
+      console.error("Error handling upvote:", error);
     }
   };
+  
 
   const handleDownvote = async (reportId: string, category: string) => {
-    const existingVote = await getVoteStatus(reportId);
-    if (!existingVote || existingVote === "upvote") {
-      setReports((prevReports) =>
-        prevReports.map((report) => {
-          if (report.id === reportId) {
-            // Compute new counts
-            const newDownvoteCount = report.downvoteCount + 1;
-            const newUpvoteCount =
-              report.voted === "upvote"
-                ? report.upvoteCount - 1
-                : report.upvoteCount;
+    try {
+      const reportRef = doc(db, `reports/${category.toLowerCase()}/reports/${reportId}/votes/${USER_ID}`);   
+      console.log("Document Reference:", reportRef.path);
+      const reportSnap = await getDoc(reportRef);
+      const data = {
+        user_id: USER_ID,
+        vote: 'downvote'
+      };
+      
+      if (reportSnap.exists()) {
+        const existingVote = reportSnap.data().vote;
 
-            // Update Firestore and save vote status
-            updateVoteCount(
-              reportId,
-              newUpvoteCount,
-              newDownvoteCount,
-              category
-            );
-            saveVoteStatus(reportId, "downvote");
-
-            return {
-              ...report,
-              upvoteCount: newUpvoteCount,
-              downvoteCount: newDownvoteCount,
-              voted: "downvote",
-            };
-          }
-          return report;
-        })
-      );
+        if(existingVote === 'downvote'){
+            await deleteDoc(reportRef)
+            console.log("Remove downvote!")
+        }else{
+          await deleteDoc(reportRef)
+          await setDoc(reportRef, data)
+          console.log("Update Vote!")
+        }
+      } else {
+        await setDoc(reportRef, data);
+        console.log("Upvote added successfully!", reportId);
+      }
+    } catch (error) {
+      console.error("Error handling downvote:", error);
     }
   };
 
@@ -384,7 +356,7 @@ export default function Reports() {
         <View className="w-full flex flex-row mt-2 justify-between">
           <View className="flex flex-row items-center">
             <TouchableOpacity
-              onPress={() => handleUpvote(item.id, item.category)}
+              onPress={() => handleUpvote(item.id, item.type_of_report)}
             >
               <MaterialCommunityIcons
                 name={item.voted === "upvote" ? "thumb-up" : "thumb-up-outline"}
@@ -395,7 +367,7 @@ export default function Reports() {
             </TouchableOpacity>
             <Text className="text-lg mx-1">{item.upvoteCount}</Text>
             <TouchableOpacity
-              onPress={() => handleDownvote(item.id, item.category)}
+              onPress={() => handleDownvote(item.id, item.type_of_report)}
             >
               <MaterialCommunityIcons
                 name={

@@ -5,6 +5,7 @@ import { router } from "expo-router";
 import api from "@/app/api/axios";
 import * as FileSystem from "expo-file-system";
 interface AuthProps {
+  USER_ID?: string,
   authState?: { token: string | null; authenticated: boolean | null };
   onRegister?: (
     username: string,
@@ -67,7 +68,7 @@ export const AuthProvider = ({ children }: any) => {
     token: null,
     authenticated: null,
   });
-
+  const [USER_ID, SET_USER_ID] = useState('')
   useEffect(() => {
     const loadToken = async () => {
       const token = await SecureStore.getItemAsync(TOKEN_KEY);
@@ -80,6 +81,13 @@ export const AuthProvider = ({ children }: any) => {
         });
       }
     };
+    const loadId = async () => {
+      const user_id = await SecureStore.getItemAsync('user_id');
+      if(user_id){
+        SET_USER_ID(user_id)
+      }
+    }
+    loadId()
     loadToken();
   }, []);
 
@@ -134,7 +142,7 @@ export const AuthProvider = ({ children }: any) => {
         token: data.access,
         authenticated: true,
       });
-
+      SET_USER_ID(data.user_id.toString())
       const expirationTime = Date.now() + 60 * 60 * 1000;
       axios.defaults.headers.common["Authorization"] = `Bearer ${data.access}`;
 
@@ -445,6 +453,7 @@ export const AuthProvider = ({ children }: any) => {
     onLogout: logout,
     onVerifyEmail: onVerifyEmail,
     authState,
+    USER_ID,
     createReport: createReport,
     getUserInfo,
     updateProfile,
