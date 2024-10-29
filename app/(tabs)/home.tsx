@@ -39,6 +39,12 @@ interface Report {
   report_description: string;
   image_path: string;
   report_date: string;
+  custom_type: string;
+  floor_number: string;
+}
+interface Location {
+  latitude: number;
+  longitude: number;
 }
 
 const fetchDocuments = async () => {
@@ -74,11 +80,11 @@ export default function Home() {
   const fetchAllDocuments = async () => {
     const categories = [
       "fires",
-      "street lights",
+      "street light",
       "potholes",
       "floods",
       "others",
-      "road incidents",
+      "road accident",
     ];
 
     const unsubscribeFunctions = categories.map((category) => {
@@ -97,6 +103,8 @@ export default function Home() {
               category: category, // Set the category based on the current loop
               image_path: data.image_path || "", // Default to empty string if missing
               report_date: data.report_date || "", // Default to empty string if missing
+              custom_type: data.custom_type || "",
+              floor_number: data.floor_number || "",
             };
           });
 
@@ -138,7 +146,7 @@ export default function Home() {
   useEffect(() => {
     const requestLocationPermission = async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      console.log("Location permission status:", status);
+      // console.log("Location permission status:", status);
 
       if (status === "granted") {
         setLocationPermissionGranted(true);
@@ -207,6 +215,29 @@ export default function Home() {
 
     requestLocationPermission();
   }, []);
+
+  const haversineDistance = (
+    userLocation: Location,
+    selectedReport: Report
+  ): number => {
+    const toRad = (value: number) => (value * Math.PI) / 180;
+
+    const lat1 = toRad(userLocation.longitude);
+    const lon1 = toRad(userLocation.latitude);
+    const lat2 = toRad(selectedReport.latitude);
+    const lon2 = toRad(selectedReport.longitude);
+
+    const dLat = lat2 - lat1;
+    const dLon = lon2 - lon1;
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const radius = 6371000; // Earth's radius in meters
+    return radius * c; // Distance in meters
+  };
 
   const getWeatherDescription = (code: number) => {
     const weatherConditions: { [key: number]: string } = {
@@ -278,7 +309,7 @@ export default function Home() {
         longitudeDelta: region?.longitudeDelta || 0.01,
       };
 
-      console.log("Centering on user location:", newRegion); // Debugging ayaw magitna nung location
+      // console.log("Centering on user location:", newRegion); // Debugging ayaw magitna nung location
       mapRef.current?.animateToRegion(newRegion, 1000); // Animate to the new region
     } else {
       console.error("User location is not available"); // Debugging line ulet
@@ -321,7 +352,27 @@ export default function Home() {
                   }}
                 >
                   <View className="w-auto justify-center items-center">
-                    <Text>{item.type_of_report}</Text>
+                    <Text className="font-bold text-sm">
+                      {" " + item.type_of_report}
+                      {item.custom_type && item.custom_type.length > 0 && (
+                        <Text>{", " + item.custom_type}</Text>
+                      )}
+                    </Text>
+
+                    <Text className="text-xs text-slate-600 mt-1">
+                      Distance:{" "}
+                      {userLocation
+                        ? (() => {
+                            const distance = haversineDistance(
+                              userLocation,
+                              item
+                            );
+                            return distance > 1000
+                              ? `${(distance / 1000).toFixed(2)} km` // Convert to kilometers
+                              : `${distance.toFixed(2)} m`; // Keep in meters
+                          })()
+                        : "Calculating..."}
+                    </Text>
                     <Text className="text-xs text-slate-400 mt-1">
                       More Info
                     </Text>
@@ -412,15 +463,31 @@ export default function Home() {
                               </Text>
                             </View>
                           )}
-                          <Text className="text-lg mt-3  text-left pr-2 font-semibold text-slate-500">
+                          <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
                             Type of Report:
                             <Text className="text-lg font-normal text-black ml-2">
                               {" " + selectedReport.type_of_report}
+                              {selectedReport.custom_type &&
+                                selectedReport.custom_type.length > 0 && (
+                                  <Text className="text-lg font-normal text-black ml-2">
+                                    {", " + selectedReport.custom_type}
+                                  </Text>
+                                )}
                             </Text>
                           </Text>
                         </View>
                       </View>
 
+                      {selectedReport.floor_number ? (
+                        <View className="w-full flex flex-row">
+                          <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
+                            Floor Number:
+                            <Text className="text-lg font-normal text-black ml-2">
+                              {" " + selectedReport.floor_number}
+                            </Text>
+                          </Text>
+                        </View>
+                      ) : null}
                       <View className="w-full flex flex-row mb-3">
                         <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
                           Description:

@@ -23,7 +23,9 @@ interface AuthProps {
     longitude: string,
     latitude: string,
     is_emergency: string,
-    image_path: string
+    image_path: string,
+    custom_type: string,
+    floor_number: string
   ) => Promise<any>;
   onLogout?: () => Promise<any>;
   getUserInfo?: () => Promise<any>;
@@ -228,7 +230,9 @@ export const AuthProvider = ({ children }: any) => {
     longitude: string,
     latitude: string,
     is_emergency: string,
-    image_path: string
+    image_path: string,
+    custom_type: string,
+    floor_number: string
   ) => {
     console.log(
       type_of_report,
@@ -236,7 +240,9 @@ export const AuthProvider = ({ children }: any) => {
       longitude,
       latitude,
       is_emergency,
-      image_path
+      image_path,
+      custom_type,
+      floor_number
     );
     const formData = new FormData();
     formData.append("type_of_report", type_of_report);
@@ -249,6 +255,8 @@ export const AuthProvider = ({ children }: any) => {
       encoding: FileSystem.EncodingType.Base64,
     });
     formData.append("image_path", `data:image/jpeg;base64,${imageBase64}`);
+    formData.append("custom_type", custom_type);
+    formData.append("floor_number", floor_number);
     try {
       const res = await api.post("api/create-report/", formData, {
         headers: {
