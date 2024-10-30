@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
 import {
   Dimensions,
@@ -32,6 +32,31 @@ export default function CameraComp() {
   const [permission, requestPermission] = useCameraPermissions();
   const [loading, setLoading] = useState(false); // Add loading state
   const cameraRef = React.useRef<CameraView>(null);
+  const [capturedUri, setCapturedUri] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (capturedUri) {
+      resizeAndClassifyImage(capturedUri);
+    }
+  }, [capturedUri]);
+  useEffect(() => {
+    const fetchLocation = async () => {
+      try {
+        const location = await Location.getCurrentPositionAsync({});
+        const { latitude, longitude } = location.coords;
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          alert("Permission to access location was denied");
+          setLoading(false);
+          return;
+        }
+        await SecureStore.setItemAsync("currentLocation", `${latitude},${longitude}`);
+      } catch (error) {
+        console.error("Error fetching location:", error);
+      }
+    };
+    fetchLocation();
+  }, []);
 
   if (!permission) {
     // Camera permissions are still loading.
@@ -53,47 +78,25 @@ export default function CameraComp() {
   function toggleCameraFacing() {
     setFacing((current) => (current === "back" ? "front" : "back"));
   }
+
   const capturePhoto = async () => {
     try {
-      // Request location permission
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        alert("Permission to access location was denied");
-        return;
-      }
+      setLoading(true);
+      const photo = cameraRef.current
+        ? await cameraRef.current.takePictureAsync({ quality: 0.8 })
+        : null;
 
-      // Get current location
-      let location = await Location.getCurrentPositionAsync({});
-      const { latitude, longitude } = location.coords;
-      await SecureStore.setItemAsync(
-        "currentLocation",
-        `${latitude},${longitude}`
-      );
+      if (photo && photo.uri) {
+        console.log("Photo captured:", photo.uri);
 
-      // Take a photo
-      if (cameraRef.current) {
-        setLoading(true);
-        const photo = await cameraRef.current.takePictureAsync({
-          quality: 0.7,
-          base64: true,
-        });
+        // Save the image URI and navigate immediately
+        await SecureStore.setItemAsync("imageUri", photo.uri);
+        router.push("/pages/pictureForm");
 
-        if (photo && photo.uri && photo.base64) {
-          console.log("Photo captured:", photo.uri);
-
-           const optimize_uri = await resizeImage(photo.uri)
-           const isClassified = await classify_image(optimize_uri)
-
-          // Save the image URI
-          await SecureStore.setItemAsync("imageUri", photo.uri);
-
-          // If classification succeeds, navigate to form
-          if (isClassified) {
-            router.push("/pages/pictureForm");
-          }
-        } else {
-          console.error("Photo capturing failed: photo is undefined.");
-        }
+        // Set captured URI to initiate background processing
+        setCapturedUri(photo.uri);
+      } else {
+        console.error("Photo capturing failed: photo is undefined.");
       }
     } catch (error) {
       console.error("Error capturing photo:", error);
@@ -103,17 +106,28 @@ export default function CameraComp() {
     }
   };
 
+  const resizeAndClassifyImage = async (uri: string) => {
+    try {
+      // Resize the image
+      const optimizedUri = await resizeImage(uri);
+      // Classify the resized image
+      await classify_image(optimizedUri);
+    } catch (error) {
+      console.error("Error processing image:", error);
+    }
+  };
+
   const resizeImage = async (uri: string) => {
     try {
       const result = await manipulateAsync(
         uri,
         [{ resize: { width: 224, height: 224 } }],
-        { compress: 0.5, format: SaveFormat.JPEG }
+        { format: SaveFormat.JPEG }
       );
       return result.uri;
     } catch (error) {
       console.error("Error resizing image:", error);
-      return uri; // Return original image URI if resizing fails
+      return uri;
     }
   };
 
@@ -123,7 +137,6 @@ export default function CameraComp() {
         encoding: FileSystem.EncodingType.Base64,
       });
 
-      // Send image for classification
       const res = await axios.post(
         "https://detect.roboflow.com/image_classification_fv/1",
         base64image,
@@ -133,26 +146,30 @@ export default function CameraComp() {
         }
       );
 
-      const result = getHighestConfidenceClass(res.data.predictions);
-      console.log("Classified result:", result.class);
+      const result = getHighestConfidenceClass(res.data.predictions, 0.7);
 
-      const emergencyStatus =
-        result.class === "Fires" || result.class === "Floods" || result.class === "Road Accident" ? "Yes" : "No";
-      await SecureStore.setItemAsync("isEmergency", emergencyStatus);
-      await SecureStore.setItemAsync("report_type", result.class);
-      return true; // Classification succeeded
+      if (result) {
+        console.log("Classified result:", result.class);
+        const emergencyStatus =
+          ["Fires", "Floods", "Road Accident"].includes(result.class) ? "Yes" : "No";
+        await SecureStore.setItemAsync("isEmergency", emergencyStatus);
+        await SecureStore.setItemAsync("report_type", result.class);
+      } else {
+        console.log("Result null!");
+      }
     } catch (error: any) {
       console.error("Error during classification:", error.message);
       alert("Error classifying image. Please try again.");
-      return false; // Classification failed
     }
   };
 
-  const getHighestConfidenceClass = (results: Prediction[]) => {
-    return results.reduce((prev, current) =>
-      prev.confidence > current.confidence ? prev : current
-    );
+  const getHighestConfidenceClass = (results: Prediction[], threshold = 0.7) => {
+    const highConfidenceResult = results.filter(result => result.confidence >= threshold);
+    return highConfidenceResult.length
+      ? highConfidenceResult.reduce((prev, current) => prev.confidence > current.confidence ? prev : current)
+      : null;
   };
+
 
   return (
     <View className="w-full h-full flex justify-center items-center">
