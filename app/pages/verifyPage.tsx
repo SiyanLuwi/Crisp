@@ -103,6 +103,15 @@ export default function VerifyPage() {
         setTimeout(() => {
           setModalVisible(false); // Close success modal
           router.back(); // Navigate back after verification
+          setFirstName("");
+          setMiddleName("");
+          setLastName("");
+          setAddress("");
+          setBirthday("");
+          setIdNumber("");
+          setSelfie(null);
+          setPhoto(null);
+          setIdPicture(null);
         }, 2000); // Auto close modal after 2 seconds
       }
     } catch (error: any) {

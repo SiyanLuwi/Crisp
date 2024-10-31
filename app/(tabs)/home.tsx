@@ -398,7 +398,7 @@ export default function Home() {
         <SafeAreaView className="bg-white w-full absolute p-0 flex-row rounded-b-3xl border-[#0C3B2D] border-4 border-t-0">
           <View className="flex-1 items-start justify-center p-5 ml-4">
             <View className="items-start justify-start">
-              <Text className="text-[#0C3B2D] font-extrabold text-3xl mb-2">
+              <Text className="text-[#0C3B2D] font-bold text-2xl mb-2">
                 {getLocalDay()}
               </Text>
             </View>

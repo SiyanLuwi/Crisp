@@ -270,6 +270,43 @@ export default function Register() {
               onClose={() => setShowMapPicker(false)}
             />
           )}
+          {password.length > 0 && !/[A-Z]/.test(password) && (
+            <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
+              Password must contain at least one uppercase letter.
+            </Text>
+          )}
+          {password.length > 0 && !/\d/.test(password) && (
+            <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
+              Password must contain at least one number.
+            </Text>
+          )}
+          {password.length > 0 && !/[!@#$%^&*(),.?":{}|<>]/.test(password) && (
+            <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
+              Password must contain at least one special character.
+            </Text>
+          )}
+          {password_confirm.length > 0 && password_confirm !== password && (
+            <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
+              Passwords do not match.
+            </Text>
+          )}
+          <LoadingButton
+            style="mt-3 w-full max-w-[80%] bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center"
+            title="REGISTER"
+            onPress={handleRegister}
+            loading={loading}
+          />
+          <TouchableOpacity
+            className="w-full flex items-center justify-center flex-row mt-6"
+            onPress={() => router.navigate(`/pages/login`)}
+          >
+            <Text className="text-xl text-[#7e9778] mr-3 mt-1 mb-8 font-semibold flex">
+              Already an account?
+            </Text>
+            <Text className="text-xl text-[#0C3B2D] mt-1 mb-8 font-bold flex">
+              Login
+            </Text>
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>

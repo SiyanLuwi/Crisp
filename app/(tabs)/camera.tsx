@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
 import {
   Dimensions,
@@ -26,37 +26,22 @@ interface Prediction {
   class_id: number;
   confidence: number;
 }
+const getAddressFromCoordinates = async (latitude: number, longitude: number) => {
+  try {
+    const [result] = await Location.reverseGeocodeAsync({ latitude, longitude });
+    return result ? `${result.name}, ${result.city}, ${result.region}, ${result.country}` : "Address not found";
+  } catch (error) {
+    console.error("Error fetching address:", error);
+    return null;
+  }
+};
+
 
 export default function CameraComp() {
   const [facing, setFacing] = useState<CameraType>("back");
   const [permission, requestPermission] = useCameraPermissions();
   const [loading, setLoading] = useState(false); // Add loading state
   const cameraRef = React.useRef<CameraView>(null);
-  const [capturedUri, setCapturedUri] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (capturedUri) {
-      resizeAndClassifyImage(capturedUri);
-    }
-  }, [capturedUri]);
-  useEffect(() => {
-    const fetchLocation = async () => {
-      try {
-        const location = await Location.getCurrentPositionAsync({});
-        const { latitude, longitude } = location.coords;
-        let { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== "granted") {
-          alert("Permission to access location was denied");
-          setLoading(false);
-          return;
-        }
-        await SecureStore.setItemAsync("currentLocation", `${latitude},${longitude}`);
-      } catch (error) {
-        console.error("Error fetching location:", error);
-      }
-    };
-    fetchLocation();
-  }, []);
 
   if (!permission) {
     // Camera permissions are still loading.
@@ -78,25 +63,53 @@ export default function CameraComp() {
   function toggleCameraFacing() {
     setFacing((current) => (current === "back" ? "front" : "back"));
   }
-
   const capturePhoto = async () => {
     try {
-      setLoading(true);
-      const photo = cameraRef.current
-        ? await cameraRef.current.takePictureAsync({ quality: 0.8 })
-        : null;
-
-      if (photo && photo.uri) {
-        console.log("Photo captured:", photo.uri);
-
-        // Save the image URI and navigate immediately
-        await SecureStore.setItemAsync("imageUri", photo.uri);
-        router.push("/pages/pictureForm");
-
-        // Set captured URI to initiate background processing
-        setCapturedUri(photo.uri);
+      // Request location permission
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        alert("Permission to access location was denied");
+        return;
+      }
+  
+      // Get current location with high accuracy
+      let location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+      const { latitude, longitude } = location.coords;
+  
+      // Convert to address
+      const address = await getAddressFromCoordinates(latitude, longitude);
+      if (address) {
+        await SecureStore.setItemAsync("currentLocation", address); // Save the address
       } else {
-        console.error("Photo capturing failed: photo is undefined.");
+        console.error("Failed to get address.");
+      }
+  
+      // Take a photo
+      if (cameraRef.current) {
+        setLoading(true);
+        const photo = await cameraRef.current.takePictureAsync({
+          quality: 0.7,
+          base64: true,
+        });
+  
+        if (photo && photo.uri && photo.base64) {
+          console.log("Photo captured:", photo.uri);
+  
+          const optimize_uri = await resizeImage(photo.uri);
+          const isClassified = await classify_image(optimize_uri);
+  
+          // Save the image URI
+          await SecureStore.setItemAsync("imageUri", photo.uri);
+  
+          // If classification succeeds, navigate to form
+          if (isClassified) {
+            router.push("/pages/pictureForm");
+          }
+        } else {
+          console.error("Photo capturing failed: photo is undefined.");
+        }
       }
     } catch (error) {
       console.error("Error capturing photo:", error);
@@ -105,29 +118,19 @@ export default function CameraComp() {
       setLoading(false);
     }
   };
-
-  const resizeAndClassifyImage = async (uri: string) => {
-    try {
-      // Resize the image
-      const optimizedUri = await resizeImage(uri);
-      // Classify the resized image
-      await classify_image(optimizedUri);
-    } catch (error) {
-      console.error("Error processing image:", error);
-    }
-  };
+  
 
   const resizeImage = async (uri: string) => {
     try {
       const result = await manipulateAsync(
         uri,
         [{ resize: { width: 224, height: 224 } }],
-        { format: SaveFormat.JPEG }
+        { compress: 0.5, format: SaveFormat.JPEG }
       );
       return result.uri;
     } catch (error) {
       console.error("Error resizing image:", error);
-      return uri;
+      return uri; // Return original image URI if resizing fails
     }
   };
 
@@ -137,6 +140,7 @@ export default function CameraComp() {
         encoding: FileSystem.EncodingType.Base64,
       });
 
+      // Send image for classification
       const res = await axios.post(
         "https://detect.roboflow.com/image_classification_fv/1",
         base64image,
@@ -146,30 +150,26 @@ export default function CameraComp() {
         }
       );
 
-      const result = getHighestConfidenceClass(res.data.predictions, 0.7);
+      const result = getHighestConfidenceClass(res.data.predictions);
+      console.log("Classified result:", result.class);
 
-      if (result) {
-        console.log("Classified result:", result.class);
-        const emergencyStatus =
-          ["Fires", "Floods", "Road Accident"].includes(result.class) ? "Yes" : "No";
-        await SecureStore.setItemAsync("isEmergency", emergencyStatus);
-        await SecureStore.setItemAsync("report_type", result.class);
-      } else {
-        console.log("Result null!");
-      }
+      const emergencyStatus =
+        result.class === "Fires" || result.class === "Floods" || result.class === "Road Accident" ? "Yes" : "No";
+      await SecureStore.setItemAsync("isEmergency", emergencyStatus);
+      await SecureStore.setItemAsync("report_type", result.class);
+      return true; // Classification succeeded
     } catch (error: any) {
       console.error("Error during classification:", error.message);
       alert("Error classifying image. Please try again.");
+      return false; // Classification failed
     }
   };
 
-  const getHighestConfidenceClass = (results: Prediction[], threshold = 0.7) => {
-    const highConfidenceResult = results.filter(result => result.confidence >= threshold);
-    return highConfidenceResult.length
-      ? highConfidenceResult.reduce((prev, current) => prev.confidence > current.confidence ? prev : current)
-      : null;
+  const getHighestConfidenceClass = (results: Prediction[]) => {
+    return results.reduce((prev, current) =>
+      prev.confidence > current.confidence ? prev : current
+    );
   };
-
 
   return (
     <View className="w-full h-full flex justify-center items-center">

@@ -301,11 +301,11 @@ export default function ManageReports() {
       // Delete the report from the reports collection
       const reportRef = doc(
         db,
-        `reports/${selectedReport.category}/reports`,
+        `reports/${selectedReport.type_of_report.toLowerCase()}/reports`,
         reportId
       );
       await deleteDoc(reportRef);
-
+      console.log(selectedReport, reportId);
       // Create a new document in the deletedReports collection
       const deletedReportRef = doc(db, "deletedReports", reportId);
       await setDoc(deletedReportRef, {
