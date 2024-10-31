@@ -1,47 +1,94 @@
-import React from "react";
-import { View, Text, Modal, TouchableOpacity, StyleSheet } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, Modal, TouchableOpacity } from "react-native";
 
 interface DeleteReportModalProps {
   visible: boolean;
   onClose: () => void;
+  onConfirm: (reportId: string) => Promise<void>; // Change to Promise<void> for async operations
+  reportId: string | null; // Add reportId prop
 }
 
 const DeleteReportModal: React.FC<DeleteReportModalProps> = ({
   visible,
   onClose,
+  onConfirm,
+  reportId,
 }) => {
-  const handleConfirm = () => {
-    onClose(); // Use the modified close function
-    console.log("Report deleted");
+  const [success, setSuccess] = useState(false);
+  const [successMessageVisible, setSuccessMessageVisible] = useState(false);
+
+  const handleConfirm = async () => {
+    if (reportId) {
+      await onConfirm(reportId); // Call onConfirm with the report ID, wait for it to finish
+      setSuccess(true);
+      setSuccessMessageVisible(true);
+    }
   };
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+
+    if (successMessageVisible) {
+      // Set a timer to hide the success message after 3 seconds
+      timer = setTimeout(() => {
+        setSuccessMessageVisible(false);
+        onClose(); // Close the modal after the message is hidden
+      }, 3000); // Change the duration as needed (3000 ms = 3 seconds)
+    }
+
+    return () => {
+      clearTimeout(timer); // Clean up the timer on unmount or when successMessageVisible changes
+    };
+  }, [successMessageVisible]);
+
   return (
     <Modal transparent={true} visible={visible} animationType="fade">
       <View className="flex-1 justify-center items-center bg-black/50">
         <View className="w-4/5 py-5 px-3 bg-white rounded-xl items-start border-2 border-[#0C3B2D]">
-          <Text className="text-2xl font-extrabold text-[#0C3B2D] mb-5 px-3">
-            Delete Report
-          </Text>
-          <Text className="text-md font-normal text-[#0C3B2D] mb-10 px-3">
-            Are you sure you want to delete your post?
-          </Text>
-          <View className="flex flex-row justify-end w-full mt-3  px-3">
-            <TouchableOpacity
-              onPress={handleConfirm}
-              className="bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center"
-            >
-              <Text className="text-md font-semibold text-white px-4">
-                Confirm
+          {!success ? (
+            <>
+              <Text className="text-2xl font-extrabold text-[#0C3B2D] mb-5 px-3">
+                Delete Report
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={onClose}
-              className="bg-white border-[#0C3B2D] border-2 p-2 rounded-lg h-auto items-center justify-center ml-3"
-            >
-              <Text className="text-md font-semibold text-[#0C3B2D] px-4">
-                Cancel
+              <Text className="text-md font-normal text-[#0C3B2D] mb-10 px-3">
+                Are you sure you want to delete your post?
               </Text>
-            </TouchableOpacity>
-          </View>
+              <View className="flex flex-row justify-end w-full mt-3  px-3">
+                <TouchableOpacity
+                  onPress={handleConfirm}
+                  className="bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center"
+                >
+                  <Text className="text-md font-semibold text-white px-4">
+                    Confirm
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={onClose}
+                  className="bg-white border-[#0C3B2D] border-2 p-2 rounded-lg h-auto items-center justify-center ml-3"
+                >
+                  <Text className="text-md font-semibold text-[#0C3B2D] px-4">
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : successMessageVisible ? (
+            <View className="full p-3 bg-white rounded-xl items-start">
+              <Text className="text-xl font-bold text-[#0C3B2D] mb-5">
+                Report has been Deleted successfully!
+              </Text>
+              <View className="flex flex-row justify-end w-full ">
+                <TouchableOpacity
+                  className="bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center"
+                  onPress={onClose} // Close the modal here
+                >
+                  <Text className="text-md font-semibold text-white px-4">
+                    Close
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : null}
         </View>
       </View>
     </Modal>

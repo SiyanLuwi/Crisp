@@ -14,7 +14,12 @@ import axios from "axios";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getFirestore, collection, getDocs } from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  onSnapshot,
+} from "firebase/firestore";
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
 import { useQuery } from "@tanstack/react-query";
 import { app } from "@/firebase/firebaseConfig";
@@ -30,9 +35,16 @@ interface Report {
   type_of_report: string;
   longitude: number;
   latitude: number;
+  category: string;
   report_description: string;
   image_path: string;
   report_date: string;
+  custom_type: string;
+  floor_number: string;
+}
+interface Location {
+  latitude: number;
+  longitude: number;
 }
 
 const fetchDocuments = async () => {
@@ -63,15 +75,78 @@ export default function Home() {
   const mapRef = useRef<MapView>(null); // Add a ref to the MapView
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
-  const { data } = useQuery<Report[], Error>({
-    queryKey: ["reports"],
-    queryFn: fetchDocuments,
-  });
+  const [reports, setReports] = useState<Report[]>([]);
+
+  const fetchAllDocuments = async () => {
+    const categories = [
+      "fires",
+      "street light",
+      "potholes",
+      "floods",
+      "others",
+      "road accident",
+    ];
+
+    const unsubscribeFunctions = categories.map((category) => {
+      return onSnapshot(
+        collection(db, `reports/${category}/reports`),
+        (snapshot) => {
+          const reports: Report[] = snapshot.docs.map((doc) => {
+            const data = doc.data() as Omit<Report, "id">; // Omit the id when fetching data
+            return {
+              id: doc.id, // Include the document ID this is an UUID
+              username: data.username || "", // Default to empty string if missing
+              type_of_report: data.type_of_report || "",
+              report_description: data.report_description || "",
+              longitude: data.longitude || 0, // Default to 0 if missing
+              latitude: data.latitude || 0, // Default to 0 if missing
+              category: category, // Set the category based on the current loop
+              image_path: data.image_path || "", // Default to empty string if missing
+              report_date: data.report_date || "", // Default to empty string if missing
+              custom_type: data.custom_type || "",
+              floor_number: data.floor_number || "",
+            };
+          });
+
+          const sortedReports = reports.sort((a, b) => {
+            const dateA = new Date(a.report_date).getTime();
+            const dateB = new Date(b.report_date).getTime();
+            return dateB - dateA;
+          });
+          // console.log(`Fetched Reports from ${category}:`, sortedReports);
+          // Update the reports state with new reports from this category
+          setReports((prevReports) => {
+            const existingReports = prevReports.filter(
+              (report) => report.category !== category
+            );
+            return [...existingReports, ...sortedReports]; // Replace old reports of this category and add the sorted new ones
+          });
+        },
+        (error) => {
+          console.error(`Error fetching reports from ${category}:`, error);
+        }
+      );
+    });
+    return () => {
+      unsubscribeFunctions.forEach((unsubscribe) => unsubscribe());
+    };
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const unsubscribe = await fetchAllDocuments();
+      return unsubscribe; // Return the unsubscribe function for cleanup
+    };
+
+    fetchData().catch((error) => {
+      console.error("Error in fetching documents:", error);
+    });
+  }, []);
 
   useEffect(() => {
     const requestLocationPermission = async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      console.log("Location permission status:", status);
+      // console.log("Location permission status:", status);
 
       if (status === "granted") {
         setLocationPermissionGranted(true);
@@ -108,7 +183,7 @@ export default function Home() {
         const estimatedFloor =
           altitude !== null ? Math.round(altitude / floorHeight) : null; // If altitude is null, estimatedFloor is also null
 
-        console.log(`Estimated Floor: ${estimatedFloor}`); // Log the estimated floor
+        // console.log(`Estimated Floor: ${estimatedFloor}`); // Log the estimated floor
 
         // Optionally update state with altitude and estimated floor
         setAltitude(altitude); // Set altitude state if needed
@@ -140,6 +215,29 @@ export default function Home() {
 
     requestLocationPermission();
   }, []);
+
+  const haversineDistance = (
+    userLocation: Location,
+    selectedReport: Report
+  ): number => {
+    const toRad = (value: number) => (value * Math.PI) / 180;
+
+    const lat1 = toRad(userLocation.longitude);
+    const lon1 = toRad(userLocation.latitude);
+    const lat2 = toRad(selectedReport.latitude);
+    const lon2 = toRad(selectedReport.longitude);
+
+    const dLat = lat2 - lat1;
+    const dLon = lon2 - lon1;
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const radius = 6371000; // Earth's radius in meters
+    return radius * c; // Distance in meters
+  };
 
   const getWeatherDescription = (code: number) => {
     const weatherConditions: { [key: number]: string } = {
@@ -211,13 +309,12 @@ export default function Home() {
         longitudeDelta: region?.longitudeDelta || 0.01,
       };
 
-      console.log("Centering on user location:", newRegion); // Debugging ayaw magitna nung location
+      // console.log("Centering on user location:", newRegion); // Debugging ayaw magitna nung location
       mapRef.current?.animateToRegion(newRegion, 1000); // Animate to the new region
     } else {
       console.error("User location is not available"); // Debugging line ulet
     }
   };
-
   return (
     <View className="h-full w-full flex-1 absolute">
       {!locationPermissionGranted || region === null ? (
@@ -240,31 +337,49 @@ export default function Home() {
               description="South Campus"
             />
 
-            {data &&
-              data.map((item) => (
-                // console.log(item.latitude, item.longitude),
-                <Marker
-                  key={item.id}
-                  coordinate={{
-                    latitude: item.longitude,
-                    longitude: item.latitude,
+            {reports.map((item, index) => (
+              <Marker
+                key={`${item.id}-${index}`}
+                coordinate={{
+                  latitude: item.longitude,
+                  longitude: item.latitude,
+                }}
+              >
+                <Callout
+                  onPress={() => {
+                    setSelectedReport(item);
+                    setModalVisible(true);
                   }}
                 >
-                  <Callout
-                    onPress={() => {
-                      setSelectedReport(item);
-                      setModalVisible(true);
-                    }}
-                  >
-                    <View className="w-auto justify-center items-center">
-                      <Text>{item.type_of_report}</Text>
-                      <Text className="text-xs text-slate-400 mt-1">
-                        More Info
-                      </Text>
-                    </View>
-                  </Callout>
-                </Marker>
-              ))}
+                  <View className="w-auto justify-center items-center">
+                    <Text className="font-bold text-sm">
+                      {" " + item.type_of_report}
+                      {item.custom_type && item.custom_type.length > 0 && (
+                        <Text>{", " + item.custom_type}</Text>
+                      )}
+                    </Text>
+
+                    <Text className="text-xs text-slate-600 mt-1">
+                      Distance:{" "}
+                      {userLocation
+                        ? (() => {
+                            const distance = haversineDistance(
+                              userLocation,
+                              item
+                            );
+                            return distance > 1000
+                              ? `${(distance / 1000).toFixed(2)} km` // Convert to kilometers
+                              : `${distance.toFixed(2)} m`; // Keep in meters
+                          })()
+                        : "Calculating..."}
+                    </Text>
+                    <Text className="text-xs text-slate-400 mt-1">
+                      More Info
+                    </Text>
+                  </View>
+                </Callout>
+              </Marker>
+            ))}
           </MapView>
 
           <TouchableOpacity
@@ -283,7 +398,7 @@ export default function Home() {
         <SafeAreaView className="bg-white w-full absolute p-0 flex-row rounded-b-3xl border-[#0C3B2D] border-4 border-t-0">
           <View className="flex-1 items-start justify-center p-5 ml-4">
             <View className="items-start justify-start">
-              <Text className="text-[#0C3B2D] font-extrabold text-3xl mb-2">
+              <Text className="text-[#0C3B2D] font-bold text-2xl mb-2">
                 {getLocalDay()}
               </Text>
             </View>
@@ -348,15 +463,31 @@ export default function Home() {
                               </Text>
                             </View>
                           )}
-                          <Text className="text-lg mt-3  text-left pr-2 font-semibold text-slate-500">
+                          <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
                             Type of Report:
                             <Text className="text-lg font-normal text-black ml-2">
                               {" " + selectedReport.type_of_report}
+                              {selectedReport.custom_type &&
+                                selectedReport.custom_type.length > 0 && (
+                                  <Text className="text-lg font-normal text-black ml-2">
+                                    {", " + selectedReport.custom_type}
+                                  </Text>
+                                )}
                             </Text>
                           </Text>
                         </View>
                       </View>
 
+                      {selectedReport.floor_number ? (
+                        <View className="w-full flex flex-row">
+                          <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
+                            Floor Number:
+                            <Text className="text-lg font-normal text-black ml-2">
+                              {" " + selectedReport.floor_number}
+                            </Text>
+                          </Text>
+                        </View>
+                      ) : null}
                       <View className="w-full flex flex-row mb-3">
                         <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
                           Description:

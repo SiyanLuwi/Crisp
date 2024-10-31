@@ -5,6 +5,7 @@ import { router } from "expo-router";
 import api from "@/app/api/axios";
 import * as FileSystem from "expo-file-system";
 interface AuthProps {
+  USER_ID?: string,
   authState?: { token: string | null; authenticated: boolean | null };
   onRegister?: (
     username: string,
@@ -22,7 +23,9 @@ interface AuthProps {
     longitude: string,
     latitude: string,
     is_emergency: string,
-    image_path: string
+    image_path: string,
+    custom_type: string,
+    floor_number: string
   ) => Promise<any>;
   onLogout?: () => Promise<any>;
   getUserInfo?: () => Promise<any>;
@@ -67,7 +70,7 @@ export const AuthProvider = ({ children }: any) => {
     token: null,
     authenticated: null,
   });
-
+  const [USER_ID, SET_USER_ID] = useState('')
   useEffect(() => {
     const loadToken = async () => {
       const token = await SecureStore.getItemAsync(TOKEN_KEY);
@@ -80,6 +83,13 @@ export const AuthProvider = ({ children }: any) => {
         });
       }
     };
+    const loadId = async () => {
+      const user_id = await SecureStore.getItemAsync('user_id');
+      if(user_id){
+        SET_USER_ID(user_id)
+      }
+    }
+    loadId()
     loadToken();
   }, []);
 
@@ -112,7 +122,7 @@ export const AuthProvider = ({ children }: any) => {
       return { error: true, msg: "Register error!" };
     }
   };
- 
+
   //Login function
   const login = async (username: string, password: string) => {
     try {
@@ -134,7 +144,7 @@ export const AuthProvider = ({ children }: any) => {
         token: data.access,
         authenticated: true,
       });
-   
+      SET_USER_ID(data.user_id.toString())
       const expirationTime = Date.now() + 60 * 60 * 1000;
       axios.defaults.headers.common["Authorization"] = `Bearer ${data.access}`;
 
@@ -143,13 +153,14 @@ export const AuthProvider = ({ children }: any) => {
         [REFRESH_KEY]: data.refresh,
         [ROLE]: data.account_type,
         [EXPIRATION]: expirationTime.toString(),
-        user_id: data.user_id,
+        user_id: data.user_id.toString(),
         username: data.username,
         email: data.email,
         address: data.address,
         contact_number: data.contact_number,
         account_type: data.account_type,
         is_email_verified: data.is_email_verified,
+        is_verified: data.is_verified,
       };
 
       await Promise.all(
@@ -219,7 +230,9 @@ export const AuthProvider = ({ children }: any) => {
     longitude: string,
     latitude: string,
     is_emergency: string,
-    image_path: string
+    image_path: string,
+    custom_type: string,
+    floor_number: string
   ) => {
     console.log(
       type_of_report,
@@ -227,7 +240,9 @@ export const AuthProvider = ({ children }: any) => {
       longitude,
       latitude,
       is_emergency,
-      image_path
+      image_path,
+      custom_type,
+      floor_number
     );
     const formData = new FormData();
     formData.append("type_of_report", type_of_report);
@@ -240,6 +255,8 @@ export const AuthProvider = ({ children }: any) => {
       encoding: FileSystem.EncodingType.Base64,
     });
     formData.append("image_path", `data:image/jpeg;base64,${imageBase64}`);
+    formData.append("custom_type", custom_type);
+    formData.append("floor_number", floor_number);
     try {
       const res = await api.post("api/create-report/", formData, {
         headers: {
@@ -272,12 +289,14 @@ export const AuthProvider = ({ children }: any) => {
       const email = await SecureStore.getItemAsync("email");
       const address = await SecureStore.getItemAsync("address");
       const contact_number = await SecureStore.getItemAsync("contact_number");
+      const is_verified = await SecureStore.getItemAsync("is_verified");
 
       return {
         username,
         email,
         address,
         contact_number,
+        is_verified: is_verified === "true",
       };
     } catch (error) {
       console.error("Error retrieving user information:", error);
@@ -291,14 +310,14 @@ export const AuthProvider = ({ children }: any) => {
     contact_no: string
   ) => {
     try {
-      const ipv = await Network.getIpAddressAsync(); // Get the current IP address if required
+      // const ipv = await Network.getIpAddressAsync(); // Get the current IP address if required
       const res = await api.put(
         `api/user/profile/`,
         {
           username,
           address,
           contact_number: contact_no,
-          ipv, // Include the IP address if it's required for the update
+          // ipv, // Include the IP address if it's required for the update
         },
         {
           headers: {
@@ -442,6 +461,7 @@ export const AuthProvider = ({ children }: any) => {
     onLogout: logout,
     onVerifyEmail: onVerifyEmail,
     authState,
+    USER_ID,
     createReport: createReport,
     getUserInfo,
     updateProfile,

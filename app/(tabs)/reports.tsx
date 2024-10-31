@@ -9,6 +9,7 @@ import {
   ImageBackground,
   Modal,
   TouchableWithoutFeedback,
+  RefreshControl,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import MapView, { Marker, Region } from "react-native-maps";
@@ -17,13 +18,26 @@ import { RFPercentage } from "react-native-responsive-fontsize";
 import ReportReportModal from "@/components/reportReport";
 const bgImage = require("@/assets/images/bgImage.png");
 import { router } from "expo-router";
-import { getFirestore, collection, getDocs, onSnapshot } from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  onSnapshot,
+  doc,
+  updateDoc,
+  setDoc,
+  getDoc,
+  deleteDoc,
+  arrayUnion,
+  increment,
+} from "firebase/firestore";
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
 import { app } from "@/firebase/firebaseConfig";
 import * as SecureStore from "expo-secure-store";
 import * as Location from "expo-location";
+import { useAuth } from "@/AuthContext/AuthContext";
 const { height, width } = Dimensions.get("window");
-
+import { Vote } from "../utils/voteCounts";
 const db = getFirestore(app);
 
 interface Report {
@@ -38,9 +52,16 @@ interface Report {
   upvote: number;
   downvote: number;
   report_date: string;
+  custom_type: string;
+  floor_number: string;
+  upvoteCount: number | any;
+  downvoteCount: number | any;
+  voted: "upvote" | "downvote" | null;
 }
-
-
+interface Location {
+  latitude: number;
+  longitude: number;
+}
 
 export default function Reports() {
   const initialRegion = {
@@ -62,75 +83,165 @@ export default function Reports() {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
-  
-  const fetchAllDocuments = async () => {
+  const [refreshing, setRefreshing] = useState(false);
+  const [upvoteCount, setUpvoteCount] = useState<number>(0);
+  const [downvoteCount, setDownvoteCount] = useState<number>(0);
+  const [voted, setVoted] = useState<"upvote" | "downvote" | null>(null);
+  const { USER_ID } = useAuth();
+
+  async function fetchAllVotes() {
+    const AllVotes: any[] = [];
+    try {
+      const allVotes = await Vote.getAllVotes();
+
+      allVotes.forEach((report) => {
+        report.votes.forEach((vote) => {
+          AllVotes.push({
+            reportId: report.reportId,
+            userId: vote.user_id,
+            vote: vote.vote,
+          });
+        });
+      });
+      return AllVotes;
+    } catch (error) {
+      console.error("Error fetching all votes:", error);
+    }
+  }
+  const fetchAllDocuments = async (userId: string, votes: any[]) => {
     const categories = [
       "fires",
-      "street lights",
+      "street light",
       "potholes",
       "floods",
       "others",
       "road incidents",
     ];
-  
     const unsubscribeFunctions = categories.map((category) => {
       return onSnapshot(
         collection(db, `reports/${category}/reports`),
-        (snapshot) => {
-          const reports: Report[] = snapshot.docs.map((doc) => {
-            const data = doc.data() as Omit<Report, "id">; // Omit the id when fetching data
-            return {
-              id: doc.id, // Include the document ID this is an UUID
-              username: data.username || "", // Default to empty string if missing
-              type_of_report: data.type_of_report || "",
-              report_description: data.report_description || "",
-              longitude: data.longitude || 0, // Default to 0 if missing
-              latitude: data.latitude || 0, // Default to 0 if missing
-              category: category, // Set the category based on the current loop
-              image_path: data.image_path || "", // Default to empty string if missing
-              upvote: data.upvote || 0, // Default to 0 if missing
-              downvote: data.downvote || 0, // Default to 0 if missing
-              report_date: data.report_date || "", // Default to empty string if missing
-            };
+        async (snapshot) => {
+          const reports: Report[] = await Promise.all(
+            snapshot.docs.map(async (doc) => {
+              const data = doc.data() as Omit<Report, "id">;
+              const reportId = doc.id;
+              const reportVotes = votes?.filter(
+                (vote) => vote.reportId === reportId
+              );
+              const upvotes = reportVotes?.filter(
+                (vote) => vote.vote === "upvote"
+              ).length;
+              const downvotes = reportVotes?.filter(
+                (vote) => vote.vote === "downvote"
+              ).length;
+              const userVote = reportVotes?.find(
+                (vote) => vote.userId === userId
+              );
+              const voted = userVote ? userVote.vote : null;
+              return {
+                id: reportId,
+                ...data,
+                upvoteCount: upvotes,
+                downvoteCount: downvotes,
+                voted: voted,
+              };
+            })
+          );
+
+          setReports((prevReports) => {
+            // Combine previous reports with new ones
+            const combinedReports = [...prevReports, ...reports];
+
+            // Sort all reports by date
+            const sortedReports = combinedReports.sort((a, b) => {
+              return (
+                new Date(b.report_date).getTime() -
+                new Date(a.report_date).getTime()
+              );
+            });
+
+            // Return sorted reports only if they have changed
+            if (JSON.stringify(prevReports) !== JSON.stringify(sortedReports)) {
+              return sortedReports;
+            }
+            return prevReports; // Return previous state if no change
           });
-        
-          const sortedReports = reports.sort((a, b) => {
-            const dateA = new Date(a.report_date).getTime();
-            const dateB = new Date(b.report_date).getTime(); 
-            return dateB - dateA;
-          });
-          console.log(`Fetched Reports from ${category}:`, sortedReports);
-          // Update the reports state with new reports from this category
-          setReports((prevReports) => [
-            ...prevReports,
-            ...sortedReports,
-          ]);
         },
         (error) => {
           console.error(`Error fetching reports from ${category}:`, error);
         }
       );
     });
+
     return () => {
       unsubscribeFunctions.forEach((unsubscribe) => unsubscribe());
     };
   };
-
   useEffect(() => {
-  const fetchData = async () => {
-    const unsubscribe = await fetchAllDocuments();
-    return unsubscribe; // Return the unsubscribe function for cleanup
+    const fetchData = async () => {
+      if (!USER_ID) {
+        throw new Error("Cannot fetch USER_ID!");
+      }
+      const votes = await fetchAllVotes();
+      if (!votes) {
+        console.error("Votes is undefined");
+        return; // Early return instead of throwing an error
+      }
+      const unsubscribe = await fetchAllDocuments(USER_ID, votes); // Await the Promise
+      return unsubscribe; // Return the unsubscribe function for cleanup
+    };
+    fetchData().catch((error) => {
+      console.error("Error in fetching documents:", error);
+    });
+  }, []);
+
+  const handleReportSubmit = async (
+    reportId: string,
+    category: string,
+    reason: string
+  ) => {
+    try {
+      // Create a reference to the specific report document
+      const reportRef = doc(db, `reportedReports/${reportId}`);
+      // Set the report data
+      await setDoc(
+        reportRef,
+        {
+          report_count: increment(1), // Initialize count to 1 for the first report
+          report_reason: arrayUnion(reason), // Append the new reason
+          reported_date: arrayUnion(new Date().toISOString()), // Append the current date
+        },
+        { merge: true }
+      ); // Merge to update existing fields or create new
+      console.log("Report submitted successfully!");
+    } catch (error) {
+      console.error("Error reporting the post:", error);
+    }
   };
 
-  fetchData().catch((error) => {
-    console.error("Error in fetching documents:", error);
-  });
-}, []); 
+  const loadReports = async () => {
+    setRefreshing(true); // Start refreshing
+    if (!USER_ID) {
+      console.error("Cannot fetch USER_ID!");
+      setRefreshing(false);
+      return; // Early return
+    }
+
+    const votes = await fetchAllVotes();
+    if (!votes) {
+      console.error("Votes is undefined");
+      setRefreshing(false);
+      return; // Early return
+    }
+    setReports([]);
+    await fetchAllDocuments(USER_ID, votes); // Fetch the reports
+    setRefreshing(false); // Stop refreshing
+  };
 
   useEffect(() => {
     const requestLocationPermission = async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      console.log("Location permission status:", status);
+      // console.log("Location permission status:", status);
 
       if (status === "granted") {
         setLocationPermissionGranted(true);
@@ -160,6 +271,94 @@ export default function Reports() {
 
     requestLocationPermission();
   }, []);
+
+  const haversineDistance = (
+    userLocation: Location,
+    selectedReport: Report
+  ): number => {
+    const toRad = (value: number) => (value * Math.PI) / 180;
+
+    const lat1 = toRad(userLocation.longitude);
+    const lon1 = toRad(userLocation.latitude);
+    const lat2 = toRad(selectedReport.latitude);
+    const lon2 = toRad(selectedReport.longitude);
+
+    const dLat = lat2 - lat1;
+    const dLon = lon2 - lon1;
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const radius = 6371000; // Earth's radius in meters
+    return radius * c; // Distance in meters
+  };
+
+  const handleUpvote = async (reportId: string, category: string) => {
+    try {
+      const reportRef = doc(
+        db,
+        `reports/${category.toLowerCase()}/reports/${reportId}/votes/${USER_ID}`
+      );
+      console.log("Document Reference:", reportRef.path);
+      const reportSnap = await getDoc(reportRef);
+      const data = {
+        user_id: USER_ID,
+        vote: "upvote",
+      };
+
+      if (reportSnap.exists()) {
+        const existingVote = reportSnap.data().vote;
+        if (existingVote === "upvote") {
+          await deleteDoc(reportRef);
+          console.log("Remove upvote!");
+        } else {
+          await deleteDoc(reportRef);
+          await setDoc(reportRef, data);
+          console.log("Update Vote!");
+        }
+      } else {
+        await setDoc(reportRef, data);
+        console.log("Upvote added successfully!", reportId);
+      }
+    } catch (error) {
+      console.error("Error handling upvote:", error);
+    }
+  };
+
+  const handleDownvote = async (reportId: string, category: string) => {
+    try {
+      const reportRef = doc(
+        db,
+        `reports/${category.toLowerCase()}/reports/${reportId}/votes/${USER_ID}`
+      );
+      console.log("Document Reference:", reportRef.path);
+      const reportSnap = await getDoc(reportRef);
+      const data = {
+        user_id: USER_ID,
+        vote: "downvote",
+      };
+
+      if (reportSnap.exists()) {
+        const existingVote = reportSnap.data().vote;
+
+        if (existingVote === "downvote") {
+          await deleteDoc(reportRef);
+          console.log("Remove downvote!");
+        } else {
+          await deleteDoc(reportRef);
+          await setDoc(reportRef, data);
+          console.log("Update Vote!");
+        }
+      } else {
+        await setDoc(reportRef, data);
+        console.log("Upvote added successfully!", reportId);
+      }
+    } catch (error) {
+      console.error("Error handling downvote:", error);
+    }
+  };
 
   const renderItem = ({ item }: { item: Report }) => {
     const [datePart, timePart] = item.report_date.split("T");
@@ -203,9 +402,24 @@ export default function Reports() {
             Type of Report:
             <Text className="text-lg font-normal text-black ml-2">
               {" " + item.type_of_report}
+              {item.custom_type && item.custom_type.length > 0 && (
+                <Text className="text-lg font-normal text-black ml-2">
+                  {", " + item.custom_type}
+                </Text>
+              )}
             </Text>
           </Text>
         </View>
+        {item.floor_number ? (
+          <View className="w-full flex flex-row">
+            <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
+              Floor Number:
+              <Text className="text-lg font-normal text-black ml-2">
+                {" " + item.floor_number}
+              </Text>
+            </Text>
+          </View>
+        ) : null}
         <View className="w-full flex flex-row">
           <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
             Description:
@@ -229,27 +443,40 @@ export default function Reports() {
         ) : null}
         <View className="w-full flex flex-row mt-2 justify-between">
           <View className="flex flex-row items-center">
-            <TouchableOpacity className="p-2">
+            <TouchableOpacity
+              onPress={() => handleUpvote(item.id, item.type_of_report)}
+            >
               <MaterialCommunityIcons
-                name="thumb-up-outline"
+                name={item.voted === "upvote" ? "thumb-up" : "thumb-up-outline"}
                 size={width * 0.06}
                 color="#0C3B2D"
+                paddingHorizontal={10}
               />
             </TouchableOpacity>
-            <Text className="text-lg mx-1">{item.downvote}</Text>
-            <TouchableOpacity className="p-2">
+            <Text className="text-lg mx-1">{item.upvoteCount}</Text>
+            <TouchableOpacity
+              onPress={() => handleDownvote(item.id, item.type_of_report)}
+            >
               <MaterialCommunityIcons
-                name="thumb-down-outline"
+                name={
+                  item.voted === "downvote"
+                    ? "thumb-down"
+                    : "thumb-down-outline"
+                }
                 size={width * 0.06}
                 color="#0C3B2D"
+                paddingHorizontal={10}
               />
             </TouchableOpacity>
-            <Text className="text-lg mx-1">{item.upvote}</Text>
+            <Text className="text-lg mx-1">{item.downvoteCount}</Text>
           </View>
           <View className="flex flex-row items-center">
             <TouchableOpacity
               className="p-2"
-              onPress={() => setReportModalVisible(true)}
+              onPress={() => {
+                setSelectedReport(item); // Ensure the selected report is set
+                setReportModalVisible(true); // Then open the report modal
+              }}
             >
               <MaterialCommunityIcons
                 name="format-align-justify"
@@ -288,10 +515,27 @@ export default function Reports() {
           className="w-full h-auto flex p-4"
           showsVerticalScrollIndicator={false}
           renderItem={renderItem}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing} // Control refreshing state
+              onRefresh={loadReports} // Trigger loadReports on refresh
+            />
+          }
         />
         <ReportReportModal
           visible={reportModalVisible}
           onClose={() => setReportModalVisible(false)}
+          onConfirmReport={(reason) => {
+            if (selectedReport) {
+              handleReportSubmit(
+                selectedReport.id,
+                selectedReport.category,
+                reason
+              );
+            } else {
+              console.error("No report selected");
+            }
+          }}
         />
 
         {/* Full Screen Image Modal */}
@@ -353,32 +597,48 @@ export default function Reports() {
                   }}
                 >
                   {selectedReport && (
-                    <MapView
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        borderRadius: 10,
-                      }}
-                      initialRegion={{
-                        latitude: selectedReport.longitude,
-                        longitude: selectedReport.latitude,
-                        latitudeDelta: 0.01,
-                        longitudeDelta: 0.01,
-                      }}
-                    >
-                      <Marker
-                        coordinate={userLocation}
-                        title={"You are here"}
-                        pinColor="blue"
-                      />
-                      <Marker
-                        coordinate={{
+                    <>
+                      <MapView
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          borderRadius: 10,
+                        }}
+                        initialRegion={{
                           latitude: selectedReport.longitude,
                           longitude: selectedReport.latitude,
+                          latitudeDelta: 0.01,
+                          longitudeDelta: 0.01,
                         }}
-                        title={selectedReport.type_of_report}
-                      />
-                    </MapView>
+                      >
+                        <Marker
+                          coordinate={userLocation}
+                          title={"You are here"}
+                          pinColor="blue"
+                        />
+                        <Marker
+                          coordinate={{
+                            latitude: selectedReport.longitude,
+                            longitude: selectedReport.latitude,
+                          }}
+                          title={selectedReport.type_of_report}
+                        />
+                      </MapView>
+                      <Text style={{ padding: 10, color: "white" }}>
+                        Distance from the Report:{" "}
+                        {userLocation
+                          ? (() => {
+                              const distance = haversineDistance(
+                                userLocation,
+                                selectedReport
+                              );
+                              return distance > 1000
+                                ? `${(distance / 1000).toFixed(2)} km` // Convert to kilometers
+                                : `${distance.toFixed(2)} m`; // Keep in meters
+                            })()
+                          : "Calculating..."}
+                      </Text>
+                    </>
                   )}
                 </View>
               </TouchableWithoutFeedback>

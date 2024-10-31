@@ -38,10 +38,14 @@ export default function PictureForm() {
   const [description, setDescription] = useState<string | null>(null);
   const [emergency, setEmergency] = useState<string | null>(null);
   const [isEmergency, setIsEmergency] = useState<string | null>(null);
+  const [customType, setCustomType] = useState<string>("");
+  const [floorNumber, setFloorNumber] = useState<string>("");
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [fullImageModalVisible, setFullImageModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [reportResult, setReportResult] = useState<any>(null);
   const [result, setResult] = useState<any>(null);
   const [isFetch, setFetch] = useState<any>(null);
   const { createReport } = useAuth();
@@ -56,7 +60,7 @@ export default function PictureForm() {
       const [longitude, latitude] = location.split(",");
 
       let is_emergency =
-        isEmergency?.toLocaleLowerCase() === "yes"
+        isEmergency?.toLocaleLowerCase() === "Emergency"
           ? "emergency"
           : "not emergency";
 
@@ -84,7 +88,9 @@ export default function PictureForm() {
         longitude,
         latitude,
         is_emergency,
-        imageUri
+        imageUri,
+        customType,
+        floorNumber
       );
 
       if (res) {
@@ -97,6 +103,13 @@ export default function PictureForm() {
       setLoading(false);
       console.error("Error creating report:", error.message || error);
     }
+  };
+
+  const handleReportSuccess = () => {
+    setLoading(false);
+    setSuccessModalVisible(true);
+    router.push("/(tabs)/reports");
+    console.log("Report created successfully:", reportResult);
   };
 
   const fetchImageUri = async () => {
@@ -121,6 +134,7 @@ export default function PictureForm() {
 
   useEffect(() => {
     const getImageUriAndLocation = async () => {
+      setSelectedItem(null);
       const uri = await fetchImageUri();
       const locations = await fetchCurrentLocation();
       const report_type = await SecureStore.getItemAsync("report_type");
@@ -147,10 +161,11 @@ export default function PictureForm() {
   const data = [
     { id: "1", name: "Street Light" },
     { id: "2", name: "Pot Hole" },
-    { id: "3", name: "Fire" },
+    { id: "3", name: "Fires" },
     { id: "4", name: "Health and Safety Concerns" },
     { id: "5", name: "Road Incidents" },
     { id: "6", name: "Crime" },
+    { id: "7", name: "Others" },
   ];
 
   const confirmCancel = () => {
@@ -277,6 +292,32 @@ export default function PictureForm() {
               </Text>
             </TouchableOpacity>
 
+            {/* Conditionally render TextInput if "Other" is selected */}
+            {selectedItem === "Others" && (
+              <TextInput
+                className="w-full bg-white p-4 rounded-lg mb-4 border border-[#0C3B2D] justify-center text-md text-[#0C3B2D] font-semibold"
+                placeholder="Please specify..."
+                placeholderTextColor={"#888"}
+                value={customType}
+                onChangeText={setCustomType}
+              />
+            )}
+
+            <View className="w-full flex flex-row justify-between items-center bg-white mx-3 mb-4 rounded-lg">
+              <Text className="text-md p-4 font-semibold text-[#0C3B2D]">
+                If in a Building Specify the Floor
+              </Text>
+              <View className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg">
+                <TextInput
+                  className="text-white text-md font-bold px-2"
+                  placeholder="#"
+                  placeholderTextColor={"#fff"}
+                  value={floorNumber}
+                  onChangeText={setFloorNumber}
+                />
+              </View>
+            </View>
+
             {/* Dropdown options displayed in Modal */}
             <Modal
               visible={isOpen}
@@ -363,6 +404,36 @@ export default function PictureForm() {
             onCancel={() => setCancelModalVisible(false)}
           />
         </ScrollView>
+
+        <Modal
+          visible={successModalVisible}
+          transparent={true}
+          animationType="fade"
+        >
+          <TouchableWithoutFeedback
+            onPress={() => setSuccessModalVisible(false)}
+          >
+            <View className="flex-1 justify-center items-center bg-black/50">
+              <View className="w-4/5 py-5 px-3 bg-white rounded-xl items-start border-2 border-[#0C3B2D]">
+                <View className="full p-3 bg-white rounded-xl items-start">
+                  <Text className="text-xl font-bold text-[#0C3B2D] mb-5">
+                    Report has been created successfully!
+                  </Text>
+                  <View className="flex flex-row justify-end mt-3 w-full">
+                    <TouchableOpacity
+                      className="bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center"
+                      onPress={() => setSuccessModalVisible(false)} // Close the modal here
+                    >
+                      <Text className="text-md font-semibold text-white px-4">
+                        Close
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
 
         {/* Full Screen Image Modal */}
         <Modal
