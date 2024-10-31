@@ -32,28 +32,20 @@ export default function CameraComp() {
   const [permission, requestPermission] = useCameraPermissions();
   const [loading, setLoading] = useState(false); // Add loading state
   const cameraRef = React.useRef<CameraView>(null);
-  const [capturedUri, setCapturedUri] = useState<string | null>(null);
 
   useEffect(() => {
-    if (capturedUri) {
-      resizeAndClassifyImage(capturedUri);
-    }
-  }, [capturedUri]);
-  useEffect(() => {
     const fetchLocation = async () => {
-      try {
-        const location = await Location.getCurrentPositionAsync({});
-        const { latitude, longitude } = location.coords;
-        let { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== "granted") {
-          alert("Permission to access location was denied");
-          setLoading(false);
-          return;
-        }
-        await SecureStore.setItemAsync("currentLocation", `${latitude},${longitude}`);
-      } catch (error) {
-        console.error("Error fetching location:", error);
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        alert("Permission to access location was denied");
+        return;
       }
+      let location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+      await SecureStore.setItemAsync(
+        "currentLocation",
+        `${latitude},${longitude}`
+      );
     };
     fetchLocation();
   }, []);
@@ -78,25 +70,27 @@ export default function CameraComp() {
   function toggleCameraFacing() {
     setFacing((current) => (current === "back" ? "front" : "back"));
   }
-
   const capturePhoto = async () => {
     try {
-      setLoading(true);
-      const photo = cameraRef.current
-        ? await cameraRef.current.takePictureAsync({ quality: 0.8 })
-        : null;
+      if (!cameraRef.current) {
+        console.error("Camera reference is not available.");
+        return;
+      }
 
-      if (photo && photo.uri) {
+      setLoading(true);
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.7,
+        base64: true,
+      });
+
+      if (photo?.uri && photo?.base64) {
         console.log("Photo captured:", photo.uri);
 
-        // Save the image URI and navigate immediately
+        const optimizedUri = await resizeImage(photo.uri);
+        // Save the original image URI
         await SecureStore.setItemAsync("imageUri", photo.uri);
-        router.push("/pages/pictureForm");
-
-        // Set captured URI to initiate background processing
-        setCapturedUri(photo.uri);
       } else {
-        console.error("Photo capturing failed: photo is undefined.");
+        console.error("Photo capturing failed: Invalid photo object.");
       }
     } catch (error) {
       console.error("Error capturing photo:", error);
@@ -106,28 +100,18 @@ export default function CameraComp() {
     }
   };
 
-  const resizeAndClassifyImage = async (uri: string) => {
-    try {
-      // Resize the image
-      const optimizedUri = await resizeImage(uri);
-      // Classify the resized image
-      await classify_image(optimizedUri);
-    } catch (error) {
-      console.error("Error processing image:", error);
-    }
-  };
-
   const resizeImage = async (uri: string) => {
     try {
       const result = await manipulateAsync(
         uri,
         [{ resize: { width: 224, height: 224 } }],
-        { format: SaveFormat.JPEG }
+        { compress: 0.5, format: SaveFormat.JPEG }
       );
-      return result.uri;
+      await classify_image(result.uri);
+      router.push("/pages/pictureForm");
     } catch (error) {
       console.error("Error resizing image:", error);
-      return uri;
+      return uri; // Return original image URI if resizing fails
     }
   };
 
@@ -137,6 +121,7 @@ export default function CameraComp() {
         encoding: FileSystem.EncodingType.Base64,
       });
 
+      // Send image for classification
       const res = await axios.post(
         "https://detect.roboflow.com/image_classification_fv/1",
         base64image,
@@ -146,30 +131,35 @@ export default function CameraComp() {
         }
       );
 
-      const result = getHighestConfidenceClass(res.data.predictions, 0.7);
-
-      if (result) {
-        console.log("Classified result:", result.class);
-        const emergencyStatus =
-          ["Fires", "Floods", "Road Accident"].includes(result.class) ? "Yes" : "No";
-        await SecureStore.setItemAsync("isEmergency", emergencyStatus);
-        await SecureStore.setItemAsync("report_type", result.class);
-      } else {
-        console.log("Result null!");
+      const result = getHighestConfidenceClass(res.data.predictions);
+      if (!result) {
+        console.warn("No predictions found.");
+        return false; // Early return if no results
       }
+      console.log("Classified result:", result.class);
+      const emergencyStatus = ["Fires", "Floods", "Road Accident"].includes(
+        result.class
+      )
+        ? "Emergency"
+        : "Not Emergency";
+      await SecureStore.setItemAsync("isEmergency", emergencyStatus);
+      await SecureStore.setItemAsync("report_type", result.class);
     } catch (error: any) {
       console.error("Error during classification:", error.message);
       alert("Error classifying image. Please try again.");
+      return false; // Classification failed
     }
   };
 
-  const getHighestConfidenceClass = (results: Prediction[], threshold = 0.7) => {
-    const highConfidenceResult = results.filter(result => result.confidence >= threshold);
-    return highConfidenceResult.length
-      ? highConfidenceResult.reduce((prev, current) => prev.confidence > current.confidence ? prev : current)
-      : null;
+  const getHighestConfidenceClass = (results: Prediction[]) => {
+    if (!results || results.length === 0) {
+      console.warn("No results to evaluate.");
+      return null; // Handle empty results
+    }
+    return results.reduce((prev, current) =>
+      prev.confidence > current.confidence ? prev : current
+    );
   };
-
 
   return (
     <View className="w-full h-full flex justify-center items-center">
