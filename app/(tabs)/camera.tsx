@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
 import {
   Dimensions,
@@ -26,29 +26,22 @@ interface Prediction {
   class_id: number;
   confidence: number;
 }
+const getAddressFromCoordinates = async (latitude: number, longitude: number) => {
+  try {
+    const [result] = await Location.reverseGeocodeAsync({ latitude, longitude });
+    return result ? `${result.name}, ${result.city}, ${result.region}, ${result.country}` : "Address not found";
+  } catch (error) {
+    console.error("Error fetching address:", error);
+    return null;
+  }
+};
+
 
 export default function CameraComp() {
   const [facing, setFacing] = useState<CameraType>("back");
   const [permission, requestPermission] = useCameraPermissions();
   const [loading, setLoading] = useState(false); // Add loading state
   const cameraRef = React.useRef<CameraView>(null);
-
-  useEffect(() => {
-    const fetchLocation = async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        alert("Permission to access location was denied");
-        return;
-      }
-      let location = await Location.getCurrentPositionAsync({});
-      const { latitude, longitude } = location.coords;
-      await SecureStore.setItemAsync(
-        "currentLocation",
-        `${latitude},${longitude}`
-      );
-    };
-    fetchLocation();
-  }, []);
 
   if (!permission) {
     // Camera permissions are still loading.
@@ -72,25 +65,51 @@ export default function CameraComp() {
   }
   const capturePhoto = async () => {
     try {
-      if (!cameraRef.current) {
-        console.error("Camera reference is not available.");
+      // Request location permission
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        alert("Permission to access location was denied");
         return;
       }
-
-      setLoading(true);
-      const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.7,
-        base64: true,
+  
+      // Get current location with high accuracy
+      let location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
       });
-
-      if (photo?.uri && photo?.base64) {
-        console.log("Photo captured:", photo.uri);
-
-        const optimizedUri = await resizeImage(photo.uri);
-        // Save the original image URI
-        await SecureStore.setItemAsync("imageUri", photo.uri);
+      const { latitude, longitude } = location.coords;
+  
+      // Convert to address
+      const address = await getAddressFromCoordinates(latitude, longitude);
+      if (address) {
+        await SecureStore.setItemAsync("currentLocation", address); // Save the address
       } else {
-        console.error("Photo capturing failed: Invalid photo object.");
+        console.error("Failed to get address.");
+      }
+  
+      // Take a photo
+      if (cameraRef.current) {
+        setLoading(true);
+        const photo = await cameraRef.current.takePictureAsync({
+          quality: 0.7,
+          base64: true,
+        });
+  
+        if (photo && photo.uri && photo.base64) {
+          console.log("Photo captured:", photo.uri);
+  
+          const optimize_uri = await resizeImage(photo.uri);
+          const isClassified = await classify_image(optimize_uri);
+  
+          // Save the image URI
+          await SecureStore.setItemAsync("imageUri", photo.uri);
+  
+          // If classification succeeds, navigate to form
+          if (isClassified) {
+            router.push("/pages/pictureForm");
+          }
+        } else {
+          console.error("Photo capturing failed: photo is undefined.");
+        }
       }
     } catch (error) {
       console.error("Error capturing photo:", error);
@@ -99,6 +118,7 @@ export default function CameraComp() {
       setLoading(false);
     }
   };
+  
 
   const resizeImage = async (uri: string) => {
     try {
@@ -107,8 +127,7 @@ export default function CameraComp() {
         [{ resize: { width: 224, height: 224 } }],
         { compress: 0.5, format: SaveFormat.JPEG }
       );
-      await classify_image(result.uri);
-      router.push("/pages/pictureForm");
+      return result.uri;
     } catch (error) {
       console.error("Error resizing image:", error);
       return uri; // Return original image URI if resizing fails
@@ -132,18 +151,13 @@ export default function CameraComp() {
       );
 
       const result = getHighestConfidenceClass(res.data.predictions);
-      if (!result) {
-        console.warn("No predictions found.");
-        return false; // Early return if no results
-      }
       console.log("Classified result:", result.class);
-      const emergencyStatus = ["Fires", "Floods", "Road Accident"].includes(
-        result.class
-      )
-        ? "Emergency"
-        : "Not Emergency";
+
+      const emergencyStatus =
+        result.class === "Fires" || result.class === "Floods" || result.class === "Road Accident" ? "Yes" : "No";
       await SecureStore.setItemAsync("isEmergency", emergencyStatus);
       await SecureStore.setItemAsync("report_type", result.class);
+      return true; // Classification succeeded
     } catch (error: any) {
       console.error("Error during classification:", error.message);
       alert("Error classifying image. Please try again.");
@@ -152,10 +166,6 @@ export default function CameraComp() {
   };
 
   const getHighestConfidenceClass = (results: Prediction[]) => {
-    if (!results || results.length === 0) {
-      console.warn("No results to evaluate.");
-      return null; // Handle empty results
-    }
     return results.reduce((prev, current) =>
       prev.confidence > current.confidence ? prev : current
     );
