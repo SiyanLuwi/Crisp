@@ -83,7 +83,7 @@ const ReportReportModal: React.FC<ReportReportModalProps> = ({
           {reportSuccess ? ( // Conditional rendering for success message
             <View className="full p-3 bg-white rounded-xl items-start">
               <Text className="text-xl font-bold text-[#0C3B2D] mb-5">
-                Report has been submitted successfully!
+                Your report has been submitted successfully!
               </Text>
               <View className="flex flex-row justify-end w-full ">
                 <TouchableOpacity

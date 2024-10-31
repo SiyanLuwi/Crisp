@@ -59,7 +59,7 @@ export default function PictureForm() {
       const [longitude, latitude] = location.split(",");
 
       let is_emergency =
-        isEmergency?.toLocaleLowerCase() === "yes"
+        isEmergency?.toLocaleLowerCase() === "Emergency"
           ? "emergency"
           : "not emergency";
 
@@ -130,6 +130,7 @@ export default function PictureForm() {
 
   useEffect(() => {
     const getImageUriAndLocation = async () => {
+      setSelectedItem(null);
       const uri = await fetchImageUri();
       const locations = await fetchCurrentLocation();
       const report_type = await SecureStore.getItemAsync("report_type");
