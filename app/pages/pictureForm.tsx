@@ -56,7 +56,7 @@ export default function PictureForm() {
         throw new Error("Location is missing");
       }
 
-      const [longitude, latitude] = location.split(",");
+      const [latitude, longitude] = location.split(",");
 
       let is_emergency =
         isEmergency?.toLocaleLowerCase() === "yes"

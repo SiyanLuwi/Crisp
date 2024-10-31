@@ -385,6 +385,7 @@ export default function Reports() {
         </View>
         <TouchableOpacity
           onPress={() => {
+            console.log(item)
             setSelectedReport(item);
             setModalVisible(true);
           }}
@@ -501,7 +502,7 @@ export default function Reports() {
           <Text className="font-bold text-4xl text-white mt-3 mb-2">
             Reports
           </Text>
-          <TouchableOpacity onPress={() => router.push("/pages/notification")}>
+          <TouchableOpacity onPress={() => router.push({ pathname: "/pages/notification" })}>
             <MaterialCommunityIcons
               name="bell"
               size={RFPercentage(3.5)}
@@ -605,8 +606,8 @@ export default function Reports() {
                           borderRadius: 10,
                         }}
                         initialRegion={{
-                          latitude: selectedReport.longitude,
-                          longitude: selectedReport.latitude,
+                          latitude: selectedReport.latitude,
+                          longitude: selectedReport.longitude,
                           latitudeDelta: 0.01,
                           longitudeDelta: 0.01,
                         }}
