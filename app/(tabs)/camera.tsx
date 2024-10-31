@@ -26,6 +26,16 @@ interface Prediction {
   class_id: number;
   confidence: number;
 }
+const getAddressFromCoordinates = async (latitude: number, longitude: number) => {
+  try {
+    const [result] = await Location.reverseGeocodeAsync({ latitude, longitude });
+    return result ? `${result.name}, ${result.city}, ${result.region}, ${result.country}` : "Address not found";
+  } catch (error) {
+    console.error("Error fetching address:", error);
+    return null;
+  }
+};
+
 
 export default function CameraComp() {
   const [facing, setFacing] = useState<CameraType>("back");
@@ -61,15 +71,21 @@ export default function CameraComp() {
         alert("Permission to access location was denied");
         return;
       }
-
-      // Get current location
-      let location = await Location.getCurrentPositionAsync({});
+  
+      // Get current location with high accuracy
+      let location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
       const { latitude, longitude } = location.coords;
-      await SecureStore.setItemAsync(
-        "currentLocation",
-        `${latitude},${longitude}`
-      );
-
+  
+      // Convert to address
+      const address = await getAddressFromCoordinates(latitude, longitude);
+      if (address) {
+        await SecureStore.setItemAsync("currentLocation", address); // Save the address
+      } else {
+        console.error("Failed to get address.");
+      }
+  
       // Take a photo
       if (cameraRef.current) {
         setLoading(true);
@@ -77,16 +93,16 @@ export default function CameraComp() {
           quality: 0.7,
           base64: true,
         });
-
+  
         if (photo && photo.uri && photo.base64) {
           console.log("Photo captured:", photo.uri);
-
-           const optimize_uri = await resizeImage(photo.uri)
-           const isClassified = await classify_image(optimize_uri)
-
+  
+          const optimize_uri = await resizeImage(photo.uri);
+          const isClassified = await classify_image(optimize_uri);
+  
           // Save the image URI
           await SecureStore.setItemAsync("imageUri", photo.uri);
-
+  
           // If classification succeeds, navigate to form
           if (isClassified) {
             router.push("/pages/pictureForm");
@@ -102,6 +118,7 @@ export default function CameraComp() {
       setLoading(false);
     }
   };
+  
 
   const resizeImage = async (uri: string) => {
     try {

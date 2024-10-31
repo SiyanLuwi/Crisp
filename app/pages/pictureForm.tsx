@@ -25,6 +25,7 @@ import MapPicker from "@/components/mapPicker";
 import * as SecureStore from "expo-secure-store";
 import LoadingButton from "@/components/loadingButton";
 import { useAuth } from "@/AuthContext/AuthContext";
+import * as Location from "expo-location"; // Import Location
 
 const { width, height } = Dimensions.get("window");
 
@@ -47,7 +48,7 @@ export default function PictureForm() {
 
   const report = async () => {
     try {
-      setLoading(true)
+      setLoading(true);
       if (!location) {
         throw new Error("Location is missing");
       }
@@ -87,13 +88,13 @@ export default function PictureForm() {
       );
 
       if (res) {
-        setLoading(false)
-        alert("Report Created!");    
+        setLoading(false);
+        alert("Report Created!");
         router.push("/(tabs)/reports");
         console.log("Report created successfully:", res);
       }
     } catch (error: any) {
-      setLoading(false)
+      setLoading(false);
       console.error("Error creating report:", error.message || error);
     }
   };
@@ -107,6 +108,7 @@ export default function PictureForm() {
       return null;
     }
   };
+
   const fetchCurrentLocation = async () => {
     try {
       const latlong = await SecureStore.getItemAsync("currentLocation");
@@ -131,6 +133,7 @@ export default function PictureForm() {
     };
     getImageUriAndLocation();
   }, []);
+
   const toggleDropdown = () => {
     setIsOpen((prev) => !prev);
   };
@@ -154,12 +157,32 @@ export default function PictureForm() {
     setCancelModalVisible(false);
   };
 
-  const handleLocationSelect = (location: {
+  // Function to convert coordinates to address
+  const getAddressFromCoordinates = async (
+    latitude: number,
+    longitude: number
+  ) => {
+    try {
+      const [result] = await Location.reverseGeocodeAsync({
+        latitude,
+        longitude,
+      });
+      return `${result.name}, ${result.city}, ${result.region}, ${result.country}`;
+    } catch (error) {
+      console.error("Error fetching address:", error);
+      return null;
+    }
+  };
+
+  const handleLocationSelect = async (location: {
     latitude: number;
     longitude: number;
   }) => {
-    // Convert coordinates to address if needed
-    setLocation(`${location.latitude}, ${location.longitude}`);
+    const address = await getAddressFromCoordinates(
+      location.latitude,
+      location.longitude
+    );
+    setLocation(address); // Set the location to the text-based address
     setShowMapPicker(false); // Close the map picker
   };
 
@@ -195,12 +218,21 @@ export default function PictureForm() {
                 />
               )}
             </View>
-            <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
+            <View style={{ width: "100%", alignItems: "flex-start" }}>
+              <Text
+                style={{ textAlign: "left" }}
+                className="text-md text-white mb-1"
+              >
+                Location
+              </Text>
+            </View>
+            <View className="w-full bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
               <TextInput
-                className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
+                className="w-4/5 text-md p-2 text-[#0C3B2D] font-semibold items-center justify-center"
                 placeholderTextColor="#888"
                 placeholder="Location"
-                value={location?.toString()}
+                value={location || ""}
+                editable={false} // Make it read-only
               />
               <TouchableOpacity
                 onPress={() => setShowMapPicker(true)}
@@ -213,17 +245,32 @@ export default function PictureForm() {
                 />
               </TouchableOpacity>
             </View>
-
+            <View style={{ width: "100%", alignItems: "flex-start" }}>
+              <Text
+                style={{ textAlign: "left" }}
+                className="text-md text-white mb-1"
+              >
+                Emergency (yes/no)
+              </Text>
+            </View>
             <TextInput
-              className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+              className="w-full bg-white text-md p-2 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
               placeholderTextColor="#888"
               placeholder="Emergency (yes/no)"
               onChangeText={setIsEmergency}
-              value={isEmergency?.toString()}
+              value={(isEmergency || "").toLocaleUpperCase()}
             />
+            <View style={{ width: "100%", alignItems: "flex-start" }}>
+              <Text
+                style={{ textAlign: "left" }}
+                className="text-md text-white mb-1"
+              >
+                Type of Report
+              </Text>
+            </View>
             <TouchableOpacity
               onPress={toggleDropdown}
-              className="w-full bg-white p-4 rounded-lg mb-4 border border-[#0C3B2D] justify-center"
+              className="w-full bg-white p-3 rounded-lg mb-2 border border-[#0C3B2D] justify-center"
             >
               <Text className="text-md text-[#0C3B2D] font-semibold">
                 {selectedItem ? selectedItem : "Select a type of Report"}
@@ -237,7 +284,7 @@ export default function PictureForm() {
               animationType="fade"
               onRequestClose={toggleDropdown}
             >
-              <TouchableOpacity
+              {/* <TouchableOpacity
                 className="flex-1 justify-center items-center bg-black/50"
                 onPress={toggleDropdown}
               >
@@ -267,11 +314,18 @@ export default function PictureForm() {
                     )}
                   />
                 </View>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </Modal>
-
+            <View style={{ width: "100%", alignItems: "flex-start" }}>
+              <Text
+                style={{ textAlign: "left" }}
+                className="text-md text-white mb-1"
+              >
+                Description
+              </Text>
+            </View>
             <TextInput
-              className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+              className="w-full bg-white text-md p-4 rounded-lg items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
               placeholderTextColor="#888"
               placeholder="Description"
               multiline={true}
@@ -282,20 +336,12 @@ export default function PictureForm() {
               }}
               onChangeText={setDescription}
             />
-             <LoadingButton
-            style="mt-12 w-full bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center border-2 border-[#8BC34A]"
-            title="Submit Report"
-            onPress={report}
-            loading={loading}
-          />
-            {/* <TouchableOpacity
-              className="mt-12 w-full bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center border-2 border-[#8BC34A]"
+            <LoadingButton
+              style="mt-5 w-full bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center border-2 border-[#8BC34A]"
+              title="Submit Report"
               onPress={report}
-            >
-              <Text className="text-xl py-1 font-bold text-white">
-                Submit Report
-              </Text>
-            </TouchableOpacity> */}
+              loading={loading}
+            />
 
             <TouchableOpacity
               className="mt-3 w-full bg-[#8BC34A] rounded-xl p-2 shadow-lg justify-center items-center"
