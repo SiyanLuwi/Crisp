@@ -25,3 +25,4 @@ ios/
 
 expo-env.d.ts
 # @end expo-cli
+app/api/axios.ts
