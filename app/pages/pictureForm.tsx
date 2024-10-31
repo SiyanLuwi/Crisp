@@ -57,7 +57,7 @@ export default function PictureForm() {
         throw new Error("Location is missing");
       }
 
-      const [longitude, latitude] = location.split(",");
+      const [latitude, longitude] = location.split(",");
 
       let is_emergency =
         isEmergency?.toLocaleLowerCase() === "Emergency"
@@ -112,61 +112,35 @@ export default function PictureForm() {
     console.log("Report created successfully:", reportResult);
   };
 
-  const fetchImageUri = async () => {
-    try {
-      const uri = await SecureStore.getItemAsync("imageUri");
-      return uri ? uri : null;
-    } catch (error) {
-      console.error("Error fetching image URI:", error);
-      return null;
-    }
-  };
 
-  const fetchCurrentLocation = async () => {
+  const fetchData = async () => {
     try {
-      const latlong = await SecureStore.getItemAsync("currentLocation");
-      return latlong ? latlong : null;
-    } catch (error) {
-      console.error("Error fetching current location:", error);
-      return null;
-    }
-  };
-
-  useEffect(() => {
-    const getImageUriAndLocation = async () => {
-      setSelectedItem(null);
-      const uri = await fetchImageUri();
-      const locations = await fetchCurrentLocation();
-      const report_type = await SecureStore.getItemAsync("report_type");
-      const isEmergency = await SecureStore.getItemAsync("isEmergency");
+      const [uri, locations, report_type, isEmergency] = await Promise.all([
+        SecureStore.getItemAsync("imageUri"),
+        SecureStore.getItemAsync("currentLocation"),
+        SecureStore.getItemAsync("report_type"),
+        SecureStore.getItemAsync("isEmergency"),
+      ]);
+  
       setIsEmergency(isEmergency);
       setSelectedItem(report_type);
       setLocation(locations);
       setImageUri(uri);
       setFetch(true);
-    };
-    getImageUriAndLocation();
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+  
+  useEffect(() => {
+    setSelectedItem(null);
+    fetchData();
   }, []);
 
   const toggleDropdown = () => {
     setIsOpen((prev) => !prev);
   };
 
-  const handleItemPress = (item: string) => {
-    setSelectedItem(item);
-    setIsOpen(false);
-    console.log("Selected Item:", item);
-  };
-
-  const data = [
-    { id: "1", name: "Street Light" },
-    { id: "2", name: "Pot Hole" },
-    { id: "3", name: "Fires" },
-    { id: "4", name: "Health and Safety Concerns" },
-    { id: "5", name: "Road Incidents" },
-    { id: "6", name: "Crime" },
-    { id: "7", name: "Others" },
-  ];
 
   const confirmCancel = () => {
     setCancelModalVisible(false);
@@ -260,21 +234,7 @@ export default function PictureForm() {
                 />
               </TouchableOpacity>
             </View>
-            <View style={{ width: "100%", alignItems: "flex-start" }}>
-              <Text
-                style={{ textAlign: "left" }}
-                className="text-md text-white mb-1"
-              >
-                Emergency (yes/no)
-              </Text>
-            </View>
-            <TextInput
-              className="w-full bg-white text-md p-2 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
-              placeholderTextColor="#888"
-              placeholder="Emergency (yes/no)"
-              onChangeText={setIsEmergency}
-              value={(isEmergency || "").toLocaleUpperCase()}
-            />
+            
             <View style={{ width: "100%", alignItems: "flex-start" }}>
               <Text
                 style={{ textAlign: "left" }}
