@@ -93,9 +93,14 @@ export default function CameraComp() {
       });
 
       if (photo?.uri) {
-        const optimizedUri = await resizeImage(photo.uri);
-        await SecureStore.setItemAsync("imageUri", photo.uri);
-        await classifyImage(optimizedUri);
+        const [optimizedUri, classificationResult] = await Promise.all([
+          resizeImage(photo.uri),
+          classifyImage(photo.uri), // Pass the original URI for classification
+        ]);
+        await SecureStore.setItemAsync("imageUri", optimizedUri);
+        await SecureStore.setItemAsync("isEmergency", classificationResult.isEmergency);
+        await SecureStore.setItemAsync("report_type", classificationResult.class);
+        router.push('/pages/pictureForm')
       } else {
         console.error("Photo capturing failed: photo is undefined.");
       }
@@ -126,7 +131,7 @@ export default function CameraComp() {
       const base64image = await FileSystem.readAsStringAsync(uri, {
         encoding: FileSystem.EncodingType.Base64,
       });
-
+  
       const res = await axios.post(
         "https://detect.roboflow.com/image_classification_fv/1",
         base64image,
@@ -135,22 +140,28 @@ export default function CameraComp() {
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
         }
       );
-
+  
       const result = getHighestConfidenceClass(res.data.predictions);
+  
       console.log("Classified result:", result.class);
-      const emergencyStatus = ["Fires", "Floods", "Road Accident"].includes(result.class) ? "Yes" : "No";
-      await SecureStore.setItemAsync("isEmergency", emergencyStatus);
-      await SecureStore.setItemAsync("report_type", result.class);
-      router.push('/pages/pictureForm');
+  
+      return {
+        class: result.class,
+        isEmergency: ["Fires", "Floods", "Road Accident"].includes(result.class) ? "Yes" : "No",
+      };
+      
     } catch (error:any) {
       console.error("Error during classification:", error.message);
       alert("Error classifying image. Please try again.");
+      // Handle error appropriately (e.g., return a default value or rethrow)
+      return { class: 'Unknown', isEmergency: "No" }; // Default return on error
     }
   };
-
+  
   const getHighestConfidenceClass = (results: Prediction[]) => {
     return results.reduce((prev, current) => (prev.confidence > current.confidence ? prev : current));
   };
+
 
   return (
     <View style={styles.cameraContainer}>
@@ -186,5 +197,14 @@ const styles = StyleSheet.create({
   cameraControls: { position: "absolute", top: "5%", width: "100%", flexDirection: "row", justifyContent: "space-between" },
   iconButton: { margin: 5 },
   captureButtonContainer: { position: "absolute", bottom: "13%", width: "100%", alignItems: "center" },
-  captureButton: { width: "15%", height: "15%", borderRadius: 75, backgroundColor: "white", justifyContent: "center", alignItems: "center", borderWidth: 2, borderColor: "#0C3B2D" },
+  captureButton: {
+    width: 75,
+    height: 75,
+    borderRadius: 37.5, 
+    backgroundColor: "white",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#0C3B2D",
+  },
 });
