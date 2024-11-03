@@ -26,7 +26,7 @@ import * as SecureStore from "expo-secure-store";
 import LoadingButton from "@/components/loadingButton";
 import { useAuth } from "@/AuthContext/AuthContext";
 import * as Location from "expo-location"; // Import Location
-
+import * as Notifications from 'expo-notifications'
 const { width, height } = Dimensions.get("window");
 
 export default function PictureForm() {
@@ -95,6 +95,14 @@ export default function PictureForm() {
 
       if (res) {
         setLoading(false);
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: `You've reported ${selectedItem} incident`,
+            body: 'Thank you for caring!',
+            // data: { data: 'goes here', test: { test1: 'more data' } },
+          },
+          trigger: { seconds: 2 },
+        });
         alert("Report Created!");
         router.push("/(tabs)/reports");
         console.log("Report created successfully:", res);

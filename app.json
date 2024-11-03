@@ -31,7 +31,8 @@
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION"
       ],
-      "package": "com.bscs.bmmn.crisp"
+      "package": "com.bscs.bmmn.crisp",
+      "googleServices": "./google-services.json"
     },
     "web": {
       "bundler": "metro",
