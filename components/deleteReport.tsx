@@ -4,8 +4,8 @@ import { View, Text, Modal, TouchableOpacity } from "react-native";
 interface DeleteReportModalProps {
   visible: boolean;
   onClose: () => void;
-  onConfirm: (reportId: string) => Promise<void>; // Change to Promise<void> for async operations
-  reportId: string | null; // Add reportId prop
+  onConfirm: (reportId: string) => Promise<void>;
+  reportId: string | null;
 }
 
 const DeleteReportModal: React.FC<DeleteReportModalProps> = ({
@@ -19,27 +19,31 @@ const DeleteReportModal: React.FC<DeleteReportModalProps> = ({
 
   const handleConfirm = async () => {
     if (reportId) {
-      await onConfirm(reportId); // Call onConfirm with the report ID, wait for it to finish
+      await onConfirm(reportId);
       setSuccess(true);
       setSuccessMessageVisible(true);
+      // Don't close the modal here
     }
   };
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    if (!visible) {
+      setSuccess(false); // Reset success state when modal is closed
+      setSuccessMessageVisible(false);
+    } else if (successMessageVisible) {
+      let timer: NodeJS.Timeout;
 
-    if (successMessageVisible) {
       // Set a timer to hide the success message after 3 seconds
       timer = setTimeout(() => {
         setSuccessMessageVisible(false);
         onClose(); // Close the modal after the message is hidden
-      }, 3000); // Change the duration as needed (3000 ms = 3 seconds)
-    }
+      }, 3000); // Duration for success message
 
-    return () => {
-      clearTimeout(timer); // Clean up the timer on unmount or when successMessageVisible changes
-    };
-  }, [successMessageVisible]);
+      return () => {
+        clearTimeout(timer); // Clean up the timer
+      };
+    }
+  }, [visible, successMessageVisible]);
 
   return (
     <Modal transparent={true} visible={visible} animationType="fade">
@@ -53,7 +57,7 @@ const DeleteReportModal: React.FC<DeleteReportModalProps> = ({
               <Text className="text-md font-normal text-[#0C3B2D] mb-10 px-3">
                 Are you sure you want to delete your post?
               </Text>
-              <View className="flex flex-row justify-end w-full mt-3  px-3">
+              <View className="flex flex-row justify-end w-full mt-3 px-3">
                 <TouchableOpacity
                   onPress={handleConfirm}
                   className="bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center"

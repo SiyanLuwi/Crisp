@@ -205,6 +205,9 @@ function App() {
               />
             </TouchableOpacity>
             <View className="justify-center w-full items-center px-12 mt-6">
+              <View style={{ width: "100%", alignItems: "flex-start" }}>
+                <Text className="text-md text-white mb-1">Name:</Text>
+              </View>
               <TextInput
                 className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                 value={name}
@@ -213,6 +216,9 @@ function App() {
                 placeholderTextColor="#888"
                 placeholder="Name"
               />
+              <View style={{ width: "100%", alignItems: "flex-start" }}>
+                <Text className="text-md text-white mb-1">Address:</Text>
+              </View>
               <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
                 <TextInput
                   className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
@@ -240,6 +246,9 @@ function App() {
                   </TouchableOpacity>
                 )}
               </View>
+              <View style={{ width: "100%", alignItems: "flex-start" }}>
+                <Text className="text-md text-white mb-1">Email Address:</Text>
+              </View>
               <TextInput
                 className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                 value={email}
@@ -248,6 +257,9 @@ function App() {
                 placeholderTextColor="#888"
                 placeholder="Email Address"
               />
+              <View style={{ width: "100%", alignItems: "flex-start" }}>
+                <Text className="text-md text-white mb-1">Contact Number:</Text>
+              </View>
               <TextInput
                 className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                 value={contact}
@@ -256,6 +268,11 @@ function App() {
                 placeholderTextColor="#888"
                 placeholder="Phone Number"
               />
+              <View style={{ width: "100%", alignItems: "flex-start" }}>
+                <Text className="text-md text-white mb-1">
+                  Is User Verfied:
+                </Text>
+              </View>
               <View className="w-full flex flex-row justify-between items-center bg-white mx-3 mb-4 rounded-lg">
                 {!isVerified ? (
                   <>
