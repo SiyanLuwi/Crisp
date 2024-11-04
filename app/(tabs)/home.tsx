@@ -41,10 +41,18 @@ interface Report {
   report_date: string;
   custom_type: string;
   floor_number: string;
+  is_validated: boolean;
 }
 interface Location {
   latitude: number;
   longitude: number;
+}
+interface deptAdmin {
+  id: string;
+  department: string;
+  station: string;
+  longitude: number;
+  latitude: number;
 }
 
 const fetchDocuments = async () => {
@@ -76,6 +84,7 @@ export default function Home() {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [reports, setReports] = useState<Report[]>([]);
+  const [deptAdmins, setDeptAdmins] = useState<deptAdmin[]>([]);
 
   const fetchAllDocuments = async () => {
     const categories = [
@@ -105,6 +114,7 @@ export default function Home() {
               report_date: data.report_date || "", // Default to empty string if missing
               custom_type: data.custom_type || "",
               floor_number: data.floor_number || "",
+              is_validated: data.is_validated,
             };
           });
 
@@ -216,14 +226,32 @@ export default function Home() {
     requestLocationPermission();
   }, []);
 
+  const fetchDeptAdmins = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "deptAdmin")); // Adjust the collection name if necessary
+      const admins: deptAdmin[] = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Omit<deptAdmin, "id">),
+      }));
+      setDeptAdmins(admins);
+      // console.log("Fetched department admins:", admins); // Log the fetched admins
+    } catch (error) {
+      console.error("Error fetching department admins:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchDeptAdmins();
+  }, []);
+
   const haversineDistance = (
     userLocation: Location,
     selectedReport: Report
   ): number => {
     const toRad = (value: number) => (value * Math.PI) / 180;
 
-    const lat1 = toRad(userLocation.longitude);
-    const lon1 = toRad(userLocation.latitude);
+    const lat1 = toRad(userLocation.latitude);
+    const lon1 = toRad(userLocation.longitude);
     const lat2 = toRad(selectedReport.latitude);
     const lon2 = toRad(selectedReport.longitude);
 
@@ -329,21 +357,17 @@ export default function Home() {
             <Marker
               coordinate={region}
               title={"You are here"}
-              pinColor="blue"
-            />
-            <Marker
-              coordinate={{ latitude: 14.65344, longitude: 120.99473 }}
-              title={"University of Caloocan City - South Campus"}
-              description="South Campus"
+              pinColor="pink"
             />
 
             {reports.map((item, index) => (
               <Marker
                 key={`${item.id}-${index}`}
                 coordinate={{
-                  latitude: item.longitude,
-                  longitude: item.latitude,
+                  latitude: item.latitude,
+                  longitude: item.longitude,
                 }}
+                pinColor={item.is_validated ? "green" : "red"}
               >
                 <Callout
                   onPress={() => {
@@ -380,6 +404,43 @@ export default function Home() {
                 </Callout>
               </Marker>
             ))}
+
+            {deptAdmins.map((item, index) => (
+              <Marker
+                key={`${item.id}-${index}`}
+                coordinate={{
+                  latitude: item.latitude,
+                  longitude: item.longitude,
+                }}
+                pinColor={"blue"}
+              >
+                <Callout>
+                  <View className="w-auto justify-center items-center">
+                    <Text className="font-extrabold text-sm">
+                      {" " + item.department}
+                    </Text>
+                    <Text className="font-bold text-xs">
+                      {" " + item.station}
+                    </Text>
+
+                    <Text className="text-xs text-slate-600 mt-1">
+                      Distance:{" "}
+                      {userLocation
+                        ? (() => {
+                            const distance = haversineDistance(
+                              userLocation,
+                              item
+                            );
+                            return distance > 1000
+                              ? `${(distance / 1000).toFixed(2)} km` // Convert to kilometers
+                              : `${distance.toFixed(2)} m`; // Keep in meters
+                          })()
+                        : "Calculating..."}
+                    </Text>
+                  </View>
+                </Callout>
+              </Marker>
+            ))}
           </MapView>
 
           <TouchableOpacity
@@ -398,7 +459,7 @@ export default function Home() {
         <SafeAreaView className="bg-white w-full absolute p-0 flex-row rounded-b-3xl border-[#0C3B2D] border-4 border-t-0">
           <View className="flex-1 items-start justify-center p-5 ml-4">
             <View className="items-start justify-start">
-              <Text className="text-[#0C3B2D] font-bold text-2xl mb-2">
+              <Text className="text-[#0C3B2D] font-extrabold text-2xl">
                 {getLocalDay()}
               </Text>
             </View>
@@ -437,9 +498,9 @@ export default function Home() {
           >
             <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
               <View className="flex-1 justify-center items-center bg-black/50">
-                <View className="w-4/5 p-5 bg-white rounded-xl items-start border-2 border-[#0C3B2D]">
-                  {selectedReport && (
-                    <>
+                {selectedReport && (
+                  <>
+                    <View className="w-4/5 p-5 bg-white rounded-xl items-start border-2 border-[#0C3B2D]">
                       <View className="w-full flex flex-row">
                         <View className="flex flex-col items-start">
                           <Text className="text-xl font-bold">
@@ -502,9 +563,15 @@ export default function Home() {
                           className="w-full h-72 rounded-lg my-1 border-2 border-[#0C3B2D]"
                         />
                       )}
-                    </>
-                  )}
-                </View>
+                    </View>
+                    <Text style={{ padding: 10, color: "white" }}>
+                      Report has{" "}
+                      {selectedReport.is_validated
+                        ? "been Validated"
+                        : "Not yet been Validated"}
+                    </Text>
+                  </>
+                )}
               </View>
             </TouchableWithoutFeedback>
           </Modal>
