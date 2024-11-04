@@ -29,6 +29,7 @@ import {
   deleteDoc,
   doc,
   setDoc,
+  getDoc,
 } from "firebase/firestore";
 import * as SecureStore from "expo-secure-store";
 import * as Location from "expo-location";
@@ -76,6 +77,8 @@ export default function ManageReports() {
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [fullImageModalVisible, setFullImageModalVisible] = useState(false);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [locationPermissionGranted, setLocationPermissionGranted] =
     useState(false);
@@ -264,8 +267,8 @@ export default function ManageReports() {
   ): number => {
     const toRad = (value: number) => (value * Math.PI) / 180;
 
-    const lat1 = toRad(userLocation.longitude);
-    const lon1 = toRad(userLocation.latitude);
+    const lat1 = toRad(userLocation.latitude);
+    const lon1 = toRad(userLocation.longitude);
     const lat2 = toRad(selectedReport.latitude);
     const lon2 = toRad(selectedReport.longitude);
 
@@ -293,31 +296,40 @@ export default function ManageReports() {
     });
   }, []);
 
-  // Add this function in ManageReports component
   const handleDeleteReport = async (reportId: string) => {
     if (!selectedReport) return;
 
     try {
-      // Delete the report from the reports collection
       const reportRef = doc(
         db,
         `reports/${selectedReport.type_of_report.toLowerCase()}/reports`,
         reportId
       );
-      await deleteDoc(reportRef);
-      console.log(selectedReport, reportId);
-      // Create a new document in the deletedReports collection
+
+      // Get the report data before deleting
+      const reportSnap = await getDoc(reportRef);
+      if (!reportSnap.exists()) {
+        console.error("Report does not exist!");
+        return;
+      }
+      const reportData = reportSnap.data();
+
+      // Move report to deletedReports
       const deletedReportRef = doc(db, "deletedReports", reportId);
       await setDoc(deletedReportRef, {
-        ...selectedReport,
-        deleted_at: new Date().toISOString(), // Add a deletion timestamp
-        deleted_by: username, // Add the user who deleted the report
+        ...reportData,
+        deleted_at: new Date().toISOString(),
+        deleted_by: username,
       });
 
-      // Optionally, update the state to remove the deleted report from the UI
+      // Delete original report
+      await deleteDoc(reportRef);
+
+      // Update reports and reset selected report
       setReports((prevReports) =>
         prevReports.filter((report) => report.id !== reportId)
       );
+      setSelectedReport(null); // Reset selected report
 
       console.log("Report deleted and moved to deletedReports successfully.");
     } catch (error) {
@@ -379,10 +391,17 @@ export default function ManageReports() {
           </Text>
         </View>
         {item.image_path ? (
-          <Image
-            source={{ uri: item.image_path }}
-            className="w-full h-72 rounded-lg my-1 border-2 border-[#0C3B2D]"
-          />
+          <TouchableOpacity
+            onPress={() => {
+              setSelectedImage(item.image_path);
+              setFullImageModalVisible(true);
+            }}
+          >
+            <Image
+              source={{ uri: item.image_path }}
+              className="w-full h-72 rounded-lg my-1 border-2 border-[#0C3B2D]"
+            />
+          </TouchableOpacity>
         ) : null}
         <View className="w-full flex flex-row mt-2 justify-between">
           <View className="flex flex-row items-center">
@@ -460,6 +479,39 @@ export default function ManageReports() {
           />
         )}
 
+        {/* Full Screen Image Modal */}
+        <Modal
+          visible={fullImageModalVisible}
+          transparent={true}
+          animationType="fade"
+        >
+          <TouchableWithoutFeedback
+            onPress={() => setFullImageModalVisible(false)}
+          >
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: "rgba(0, 0, 0, 0.7)",
+                justifyContent: "center",
+                alignItems: "center",
+                padding: 10,
+              }}
+            >
+              {selectedImage && (
+                <Image
+                  source={{ uri: selectedImage }}
+                  style={{
+                    width: width * 0.9,
+                    height: height * 0.55,
+                    borderRadius: 10,
+                  }}
+                  resizeMode="contain"
+                />
+              )}
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+
         <Modal
           visible={modalVisible}
           animationType="slide"
@@ -494,8 +546,8 @@ export default function ManageReports() {
                           borderRadius: 10,
                         }}
                         initialRegion={{
-                          latitude: selectedReport.longitude,
-                          longitude: selectedReport.latitude,
+                          latitude: selectedReport.latitude,
+                          longitude: selectedReport.longitude,
                           latitudeDelta: 0.01,
                           longitudeDelta: 0.01,
                         }}
@@ -507,8 +559,8 @@ export default function ManageReports() {
                         />
                         <Marker
                           coordinate={{
-                            latitude: selectedReport.longitude,
-                            longitude: selectedReport.latitude,
+                            latitude: selectedReport.latitude,
+                            longitude: selectedReport.longitude,
                           }}
                           title={selectedReport.type_of_report}
                         />

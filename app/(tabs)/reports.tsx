@@ -57,6 +57,7 @@ interface Report {
   upvoteCount: number | any;
   downvoteCount: number | any;
   voted: "upvote" | "downvote" | null;
+  is_validated: boolean;
 }
 interface Location {
   latitude: number;
@@ -87,7 +88,23 @@ export default function Reports() {
   const [upvoteCount, setUpvoteCount] = useState<number>(0);
   const [downvoteCount, setDownvoteCount] = useState<number>(0);
   const [voted, setVoted] = useState<"upvote" | "downvote" | null>(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const { USER_ID } = useAuth();
+  const { getUserInfo } = useAuth();
+  const [isVerified, setIsVerified] = useState(false);
+  const [visibleReportsCount, setVisibleReportsCount] = useState(5);
+
+  useEffect(() => {
+    const loadUserInfo = async () => {
+      const userInfo = await (getUserInfo
+        ? getUserInfo()
+        : Promise.resolve({}));
+      setIsVerified(userInfo?.is_verified || "");
+    };
+
+    loadUserInfo();
+  }, [getUserInfo]);
 
   async function fetchAllVotes() {
     const AllVotes: any[] = [];
@@ -148,9 +165,15 @@ export default function Reports() {
             })
           );
 
+          // Filter for reports that are validated
+          const validatedReports = reports.filter(
+            (report) => report.is_validated
+          );
+
           setReports((prevReports) => {
             // Combine previous reports with new ones
             const combinedReports = [...prevReports, ...reports];
+            // const combinedReports = [...prevReports, ...validatedReports];
 
             // Sort all reports by date
             const sortedReports = combinedReports.sort((a, b) => {
@@ -177,6 +200,7 @@ export default function Reports() {
       unsubscribeFunctions.forEach((unsubscribe) => unsubscribe());
     };
   };
+
   useEffect(() => {
     const fetchData = async () => {
       if (!USER_ID) {
@@ -201,19 +225,30 @@ export default function Reports() {
     reason: string
   ) => {
     try {
-      // Create a reference to the specific report document
-      const reportRef = doc(db, `reportedReports/${reportId}`);
-      // Set the report data
+      const reportRef = doc(
+        db,
+        `reports/${category.toLowerCase()}/reports/${reportId}/reported/reasons`
+      );
       await setDoc(
         reportRef,
         {
-          report_count: increment(1), // Initialize count to 1 for the first report
-          report_reason: arrayUnion(reason), // Append the new reason
-          reported_date: arrayUnion(new Date().toISOString()), // Append the current date
+          report_count: increment(1),
+          report_reason: arrayUnion(reason),
+          reported_date: arrayUnion(new Date().toISOString()),
+          reported_by: arrayUnion(USER_ID),
         },
         { merge: true }
-      ); // Merge to update existing fields or create new
-      console.log("Report submitted successfully!");
+      );
+
+      // Fetch and log the document to confirm
+      const docSnap = await getDoc(reportRef);
+      if (docSnap.exists()) {
+        console.log("Document data after submit:", docSnap.data());
+      } else {
+        console.log("No such document!");
+      }
+
+      console.log("Report submitted successfully");
     } catch (error) {
       console.error("Error reporting the post:", error);
     }
@@ -236,6 +271,10 @@ export default function Reports() {
     setReports([]);
     await fetchAllDocuments(USER_ID, votes); // Fetch the reports
     setRefreshing(false); // Stop refreshing
+  };
+
+  const loadMoreReports = () => {
+    setVisibleReportsCount((prevCount) => prevCount + 5); // Increment the count by 5
   };
 
   useEffect(() => {
@@ -278,8 +317,8 @@ export default function Reports() {
   ): number => {
     const toRad = (value: number) => (value * Math.PI) / 180;
 
-    const lat1 = toRad(userLocation.longitude);
-    const lon1 = toRad(userLocation.latitude);
+    const lat1 = toRad(userLocation.latitude);
+    const lon1 = toRad(userLocation.longitude);
     const lat2 = toRad(selectedReport.latitude);
     const lon2 = toRad(selectedReport.longitude);
 
@@ -360,6 +399,36 @@ export default function Reports() {
     }
   };
 
+  const handleReportValidate = async (reportId: string, category: string) => {
+    try {
+      const reportRef = doc(
+        db,
+        `reports/${category.toLowerCase()}/reports/${reportId}/validation/${USER_ID}`
+      );
+      const data = {
+        user_id: USER_ID,
+        validated: "validated",
+      };
+
+      await setDoc(reportRef, data);
+      console.log("Report validated successfully!", reportId);
+
+      setIsSuccess(true); // Set success state
+      // Optionally, you might want to close the modal here after a short delay
+    } catch (error) {
+      console.error("Error handling validation:", error);
+    }
+  };
+
+  const confirmValidation = async () => {
+    if (selectedReport) {
+      await handleReportValidate(
+        selectedReport.id,
+        selectedReport.type_of_report
+      );
+    }
+  };
+
   const renderItem = ({ item }: { item: Report }) => {
     const [datePart, timePart] = item.report_date.split("T");
     const formattedDate = datePart.replace(/-/g, "/");
@@ -385,7 +454,7 @@ export default function Reports() {
         </View>
         <TouchableOpacity
           onPress={() => {
-            console.log(item)
+            // console.log(item);
             setSelectedReport(item);
             setModalVisible(true);
           }}
@@ -443,49 +512,95 @@ export default function Reports() {
           </TouchableOpacity>
         ) : null}
         <View className="w-full flex flex-row mt-2 justify-between">
-          <View className="flex flex-row items-center">
-            <TouchableOpacity
-              onPress={() => handleUpvote(item.id, item.type_of_report)}
-            >
-              <MaterialCommunityIcons
-                name={item.voted === "upvote" ? "thumb-up" : "thumb-up-outline"}
-                size={width * 0.06}
-                color="#0C3B2D"
-                paddingHorizontal={10}
-              />
-            </TouchableOpacity>
-            <Text className="text-lg mx-1">{item.upvoteCount}</Text>
-            <TouchableOpacity
-              onPress={() => handleDownvote(item.id, item.type_of_report)}
-            >
-              <MaterialCommunityIcons
-                name={
-                  item.voted === "downvote"
-                    ? "thumb-down"
-                    : "thumb-down-outline"
-                }
-                size={width * 0.06}
-                color="#0C3B2D"
-                paddingHorizontal={10}
-              />
-            </TouchableOpacity>
-            <Text className="text-lg mx-1">{item.downvoteCount}</Text>
-          </View>
-          <View className="flex flex-row items-center">
-            <TouchableOpacity
-              className="p-2"
-              onPress={() => {
-                setSelectedReport(item); // Ensure the selected report is set
-                setReportModalVisible(true); // Then open the report modal
-              }}
-            >
-              <MaterialCommunityIcons
-                name="format-align-justify"
-                size={width * 0.06}
-                color="#0C3B2D"
-              />
-            </TouchableOpacity>
-          </View>
+          {item.is_validated ? (
+            <>
+              <View className="flex flex-row items-center">
+                <TouchableOpacity
+                  onPress={() => handleUpvote(item.id, item.type_of_report)}
+                  disabled={!isVerified}
+                >
+                  <MaterialCommunityIcons
+                    name={
+                      item.voted === "upvote" ? "thumb-up" : "thumb-up-outline"
+                    }
+                    size={width * 0.06}
+                    color={isVerified ? "#0C3B2D" : "#A0A0A0"}
+                    paddingHorizontal={10}
+                  />
+                </TouchableOpacity>
+                <Text className="text-lg mx-1">{item.upvoteCount}</Text>
+                <TouchableOpacity
+                  onPress={() => handleDownvote(item.id, item.type_of_report)}
+                  disabled={!isVerified}
+                >
+                  <MaterialCommunityIcons
+                    name={
+                      item.voted === "downvote"
+                        ? "thumb-down"
+                        : "thumb-down-outline"
+                    }
+                    size={width * 0.06}
+                    color={isVerified ? "#0C3B2D" : "#A0A0A0"}
+                    paddingHorizontal={10}
+                  />
+                </TouchableOpacity>
+                <Text className="text-lg mx-1">{item.downvoteCount}</Text>
+              </View>
+              <View className="flex flex-row items-center">
+                <TouchableOpacity
+                  className="p-2"
+                  onPress={() => {
+                    setSelectedReport(item); // Ensure the selected report is set
+                    setReportModalVisible(true); // Then open the report modal
+                  }}
+                  disabled={!isVerified}
+                >
+                  <MaterialCommunityIcons
+                    name="format-align-justify"
+                    size={width * 0.06}
+                    color={isVerified ? "#0C3B2D" : "#A0A0A0"}
+                  />
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : (
+            <View className="w-full flex flex-row">
+              <View className="flex-1 mr-3">
+                <TouchableOpacity
+                  className={`bg-[#0C3B2D] border-[#0C3B2D] border-2 p-2 rounded-lg h-auto items-center justify-center ${
+                    !isVerified ? "opacity-50" : ""
+                  }`}
+                  // onPress={onValidate} handleReportValidate
+                  onPress={() => {
+                    setSelectedReport(item); // Set the selected report
+                    setIsModalVisible(true); // Show the modal
+                    setIsSuccess(false); // Reset success state
+                  }}
+                  disabled={!isVerified}
+                >
+                  <Text className="text-md font-semibold text-white px-4">
+                    Validate Report
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <View className="flex-1">
+                <TouchableOpacity
+                  className={`bg-white border-[#0C3B2D] border-2 p-2 rounded-lg h-auto items-center justify-center ${
+                    !isVerified ? "opacity-50" : ""
+                  }`}
+                  onPress={() => {
+                    setSelectedReport(item); // Ensure the selected report is set
+                    setReportModalVisible(true); // Then open the report modal
+                  }}
+                  disabled={!isVerified}
+                >
+                  <Text className="text-md font-semibold text-[#0C3B2D] px-4">
+                    Report Incident
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
         </View>
       </View>
     );
@@ -502,7 +617,9 @@ export default function Reports() {
           <Text className="font-bold text-4xl text-white mt-3 mb-2">
             Reports
           </Text>
-          <TouchableOpacity onPress={() => router.push({ pathname: "/pages/notification" })}>
+          <TouchableOpacity
+            onPress={() => router.push({ pathname: "/pages/notification" })}
+          >
             <MaterialCommunityIcons
               name="bell"
               size={RFPercentage(3.5)}
@@ -511,7 +628,7 @@ export default function Reports() {
           </TouchableOpacity>
         </View>
         <FlatList
-          data={reports}
+          data={reports.slice(0, visibleReportsCount)}
           keyExtractor={(item, index) => `${item.id}-${index}}`}
           className="w-full h-auto flex p-4"
           showsVerticalScrollIndicator={false}
@@ -522,7 +639,19 @@ export default function Reports() {
               onRefresh={loadReports} // Trigger loadReports on refresh
             />
           }
+          onEndReached={loadMoreReports} // Load more reports when reaching the end
+          onEndReachedThreshold={0.0}
+          ListFooterComponent={
+            visibleReportsCount >= reports.length ? ( // Check if we've displayed all reports
+              <Text
+                style={{ padding: 20, color: "white", textAlign: "center" }}
+              >
+                You've reached the end of the page.
+              </Text>
+            ) : null
+          }
         />
+
         <ReportReportModal
           visible={reportModalVisible}
           onClose={() => setReportModalVisible(false)}
@@ -530,7 +659,7 @@ export default function Reports() {
             if (selectedReport) {
               handleReportSubmit(
                 selectedReport.id,
-                selectedReport.category,
+                selectedReport.type_of_report,
                 reason
               );
             } else {
@@ -619,8 +748,8 @@ export default function Reports() {
                         />
                         <Marker
                           coordinate={{
-                            latitude: selectedReport.longitude,
-                            longitude: selectedReport.latitude,
+                            latitude: selectedReport.latitude,
+                            longitude: selectedReport.longitude,
                           }}
                           title={selectedReport.type_of_report}
                         />
@@ -646,6 +775,57 @@ export default function Reports() {
             </View>
           </TouchableWithoutFeedback>
         </Modal>
+
+        <Modal visible={isModalVisible} transparent={true} animationType="fade">
+          <TouchableWithoutFeedback onPress={() => setIsModalVisible(false)}>
+            <View className="flex-1 justify-center items-center bg-black/50">
+              <View className="w-4/5 p-5 bg-white rounded-xl items-start border-2 border-[#0C3B2D]">
+                {isSuccess ? (
+                  <>
+                    <Text className="text-xl font-bold text-[#0C3B2D] mb-5">
+                      Report validation successful!
+                    </Text>
+                    <View className="flex flex-row justify-end mt-3 w-full">
+                      <TouchableOpacity
+                        className="bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center"
+                        onPress={() => setIsModalVisible(false)} // Close the modal here
+                      >
+                        <Text className="text-md font-semibold text-white px-4">
+                          Close
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                ) : (
+                  <>
+                    <Text className="text-xl font-bold text-[#0C3B2D] mb-5">
+                      Confirm Report Validation
+                    </Text>
+                    <View className="flex flex-row justify-end mt-3 w-full">
+                      <TouchableOpacity
+                        className="bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center"
+                        onPress={confirmValidation} // Confirm validation
+                      >
+                        <Text className="text-md font-semibold text-white px-4">
+                          Confirm
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        className="bg-white border-[#0C3B2D] border-2 p-2 rounded-lg h-auto items-center justify-center ml-3"
+                        onPress={() => setIsModalVisible(false)} // Close modal
+                      >
+                        <Text className="text-md font-semibold text-[#0C3B2D] px-4">
+                          Cancel
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                )}
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+
         <TouchableOpacity className="p-2">
           <MaterialCommunityIcons
             name="thumb-down-outline"
