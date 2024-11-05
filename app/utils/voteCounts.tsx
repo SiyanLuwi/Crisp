@@ -13,36 +13,71 @@ export class Vote {
     this.vote = vote;
   }
 
-  //!!! PAPALITAN TO NANG NASA REPORTS.TSX yung const handleupvote then downvote
+  public static async handleDownvote(reportId: string, category: string, userId: string): Promise<void>{
+    try {
+      const reportRef = doc(
+        db,
+        `reports/${category.toLowerCase()}/reports/${reportId}/votes/${userId}`
+      );
+      console.log("Document Reference:", reportRef.path);
+      const reportSnap = await getDoc(reportRef);
+      const data = {
+        user_id: userId,
+        vote: "downvote",
+      };
 
+      if (reportSnap.exists()) {
+        const existingVote = reportSnap.data().vote;
 
-  // public static async handleUpvote(reportId: string, category: string, userId: string): Promise<void> {
-  //   if(!userId){
-  //     throw new Error("User id might be undefined!")
-  //   }
-  //   try {
-  //     const voteRef = doc(db, `votes/${category}/reports/${reportId}/userVotes`, userId);
-  //     const voteSnapshot = await getDoc(voteRef);
-      
-  //     if (voteSnapshot.exists()) {
-  //       deleteDoc(voteRef)
-  //       console.log("Existing vote deleted.");
-  //       return; // Exit if the user has already voted
-  //     }
-  //     const newVote = new Vote(reportId, category, userId, "up");
+        if (existingVote === "downvote") {
+          await deleteDoc(reportRef);
+          console.log("Remove downvote!");
+        } else {
+          await deleteDoc(reportRef);
+          await setDoc(reportRef, data);
+          console.log("Update Vote!");
+        }
+      } else {
+        await setDoc(reportRef, data);
+        console.log("Upvote added successfully!", reportId);
+      }
+    } catch (error: any) {
+      console.error("Error handling downvote:", error.message);
+    }
+  }
 
-  //     // Save the new vote
-  //     await setDoc(voteRef, {
-  //       user_id: newVote.user_id,
-  //       report_id: newVote.report_id,
-  //       vote: newVote.votes,
-  //     });
-
-  //     console.log("Upvote success!");
-  //   } catch (error) {
-  //     console.error("Error during upvote:", error);
-  //   }
-  // }
+  public static async handleUpvote(reportId: string, category: string, userId: string): Promise<void> {
+      try {
+        const reportRef = doc(
+          db,
+          `reports/${category.toLowerCase()}/reports/${reportId}/votes/${userId}`
+        );
+        console.log("Document Reference:", reportRef.path);
+        const reportSnap = await getDoc(reportRef);
+        const data = {
+          user_id: userId,
+          vote: "upvote",
+        };
+  
+        if (reportSnap.exists()) {
+          const existingVote = reportSnap.data().vote;
+          if (existingVote === "upvote") {
+            await deleteDoc(reportRef);
+            console.log("Remove upvote!");
+          } else {
+            await deleteDoc(reportRef);
+            await setDoc(reportRef, data);
+            console.log("Update Vote!");
+          }
+        } else {
+          await setDoc(reportRef, data);
+          console.log("Upvote added successfully!", reportId);
+        }
+    } catch (error) {
+      console.error("Error during upvote:", error);
+    }
+  
+}
 
   public static async getAllVotes(): Promise<{ reportId: string; votes: Vote[] }[]> {
     const categories = ["fires", "street light", "potholes", "floods", "others", "road accidents"];

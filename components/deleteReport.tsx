@@ -13,6 +13,7 @@ const DeleteReportModal: React.FC<DeleteReportModalProps> = ({
   onClose,
   onConfirm,
   reportId,
+
 }) => {
   const [success, setSuccess] = useState(false);
   const [successMessageVisible, setSuccessMessageVisible] = useState(false);

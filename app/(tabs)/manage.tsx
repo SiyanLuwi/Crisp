@@ -33,6 +33,7 @@ import {
 } from "firebase/firestore";
 import * as SecureStore from "expo-secure-store";
 import * as Location from "expo-location";
+import { Report, Reports } from "../utils/reports";
 
 const db = getFirestore(app);
 const { height, width } = Dimensions.get("window");
@@ -44,22 +45,8 @@ const posts = Array.from({ length: 10 }, (_, index) => ({
   type: `Image Type ${index + 1}`,
   description: `Image Description ${index + 1}`,
 }));
-interface Report {
-  id: string;
-  user_id: string;
-  username: string;
-  type_of_report: string;
-  report_description: string;
-  longitude: number;
-  latitude: number;
-  category: string;
-  image_path: string;
-  upvote: number;
-  downvote: number;
-  report_date: string;
-  upvoteCount: number | any;
-  downvoteCount: number | any;
-}
+
+
 interface Location {
   latitude: number;
   longitude: number;
@@ -79,7 +66,7 @@ export default function ManageReports() {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [fullImageModalVisible, setFullImageModalVisible] = useState(false);
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [selectedReport, setSelectedReport] = useState<Reports | null>(null);
   const [locationPermissionGranted, setLocationPermissionGranted] =
     useState(false);
   const [region, setRegion] = useState<Region | null>(initialRegion);
@@ -123,7 +110,7 @@ export default function ManageReports() {
       return onSnapshot(
         collection(db, `reports/${category}/reports`),
         async (snapshot) => {
-          const reports: (Report | null)[] = await Promise.all(
+          const reports: (Reports | null)[] = await Promise.all(
             snapshot.docs.map(async (doc) => {
               const data = doc.data() as Omit<Report, "id">;
               const reportId = doc.id;
@@ -156,8 +143,8 @@ export default function ManageReports() {
           );
 
           // Filter out null values before updating the state
-          const filteredReports: Report[] = reports.filter(
-            (report): report is Report => report !== null
+          const filteredReports: Reports[] = reports.filter(
+            (report): report is Reports => report !== null
           );
 
           setReports((prevReports) => {
@@ -298,44 +285,20 @@ export default function ManageReports() {
 
   const handleDeleteReport = async (reportId: string) => {
     if (!selectedReport) return;
-
+    if(!username) return;
     try {
-      const reportRef = doc(
-        db,
-        `reports/${selectedReport.type_of_report.toLowerCase()}/reports`,
-        reportId
-      );
-
-      // Get the report data before deleting
-      const reportSnap = await getDoc(reportRef);
-      if (!reportSnap.exists()) {
-        console.error("Report does not exist!");
-        return;
-      }
-      const reportData = reportSnap.data();
-
-      // Move report to deletedReports
-      const deletedReportRef = doc(db, "deletedReports", reportId);
-      await setDoc(deletedReportRef, {
-        ...reportData,
-        deleted_at: new Date().toISOString(),
-        deleted_by: username,
-      });
-
-      // Delete original report
-      await deleteDoc(reportRef);
-
-      // Update reports and reset selected report
+      await Report.deleteReports(reportId, selectedReport as Reports, username);
       setReports((prevReports) =>
         prevReports.filter((report) => report.id !== reportId)
       );
       setSelectedReport(null); // Reset selected report
-
+  
       console.log("Report deleted and moved to deletedReports successfully.");
     } catch (error) {
       console.error("Error deleting report:", error);
     }
   };
+  
 
   const renderItem = ({ item }: { item: Report }) => {
     const [datePart, timePart] = item.report_date.split("T");

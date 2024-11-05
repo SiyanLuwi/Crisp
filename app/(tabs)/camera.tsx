@@ -88,7 +88,7 @@ export default function CameraComp() {
     setLoading(true);
     try {
       const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.6,
+        quality: 0.7,
         base64: true,
       });
 
@@ -117,7 +117,7 @@ export default function CameraComp() {
       const result = await manipulateAsync(
         uri,
         [{ resize: { width: 224, height: 224 } }],
-        { compress: 0.4, format: SaveFormat.JPEG }
+        { compress: 0.6, format: SaveFormat.JPEG }
       );
       return result.uri;
     } catch (error) {

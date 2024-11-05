@@ -5,7 +5,8 @@ import { router } from "expo-router";
 import api from "@/app/api/axios";
 import * as FileSystem from "expo-file-system";
 interface AuthProps {
-  USER_ID?: string,
+  onRefresh?: (refreshToken: string) => Promise<any>;
+  USER_ID?: string;
   authState?: { token: string | null; authenticated: boolean | null };
   onRegister?: (
     username: string,
@@ -454,6 +455,46 @@ export const AuthProvider = ({ children }: any) => {
       }
     }
   };
+  const refreshAccessToken = async (refreshToken: string) => {
+    try {
+      console.log(refreshAccessToken)
+      const { data } = await api.post('api/token/refresh/', { refresh: refreshToken })
+  
+      setAuthState({
+        token: data.access,
+        authenticated: true,
+      });
+      SET_USER_ID(data.user_id.toString())
+      const expirationTime = Date.now() + 60 * 60 * 1000;
+      axios.defaults.headers.common["Authorization"] = `Bearer ${data.access}`;
+
+      const storageItems = {
+        [TOKEN_KEY]: data.access,
+        [REFRESH_KEY]: data.refresh,
+        [ROLE]: data.account_type,
+        [EXPIRATION]: expirationTime.toString(),
+        user_id: data.user_id.toString(),
+        username: data.username,
+        email: data.email,
+        address: data.address,
+        contact_number: data.contact_number,
+        account_type: data.account_type,
+        is_email_verified: data.is_email_verified,
+        is_verified: data.is_verified,
+      };
+
+      await Promise.all(
+        Object.entries(storageItems).map(([key, value]) =>
+          SecureStore.setItemAsync(key, value.toString())
+        )
+      );
+  
+      return data; 
+    } catch (error) {
+      console.error('Failed to refresh access token:', error);
+      return null; 
+    }
+  };
 
   const value = {
     onRegister: register,
@@ -468,6 +509,7 @@ export const AuthProvider = ({ children }: any) => {
     verifyCurrentPassword,
     changePassword,
     verifyAccount,
+    onRefresh: refreshAccessToken,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

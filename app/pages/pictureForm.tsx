@@ -27,6 +27,8 @@ import LoadingButton from "@/components/loadingButton";
 import { useAuth } from "@/AuthContext/AuthContext";
 import * as Location from "expo-location"; // Import Location
 import * as Notifications from "expo-notifications";
+import { scheduleNotification } from "../utils/notifications";
+import { Report } from "../utils/reports";
 const { width, height } = Dimensions.get("window");
 
 export default function PictureForm() {
@@ -82,7 +84,7 @@ export default function PictureForm() {
         throw new Error("Image Uri is not valid! or Null");
       }
 
-      const res = await createReport(
+      const res = await Report.addReports(
         selectedItem,
         description,
         longitude,
@@ -92,17 +94,10 @@ export default function PictureForm() {
         customType,
         floorNumber
       );
-
+      
       if (res) {
         setLoading(false);
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title: `You've reported ${selectedItem} incident`,
-            body: "Thank you for caring!",
-            // data: { data: 'goes here', test: { test1: 'more data' } },
-          },
-          trigger: { seconds: 2 },
-        });
+        scheduleNotification("Your Report Has Been Submitted!", `Thank you for caring! Your report about the ${selectedItem} has been submitted.`)
         setReportResult(res);
         handleReportSuccess();
       }

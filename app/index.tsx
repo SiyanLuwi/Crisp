@@ -18,6 +18,8 @@ import { app } from "@/firebase/firebaseConfig";
 import * as Notifications from 'expo-notifications'
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
+import { useAuth } from "@/AuthContext/AuthContext";
+import { startLocationUpdates, stopLocationUpdates } from "./utils/locationMonitoring";
 const bgImage = require("@/assets/images/landing_page.png");
 
 // Get screen dimensions
@@ -37,61 +39,8 @@ Notifications.setNotificationHandler({
   }),
 });
 
-
-const checkToken = async () => {
-  const accessToken = await SecureStore.getItemAsync(TOKEN_KEY);
-  const refreshToken = await SecureStore.getItemAsync(REFRESH_KEY);
-  const expiration = await SecureStore.getItemAsync(EXPIRATION);
-
-  const currentTime = Date.now();
- 
-
-  // Check if access token is missing or expired
-  if (!accessToken || !expiration || currentTime > parseInt(expiration)) {
-    // Check if refresh token is also missing or expired
-    if (refreshToken) {
-      const newAccessToken = await refreshAccessToken(refreshToken);
-      if (!newAccessToken) {
-        // Both access and refresh tokens are invalid
-        // Handle logout or re-authentication here
-        console.log('Both tokens are invalid, prompting login...');
-        return null; 
-      }
-      return newAccessToken;
-    }
-    // No tokens available
-    return null; 
-  }
-
-  return accessToken; 
-};
-
-
-const refreshAccessToken = async (refreshToken: string) => {
-  try {
-    const response = await api.post('api/token/refresh/', { refresh: refreshToken })
-    const newAccessToken = response.data.access;
-
-    await SecureStore.setItemAsync(TOKEN_KEY, newAccessToken);
-
-    api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
-
-    return newAccessToken; 
-  } catch (error) {
-    console.error('Failed to refresh access token:', error);
-    return null; 
-  }
-};
-
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-  }),
-});
-
 export default function Index() {
+  const { onRefresh } = useAuth()
   const [expoPushToken, setExpoPushToken] = useState('');
   const [channels, setChannels] = useState<Notifications.NotificationChannel[]>([]);
   const [notification, setNotification] = useState<Notifications.Notification | undefined>(
@@ -100,7 +49,38 @@ export default function Index() {
   const notificationListener = useRef<Notifications.Subscription>();
   const responseListener = useRef<Notifications.Subscription>();
 
-
+  const checkToken = async () => {
+    const accessToken = await SecureStore.getItemAsync(TOKEN_KEY);
+    const refreshToken = await SecureStore.getItemAsync(REFRESH_KEY);
+    const expiration = await SecureStore.getItemAsync(EXPIRATION);
+    
+    const currentTime = Date.now();
+    if(!accessToken || !refreshToken){
+      return;
+    }
+    if(!onRefresh){
+      throw new Error("Error on Refreshig a token!")
+    }
+    try {
+      if (!accessToken || !expiration || currentTime > parseInt(expiration)) {
+        if (refreshToken) {
+          console.log(refreshToken)
+          const newAccessToken = await onRefresh(refreshToken);
+          if (!newAccessToken) {
+            console.log('Both tokens are invalid, prompting login...');
+            return null; 
+          }
+          return newAccessToken;
+        }
+        // No tokens available
+        return null; 
+      }
+    
+      return accessToken; 
+    } catch (error: any) {
+      console.log(error.message)
+    }
+  };
 
   useEffect(() => {
     const handleAuthentication = async () => {
@@ -133,7 +113,18 @@ export default function Index() {
         Notifications.removeNotificationSubscription(responseListener.current);
     };
   }, [])
+  
+  useEffect(() => {
+    const initiateLocationUpdates = async () => {
+      await startLocationUpdates(); 
+    };
 
+    initiateLocationUpdates();
+
+    return () => {
+      stopLocationUpdates(); 
+    };
+  }, []);
   
   async function registerForPushNotificationsAsync() {
     let token;
