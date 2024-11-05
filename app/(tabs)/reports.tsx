@@ -40,25 +40,25 @@ const { height, width } = Dimensions.get("window");
 import { Vote } from "../utils/voteCounts";
 const db = getFirestore(app);
 
-interface Report {
-  id: string;
-  username: string;
-  type_of_report: string;
-  report_description: string;
-  longitude: number;
-  latitude: number;
-  category: string;
-  image_path: string;
-  upvote: number;
-  downvote: number;
-  report_date: string;
-  custom_type: string;
-  floor_number: string;
-  upvoteCount: number | any;
-  downvoteCount: number | any;
-  voted: "upvote" | "downvote" | null;
-  is_validated: boolean;
-}
+  interface Report {
+    id: string;
+    username: string;
+    type_of_report: string;
+    report_description: string;
+    longitude: number;
+    latitude: number;
+    category: string;
+    image_path: string;
+    upvote: number;
+    downvote: number;
+    report_date: string;
+    custom_type: string;
+    floor_number: string;
+    upvoteCount: number | any;
+    downvoteCount: number | any;
+    voted: "upvote" | "downvote" | null;
+    is_validated: boolean;
+  }
 interface Location {
   latitude: number;
   longitude: number;
@@ -94,7 +94,9 @@ export default function Reports() {
   const { getUserInfo } = useAuth();
   const [isVerified, setIsVerified] = useState(false);
   const [visibleReportsCount, setVisibleReportsCount] = useState(5);
-
+  if(!USER_ID){
+    return
+  }
   useEffect(() => {
     const loadUserInfo = async () => {
       const userInfo = await (getUserInfo
@@ -368,32 +370,7 @@ export default function Reports() {
 
   const handleDownvote = async (reportId: string, category: string) => {
     try {
-      const reportRef = doc(
-        db,
-        `reports/${category.toLowerCase()}/reports/${reportId}/votes/${USER_ID}`
-      );
-      console.log("Document Reference:", reportRef.path);
-      const reportSnap = await getDoc(reportRef);
-      const data = {
-        user_id: USER_ID,
-        vote: "downvote",
-      };
-
-      if (reportSnap.exists()) {
-        const existingVote = reportSnap.data().vote;
-
-        if (existingVote === "downvote") {
-          await deleteDoc(reportRef);
-          console.log("Remove downvote!");
-        } else {
-          await deleteDoc(reportRef);
-          await setDoc(reportRef, data);
-          console.log("Update Vote!");
-        }
-      } else {
-        await setDoc(reportRef, data);
-        console.log("Upvote added successfully!", reportId);
-      }
+      await Vote.handleDownvote(reportId, category, USER_ID);
     } catch (error) {
       console.error("Error handling downvote:", error);
     }
@@ -579,7 +556,7 @@ export default function Reports() {
                   disabled={!isVerified}
                 >
                   <Text className="text-md font-semibold text-white px-4">
-                    Validate Report
+                     Verify Report
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -595,7 +572,7 @@ export default function Reports() {
                   disabled={!isVerified}
                 >
                   <Text className="text-md font-semibold text-[#0C3B2D] px-4">
-                    Report Incident
+                    Mark as False
                   </Text>
                 </TouchableOpacity>
               </View>

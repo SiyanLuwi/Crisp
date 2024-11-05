@@ -22,6 +22,7 @@ import { useAuth } from "@/AuthContext/AuthContext";
 import LoadingButton from "@/components/loadingButton";
 const bgImage = require("@/assets/images/landing_page.png");
 const { width, height } = Dimensions.get("window");
+import { scheduleNotification } from "../utils/notifications";
 
 export default function Register() {
   const [password, setPassword] = useState("");
@@ -94,7 +95,9 @@ export default function Register() {
         return;
       }
       setLoading(true);
-
+      if(!onRegister){
+        throw new Error("Undefied onRegister")
+      }
       const res = await onRegister!(
         username,
         email,
@@ -109,6 +112,7 @@ export default function Register() {
         console.log(res.data);
         throw new Error("Register Error!");
       }
+      scheduleNotification("Welcome to CRISP!", "Welcome to the community! Start exploring the app now.")
       router.push("/pages/verifyEmail");
     } catch (error: any) {
       alert(error);
