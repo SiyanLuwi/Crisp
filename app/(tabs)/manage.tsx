@@ -30,6 +30,7 @@ import {
   doc,
   setDoc,
   getDoc,
+  getDocs,
 } from "firebase/firestore";
 import * as SecureStore from "expo-secure-store";
 import * as Location from "expo-location";
@@ -45,7 +46,6 @@ const posts = Array.from({ length: 10 }, (_, index) => ({
   type: `Image Type ${index + 1}`,
   description: `Image Description ${index + 1}`,
 }));
-
 
 interface Location {
   latitude: number;
@@ -285,20 +285,103 @@ export default function ManageReports() {
 
   const handleDeleteReport = async (reportId: string) => {
     if (!selectedReport) return;
-    if(!username) return;
+
     try {
-      await Report.deleteReports(reportId, selectedReport as Reports, username);
+      const reportRef = doc(
+        db,
+        `reports/${selectedReport.type_of_report.toLowerCase()}/reports`,
+        reportId
+      );
+
+      // Get the report data before deleting
+      const reportSnap = await getDoc(reportRef);
+      if (!reportSnap.exists()) {
+        console.error("Report does not exist!");
+        return;
+      }
+      const reportData = reportSnap.data();
+
+      // Delete all documents in the sub-collections: validation, votes, reasons, and feedback
+      await deleteCollectionDocuments(
+        reportId,
+        selectedReport.type_of_report.toLowerCase()
+      );
+
+      const localDate = new Date();
+      const localOffset = localDate.getTimezoneOffset() * 60000;
+      const localTimeAdjusted = new Date(localDate.getTime() - localOffset);
+
+      const localDateISOString = localTimeAdjusted.toISOString().slice(0, -1);
+
+      // Move report to deletedReports with the correct local time
+      const deletedReportRef = doc(db, "deletedReports", reportId);
+      await setDoc(deletedReportRef, {
+        ...reportData,
+        deleted_at: localDateISOString,
+        deleted_by: username, // assuming `username` is already defined elsewhere
+      });
+
+      // Delete the main report document
+      await deleteDoc(reportRef);
+
+      // Update the local state
       setReports((prevReports) =>
         prevReports.filter((report) => report.id !== reportId)
       );
       setSelectedReport(null); // Reset selected report
-  
-      console.log("Report deleted and moved to deletedReports successfully.");
     } catch (error) {
       console.error("Error deleting report:", error);
     }
   };
-  
+
+  // Function to delete all documents in a collection (sub-collections of the report)
+  async function deleteCollectionDocuments(
+    reportId: string,
+    reportType: string
+  ) {
+    try {
+      // Define the paths to the sub-collections
+      const validationPath = `reports/${reportType.toLowerCase()}/reports/${reportId}/validation`;
+      const votesPath = `reports/${reportType.toLowerCase()}/reports/${reportId}/votes`;
+      const reasonsPath = `reports/${reportType.toLowerCase()}/reports/${reportId}/reported/`;
+      const feedbackPath = `reports/${reportType.toLowerCase()}/reports/${reportId}/feedback`;
+
+      // Delete documents in validation collection
+      await deleteSubCollectionDocuments(validationPath);
+
+      // Delete documents in votes collection
+      await deleteSubCollectionDocuments(votesPath);
+
+      // Delete documents in reasons collection
+      await deleteSubCollectionDocuments(reasonsPath);
+
+      // Delete documents in feedback collection
+      await deleteSubCollectionDocuments(feedbackPath);
+    } catch (error) {
+      console.error("Error deleting documents in sub-collections:", error);
+    }
+  }
+
+  // Function to delete all documents in a given collection
+  async function deleteSubCollectionDocuments(collectionPath: string) {
+    try {
+      const collectionRef = collection(db, collectionPath);
+      const querySnapshot = await getDocs(collectionRef);
+
+      // Loop through all documents in the collection and delete them
+      querySnapshot.forEach(async (docSnapshot) => {
+        await deleteDoc(docSnapshot.ref);
+        console.log(
+          `Document with ID ${docSnapshot.id} deleted from ${collectionPath}`
+        );
+      });
+    } catch (error) {
+      console.error(
+        `Error deleting documents in collection ${collectionPath}:`,
+        error
+      );
+    }
+  }
 
   const renderItem = ({ item }: { item: Report }) => {
     const [datePart, timePart] = item.report_date.split("T");

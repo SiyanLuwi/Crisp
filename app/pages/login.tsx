@@ -97,7 +97,7 @@ export default function Login() {
             <TextInput
               className="w-4/5 bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
               placeholder="Enter your email"
-              onChangeText={setUsername}
+              onChangeText={(text) => setUsername(text.toLowerCase())}
               placeholderTextColor="#888"
             />
             <View className="w-4/5 bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">

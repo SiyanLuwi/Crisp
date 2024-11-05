@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import MapPicker from "@/components/mapPicker";
 import LogoutModal from "@/components/logout";
 import ChangePasswordModal from "@/components/changePassword";
@@ -38,6 +39,7 @@ function App() {
   const [isEditing, setIsEditing] = useState(false);
   const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
@@ -55,6 +57,7 @@ function App() {
       setAddress(userInfo?.address || "");
       setEmail(userInfo?.email || "");
       setContact(userInfo?.contact_number || "");
+      setIsVerified(userInfo?.is_verified || "");
     };
 
     loadUserInfo();
@@ -69,7 +72,7 @@ function App() {
   });
 
   const handleLogout = () => {
-    console.log("User logged out");
+    // console.log("User logged out");
     setLogoutModalVisible(false);
   };
 
@@ -79,20 +82,43 @@ function App() {
     confirmPassword: string
   ): Promise<void> => {
     return new Promise((resolve, reject) => {
-      console.log("Change password:", {
-        currentPassword,
-        newPassword,
-        confirmPassword,
-      });
+      // console.log("Change password:", {
+      //   currentPassword,
+      //   newPassword,
+      //   confirmPassword,
+      // });
       setTimeout(() => {
         if (newPassword === confirmPassword && newPassword.length > 0) {
-          console.log("Password changed successfully!");
+          // console.log("Password changed successfully!");
           resolve();
         } else {
           reject(new Error("Passwords do not match or are invalid."));
         }
       }, 2000);
     });
+  };
+
+  const pickImage = async () => {
+    // Request permission to access the gallery
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (permissionResult.granted === false) {
+      alert("Permission to access camera roll is required!");
+      return;
+    }
+
+    // Open the image picker
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0].uri);
+    }
   };
 
   const toggleEdit = () => {
@@ -105,7 +131,7 @@ function App() {
   const confirmCancel = () => {
     cancelSave(); // Call the function to revert changes
     setCancelModalVisible(false);
-    router.push("/(tabs)_employee/profile");
+    router.push("/(tabs)/profile");
   };
 
   const confirmSave = async () => {
@@ -113,7 +139,7 @@ function App() {
       // Ensure updateProfile is defined
       try {
         const updatedUser = await updateProfile(name, address, contact);
-        console.log("Profile updated successfully:", updatedUser);
+        // console.log("Profile updated successfully:", updatedUser);
         setPrevValues({ name, address, email, contact }); // Update previous values
         setShowSaveConfirmation(false);
         setIsEditing(false);
@@ -153,9 +179,9 @@ function App() {
       className="flex-1 justify-center items-center"
       resizeMode="cover"
     >
-      <SafeAreaView className="flex-1">
-        <View className="flex flex-row w-full items-center justify-between px-6">
-          <Text className="font-bold text-4xl text-white mt-3 mb-2 ml-6">
+      <SafeAreaView className="w-full h-full flex-1 justify-start items-center absolute bg-[#0C3B2D] pt-9">
+        <View className="flex flex-row h-auto w-full items-center justify-between px-6">
+          <Text className="font-bold text-4xl text-white mt-3 mb-2">
             Account
           </Text>
           <TouchableOpacity onPress={() => setLogoutModalVisible(true)}>
@@ -168,11 +194,20 @@ function App() {
         </View>
         <ScrollView className="w-full h-full flex">
           <View className="flex flex-col w-full h-full items-center ">
-            <Image
-              source={{ uri: "https://via.placeholder.com/150" }}
-              className="w-48 h-48 rounded-full border-4 border-white mb-8 mt-8"
-            />
+            <TouchableOpacity onPress={isEditing ? pickImage : undefined}>
+              <Image
+                source={{
+                  uri:
+                    selectedImage ||
+                    "https://static.vecteezy.com/system/resources/thumbnails/020/911/740/small_2x/user-profile-icon-profile-avatar-user-icon-male-icon-face-icon-profile-icon-free-png.png",
+                }}
+                className="w-48 h-48 rounded-full border-4 border-white mb-8 mt-8 bg-white"
+              />
+            </TouchableOpacity>
             <View className="justify-center w-full items-center px-12 mt-6">
+              <View style={{ width: "100%", alignItems: "flex-start" }}>
+                <Text className="text-md text-white mb-1">Name:</Text>
+              </View>
               <TextInput
                 className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                 value={name}
@@ -181,6 +216,9 @@ function App() {
                 placeholderTextColor="#888"
                 placeholder="Name"
               />
+              <View style={{ width: "100%", alignItems: "flex-start" }}>
+                <Text className="text-md text-white mb-1">Address:</Text>
+              </View>
               <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
                 <TextInput
                   className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
@@ -208,6 +246,9 @@ function App() {
                   </TouchableOpacity>
                 )}
               </View>
+              <View style={{ width: "100%", alignItems: "flex-start" }}>
+                <Text className="text-md text-white mb-1">Email Address:</Text>
+              </View>
               <TextInput
                 className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                 value={email}
@@ -216,6 +257,9 @@ function App() {
                 placeholderTextColor="#888"
                 placeholder="Email Address"
               />
+              <View style={{ width: "100%", alignItems: "flex-start" }}>
+                <Text className="text-md text-white mb-1">Contact Number:</Text>
+              </View>
               <TextInput
                 className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                 value={contact}
@@ -224,8 +268,13 @@ function App() {
                 placeholderTextColor="#888"
                 placeholder="Phone Number"
               />
+              <View style={{ width: "100%", alignItems: "flex-start" }}>
+                <Text className="text-md text-white mb-1">
+                  Is User Verfied:
+                </Text>
+              </View>
               <View className="w-full flex flex-row justify-between items-center bg-white mx-3 mb-4 rounded-lg">
-                {isVerified === false ? (
+                {!isVerified ? (
                   <>
                     <Text className="text-md p-4 font-bold text-[#0C3B2D]">
                       Not Yet Verified
@@ -327,5 +376,3 @@ function App() {
     </ImageBackground>
   );
 }
-
-//Oks na yung paglabas ng data edit na next na lang yung pag save at cancel
