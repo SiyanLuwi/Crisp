@@ -7,7 +7,7 @@ import {
   Dimensions,
   TouchableOpacity,
   Alert,
-  Platform 
+  Platform,
 } from "react-native";
 import { router } from "expo-router";
 import { RFPercentage } from "react-native-responsive-fontsize";
@@ -15,9 +15,9 @@ import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import api from "./api/axios";
 import { app } from "@/firebase/firebaseConfig";
-import * as Notifications from 'expo-notifications'
-import * as Device from 'expo-device';
-import Constants from 'expo-constants';
+import * as Notifications from "expo-notifications";
+import * as Device from "expo-device";
+import Constants from "expo-constants";
 const bgImage = require("@/assets/images/landing_page.png");
 
 // Get screen dimensions
@@ -27,7 +27,7 @@ const TOKEN_KEY = "my-jwt";
 const REFRESH_KEY = "my-jwt-refresh";
 const EXPIRATION = "accessTokenExpiration";
 const PUSH_TOKEN = "pushToken";
-
+const ACCOUNT_TYPE = "account_type";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -37,14 +37,12 @@ Notifications.setNotificationHandler({
   }),
 });
 
-
 const checkToken = async () => {
   const accessToken = await SecureStore.getItemAsync(TOKEN_KEY);
   const refreshToken = await SecureStore.getItemAsync(REFRESH_KEY);
   const expiration = await SecureStore.getItemAsync(EXPIRATION);
 
   const currentTime = Date.now();
- 
 
   // Check if access token is missing or expired
   if (!accessToken || !expiration || currentTime > parseInt(expiration)) {
@@ -54,32 +52,33 @@ const checkToken = async () => {
       if (!newAccessToken) {
         // Both access and refresh tokens are invalid
         // Handle logout or re-authentication here
-        console.log('Both tokens are invalid, prompting login...');
-        return null; 
+        console.log("Both tokens are invalid, prompting login...");
+        return null;
       }
       return newAccessToken;
     }
     // No tokens available
-    return null; 
+    return null;
   }
 
-  return accessToken; 
+  return accessToken;
 };
-
 
 const refreshAccessToken = async (refreshToken: string) => {
   try {
-    const response = await api.post('api/token/refresh/', { refresh: refreshToken })
+    const response = await api.post("api/token/refresh/", {
+      refresh: refreshToken,
+    });
     const newAccessToken = response.data.access;
 
     await SecureStore.setItemAsync(TOKEN_KEY, newAccessToken);
 
-    api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
+    api.defaults.headers.common["Authorization"] = `Bearer ${newAccessToken}`;
 
-    return newAccessToken; 
+    return newAccessToken;
   } catch (error) {
-    console.error('Failed to refresh access token:', error);
-    return null; 
+    console.error("Failed to refresh access token:", error);
+    return null;
   }
 };
 
@@ -92,70 +91,94 @@ Notifications.setNotificationHandler({
 });
 
 export default function Index() {
-  const [expoPushToken, setExpoPushToken] = useState('');
-  const [channels, setChannels] = useState<Notifications.NotificationChannel[]>([]);
-  const [notification, setNotification] = useState<Notifications.Notification | undefined>(
-    undefined
+  const [expoPushToken, setExpoPushToken] = useState("");
+  const [channels, setChannels] = useState<Notifications.NotificationChannel[]>(
+    []
   );
+  const [notification, setNotification] = useState<
+    Notifications.Notification | undefined
+  >(undefined);
   const notificationListener = useRef<Notifications.Subscription>();
   const responseListener = useRef<Notifications.Subscription>();
-
-
+  const [accountType, setAccountType] = useState<string | null>(null);
 
   useEffect(() => {
     const handleAuthentication = async () => {
       const accessToken = await checkToken();
+
       if (accessToken) {
-        router.push("/(tabs)/home");
-      } 
+        const accountType = await SecureStore.getItemAsync(ACCOUNT_TYPE);
+        setAccountType(accountType);
+
+        // Redirect based on account type
+        if (accountType === "citizen") {
+          router.push("/(tabs)/home");
+        } else if (accountType === "worker") {
+          router.push("/(tabs)_employee/home");
+        } else {
+          alert("Unexpected account type");
+        }
+      } else {
+        // Redirect to login if the token is not valid
+        router.push("/pages/login");
+      }
     };
+
     handleAuthentication();
   }, []);
 
   useEffect(() => {
-    registerForPushNotificationsAsync().then(token => token && setExpoPushToken(token));
+    registerForPushNotificationsAsync().then(
+      (token) => token && setExpoPushToken(token)
+    );
 
-    if (Platform.OS === 'android') {
-      Notifications.getNotificationChannelsAsync().then(value => setChannels(value ?? []));
+    if (Platform.OS === "android") {
+      Notifications.getNotificationChannelsAsync().then((value) =>
+        setChannels(value ?? [])
+      );
     }
-    notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
-      setNotification(notification);
-    });
+    notificationListener.current =
+      Notifications.addNotificationReceivedListener((notification) => {
+        setNotification(notification);
+      });
 
-    responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-      console.log(response);
-    });
+    responseListener.current =
+      Notifications.addNotificationResponseReceivedListener((response) => {
+        console.log(response);
+      });
 
     return () => {
       notificationListener.current &&
-        Notifications.removeNotificationSubscription(notificationListener.current);
+        Notifications.removeNotificationSubscription(
+          notificationListener.current
+        );
       responseListener.current &&
         Notifications.removeNotificationSubscription(responseListener.current);
     };
-  }, [])
+  }, []);
 
-  
   async function registerForPushNotificationsAsync() {
     let token;
-  
-    if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('default', {
-        name: 'default',
+
+    if (Platform.OS === "android") {
+      await Notifications.setNotificationChannelAsync("default", {
+        name: "default",
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#FF231F7C',
+        lightColor: "#FF231F7C",
       });
     }
-  
+
     if (Device.isDevice) {
-      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      const { status: existingStatus } =
+        await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
-      if (existingStatus !== 'granted') {
+      if (existingStatus !== "granted") {
         const { status } = await Notifications.requestPermissionsAsync();
         finalStatus = status;
       }
-      if (finalStatus !== 'granted') {
-        alert('Failed to get push token for push notification!');
+      if (finalStatus !== "granted") {
+        alert("Failed to get push token for push notification!");
         return;
       }
       // Learn more about projectId:
@@ -163,9 +186,10 @@ export default function Index() {
       // EAS projectId is used here.
       try {
         const projectId =
-          Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId;
+          Constants?.expoConfig?.extra?.eas?.projectId ??
+          Constants?.easConfig?.projectId;
         if (!projectId) {
-          throw new Error('Project ID not found');
+          throw new Error("Project ID not found");
         }
         token = (
           await Notifications.getExpoPushTokenAsync({
@@ -177,13 +201,12 @@ export default function Index() {
         token = `${e}`;
       }
     } else {
-      alert('Must use physical device for Push Notifications');
+      alert("Must use physical device for Push Notifications");
     }
-  
+
     return token;
   }
 
-    
   return (
     <View className="flex w-full h-full relative items-center justify-center">
       <Image source={bgImage} className="w-full h-full " />
@@ -201,7 +224,9 @@ export default function Index() {
       <View className="absolute left-[10%] right-[10%] bottom-[8%] w-full flex flex-col justify-start items-start">
         <TouchableOpacity
           className="mt-5 w-full max-w-[80%] bg-[#0C3B2D] rounded-xl p-2 shadow-lg border-2 justify-center items-center border-[#8BC34A]"
-          onPress={() => {router.navigate(`/pages/login`)}}
+          onPress={() => {
+            router.navigate(`/pages/login`);
+          }}
         >
           <Text className="text-xl py-1 font-bold text-white">LOGIN</Text>
         </TouchableOpacity>
@@ -217,4 +242,3 @@ export default function Index() {
     </View>
   );
 }
-

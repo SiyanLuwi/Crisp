@@ -314,15 +314,42 @@ export default function ManageReports() {
       }
       const reportData = reportSnap.data();
 
-      // Move report to deletedReports
+      // Delete the validation document for the current report
+      const validationRef = doc(
+        db,
+        `reports/${selectedReport.type_of_report.toLowerCase()}/reports/${reportId}/validation/${USER_ID}`
+      );
+      await deleteDoc(validationRef); // Delete validation document
+
+      // Delete the votes document for the current report
+      const votesRef = doc(
+        db,
+        `reports/${selectedReport.type_of_report.toLowerCase()}/reports/${reportId}/votes/${USER_ID}`
+      );
+      await deleteDoc(votesRef); // Delete votes document
+
+      // Delete the reported/reasons document for the current report
+      const reasonsRef = doc(
+        db,
+        `reports/${selectedReport.type_of_report.toLowerCase()}/reports/${reportId}/reported/reasons`
+      );
+      await deleteDoc(reasonsRef); // Delete reasons document
+
+      const localDate = new Date();
+      const localOffset = localDate.getTimezoneOffset() * 60000;
+      const localTimeAdjusted = new Date(localDate.getTime() - localOffset);
+
+      const localDateISOString = localTimeAdjusted.toISOString().slice(0, -1);
+
+      // Move report to deletedReports with the correct local time
       const deletedReportRef = doc(db, "deletedReports", reportId);
       await setDoc(deletedReportRef, {
         ...reportData,
-        deleted_at: new Date().toISOString(),
+        deleted_at: localDateISOString, // Store the local time in ISO format without 'Z'
         deleted_by: username,
       });
 
-      // Delete original report
+      // Delete the original report document
       await deleteDoc(reportRef);
 
       // Update reports and reset selected report
@@ -330,8 +357,6 @@ export default function ManageReports() {
         prevReports.filter((report) => report.id !== reportId)
       );
       setSelectedReport(null); // Reset selected report
-
-      console.log("Report deleted and moved to deletedReports successfully.");
     } catch (error) {
       console.error("Error deleting report:", error);
     }
