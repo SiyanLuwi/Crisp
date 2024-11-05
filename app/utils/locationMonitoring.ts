@@ -4,6 +4,7 @@ import { Report } from './reports'; // Adjust import based on your file structur
 import { haversineDistance } from './haversieDistace'; // Assuming this is where your distance calculation is
 
 let watchSubscription: Location.LocationSubscription | null = null; // Initialize watchSubscription
+const notifiedReports = new Set<string>();
 
 export const startLocationUpdates = async () => {
   // Request permissions before starting location updates
@@ -34,7 +35,13 @@ const checkForNearbyReports = (userLocation: any, reports: Report[]) => {
   reports.forEach((report) => {
     const distance = haversineDistance(userLocation, report);
     if (distance <= 200) { // Adjust the distance as needed
-      scheduleNotification('New Report Nearby!', `A new report has been filed near you: ${report.type_of_report}`, 1);
+      if (!notifiedReports.has(report.id)) { // Check if the report has already notified
+        scheduleNotification('New Report Nearby!', `A new report has been filed near you: ${report.type_of_report}`, 1);
+        notifiedReports.add(report.id); // Add report ID to notified set
+      }
+    } else {
+      // If the report is no longer nearby, you can remove it from the notified set if desired
+      notifiedReports.delete(report.id); // Optionally remove it if it's no longer within range
     }
   });
 };
