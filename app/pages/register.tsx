@@ -22,6 +22,7 @@ import { useAuth } from "@/AuthContext/AuthContext";
 import LoadingButton from "@/components/loadingButton";
 const bgImage = require("@/assets/images/landing_page.png");
 const { width, height } = Dimensions.get("window");
+import { scheduleNotification } from "../utils/notifications";
 
 export default function Register() {
   const [password, setPassword] = useState("");
@@ -94,7 +95,9 @@ export default function Register() {
         return;
       }
       setLoading(true);
-
+      if (!onRegister) {
+        throw new Error("Undefied onRegister");
+      }
       const res = await onRegister!(
         username,
         email,
@@ -109,6 +112,10 @@ export default function Register() {
         console.log(res.data);
         throw new Error("Register Error!");
       }
+      scheduleNotification(
+        "Welcome to CRISP!",
+        "Welcome to the community! Start exploring the app now."
+      );
       router.push("/pages/verifyEmail");
     } catch (error: any) {
       alert(error);
@@ -137,7 +144,7 @@ export default function Register() {
               className="w-4/5 bg-white text-md p-4 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
               placeholder="Enter your name"
               placeholderTextColor="#888"
-              onChangeText={setUsername}
+              onChangeText={(text) => setUsername(text.toLowerCase())}
             />
             <View className="w-4/5 bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
               <TextInput

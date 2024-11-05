@@ -17,6 +17,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import FeedbackModal from "@/components/feedback";
 const bgImage = require("@/assets/images/bgImage.png");
+import { useAuth } from "@/AuthContext/AuthContext";
 import { router } from "expo-router";
 import {
   getFirestore,
@@ -41,8 +42,6 @@ interface Report {
   latitude: number;
   category: string;
   image_path: string;
-  upvote: number;
-  downvote: number;
   report_date: string;
 }
 
@@ -60,14 +59,12 @@ export default function Reports() {
     useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [fullImageModalVisible, setFullImageModalVisible] = useState(false);
-  const [username, setUsername] = useState<string | null>("");
-  const [reportModalVisible, setReportModalVisible] = useState(false);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [reports, setReports] = useState<Report[]>([]);
-  const [loading, setLoading] = useState(true);
   const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const { USER_ID } = useAuth();
 
   const fetchAllDocuments = async () => {
     const categories = [
@@ -94,8 +91,6 @@ export default function Reports() {
               latitude: data.latitude || 0, // Default to 0 if missing
               category: category, // Set the category based on the current loop
               image_path: data.image_path || "", // Default to empty string if missing
-              upvote: data.upvote || 0, // Default to 0 if missing
-              downvote: data.downvote || 0, // Default to 0 if missing
               report_date: data.report_date || "", // Default to empty string if missing
             };
           });
@@ -249,6 +244,7 @@ export default function Reports() {
             // onPress={onConfirm}
             onPress={() => {
               setFeedbackModalVisible(true);
+              setSelectedReport(item);
               // onConfirm();
               // router.back();
             }}
@@ -392,6 +388,9 @@ export default function Reports() {
         <FeedbackModal
           visible={feedbackModalVisible}
           onClose={() => setFeedbackModalVisible(false)} // Hide modal
+          reportId={selectedReport?.id || ""} // Pass the selected report ID
+          category={selectedReport?.category || ""} // Pass the report category
+          userId={USER_ID || ""} // Pass the USER_ID (this should be the actual user's ID)
         />
       </SafeAreaView>
     </ImageBackground>

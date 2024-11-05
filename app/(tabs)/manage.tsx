@@ -30,9 +30,11 @@ import {
   doc,
   setDoc,
   getDoc,
+  getDocs,
 } from "firebase/firestore";
 import * as SecureStore from "expo-secure-store";
 import * as Location from "expo-location";
+import { Report, Reports } from "../utils/reports";
 
 const db = getFirestore(app);
 const { height, width } = Dimensions.get("window");
@@ -44,22 +46,7 @@ const posts = Array.from({ length: 10 }, (_, index) => ({
   type: `Image Type ${index + 1}`,
   description: `Image Description ${index + 1}`,
 }));
-interface Report {
-  id: string;
-  user_id: string;
-  username: string;
-  type_of_report: string;
-  report_description: string;
-  longitude: number;
-  latitude: number;
-  category: string;
-  image_path: string;
-  upvote: number;
-  downvote: number;
-  report_date: string;
-  upvoteCount: number | any;
-  downvoteCount: number | any;
-}
+
 interface Location {
   latitude: number;
   longitude: number;
@@ -79,7 +66,7 @@ export default function ManageReports() {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [fullImageModalVisible, setFullImageModalVisible] = useState(false);
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [selectedReport, setSelectedReport] = useState<Reports | null>(null);
   const [locationPermissionGranted, setLocationPermissionGranted] =
     useState(false);
   const [region, setRegion] = useState<Region | null>(initialRegion);
@@ -123,7 +110,7 @@ export default function ManageReports() {
       return onSnapshot(
         collection(db, `reports/${category}/reports`),
         async (snapshot) => {
-          const reports: (Report | null)[] = await Promise.all(
+          const reports: (Reports | null)[] = await Promise.all(
             snapshot.docs.map(async (doc) => {
               const data = doc.data() as Omit<Report, "id">;
               const reportId = doc.id;
@@ -156,8 +143,8 @@ export default function ManageReports() {
           );
 
           // Filter out null values before updating the state
-          const filteredReports: Report[] = reports.filter(
-            (report): report is Report => report !== null
+          const filteredReports: Reports[] = reports.filter(
+            (report): report is Reports => report !== null
           );
 
           setReports((prevReports) => {
@@ -314,26 +301,11 @@ export default function ManageReports() {
       }
       const reportData = reportSnap.data();
 
-      // Delete the validation document for the current report
-      const validationRef = doc(
-        db,
-        `reports/${selectedReport.type_of_report.toLowerCase()}/reports/${reportId}/validation/${USER_ID}`
+      // Delete all documents in the sub-collections: validation, votes, reasons, and feedback
+      await deleteCollectionDocuments(
+        reportId,
+        selectedReport.type_of_report.toLowerCase()
       );
-      await deleteDoc(validationRef); // Delete validation document
-
-      // Delete the votes document for the current report
-      const votesRef = doc(
-        db,
-        `reports/${selectedReport.type_of_report.toLowerCase()}/reports/${reportId}/votes/${USER_ID}`
-      );
-      await deleteDoc(votesRef); // Delete votes document
-
-      // Delete the reported/reasons document for the current report
-      const reasonsRef = doc(
-        db,
-        `reports/${selectedReport.type_of_report.toLowerCase()}/reports/${reportId}/reported/reasons`
-      );
-      await deleteDoc(reasonsRef); // Delete reasons document
 
       const localDate = new Date();
       const localOffset = localDate.getTimezoneOffset() * 60000;
@@ -345,14 +317,14 @@ export default function ManageReports() {
       const deletedReportRef = doc(db, "deletedReports", reportId);
       await setDoc(deletedReportRef, {
         ...reportData,
-        deleted_at: localDateISOString, // Store the local time in ISO format without 'Z'
-        deleted_by: username,
+        deleted_at: localDateISOString,
+        deleted_by: username, // assuming `username` is already defined elsewhere
       });
 
-      // Delete the original report document
+      // Delete the main report document
       await deleteDoc(reportRef);
 
-      // Update reports and reset selected report
+      // Update the local state
       setReports((prevReports) =>
         prevReports.filter((report) => report.id !== reportId)
       );
@@ -361,6 +333,55 @@ export default function ManageReports() {
       console.error("Error deleting report:", error);
     }
   };
+
+  // Function to delete all documents in a collection (sub-collections of the report)
+  async function deleteCollectionDocuments(
+    reportId: string,
+    reportType: string
+  ) {
+    try {
+      // Define the paths to the sub-collections
+      const validationPath = `reports/${reportType.toLowerCase()}/reports/${reportId}/validation`;
+      const votesPath = `reports/${reportType.toLowerCase()}/reports/${reportId}/votes`;
+      const reasonsPath = `reports/${reportType.toLowerCase()}/reports/${reportId}/reported/`;
+      const feedbackPath = `reports/${reportType.toLowerCase()}/reports/${reportId}/feedback`;
+
+      // Delete documents in validation collection
+      await deleteSubCollectionDocuments(validationPath);
+
+      // Delete documents in votes collection
+      await deleteSubCollectionDocuments(votesPath);
+
+      // Delete documents in reasons collection
+      await deleteSubCollectionDocuments(reasonsPath);
+
+      // Delete documents in feedback collection
+      await deleteSubCollectionDocuments(feedbackPath);
+    } catch (error) {
+      console.error("Error deleting documents in sub-collections:", error);
+    }
+  }
+
+  // Function to delete all documents in a given collection
+  async function deleteSubCollectionDocuments(collectionPath: string) {
+    try {
+      const collectionRef = collection(db, collectionPath);
+      const querySnapshot = await getDocs(collectionRef);
+
+      // Loop through all documents in the collection and delete them
+      querySnapshot.forEach(async (docSnapshot) => {
+        await deleteDoc(docSnapshot.ref);
+        console.log(
+          `Document with ID ${docSnapshot.id} deleted from ${collectionPath}`
+        );
+      });
+    } catch (error) {
+      console.error(
+        `Error deleting documents in collection ${collectionPath}:`,
+        error
+      );
+    }
+  }
 
   const renderItem = ({ item }: { item: Report }) => {
     const [datePart, timePart] = item.report_date.split("T");
