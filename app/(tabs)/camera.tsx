@@ -28,10 +28,18 @@ interface Prediction {
   confidence: number;
 }
 
-const getAddressFromCoordinates = async (latitude: number, longitude: number) => {
+const getAddressFromCoordinates = async (
+  latitude: number,
+  longitude: number
+) => {
   try {
-    const [result] = await Location.reverseGeocodeAsync({ latitude, longitude });
-    return result ? `${result.name}, ${result.city}, ${result.region}, ${result.country}` : "Address not found";
+    const [result] = await Location.reverseGeocodeAsync({
+      latitude,
+      longitude,
+    });
+    return result
+      ? `${result.name}, ${result.city}, ${result.region}, ${result.country}`
+      : "Address not found";
   } catch (error) {
     console.error("Error fetching address:", error);
     return null;
@@ -46,18 +54,23 @@ export default function CameraComp() {
 
   useEffect(() => {
     const fetchLocation = async () => {
-      await SecureStore.setItemAsync("report_type", '');
+      await SecureStore.setItemAsync("report_type", "");
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
         alert("Permission to access location was denied");
         return;
       }
       // Get current location with high accuracy
-      let location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      let location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
       const { latitude, longitude } = location.coords;
       const address = await getAddressFromCoordinates(latitude, longitude);
       if (address) {
-        await SecureStore.setItemAsync("currentLocation", `${latitude}, ${longitude}`);
+        await SecureStore.setItemAsync(
+          "currentLocation",
+          `${latitude}, ${longitude}`
+        );
       } else {
         console.error("Failed to get address.");
       }
@@ -72,14 +85,16 @@ export default function CameraComp() {
   if (!permission.granted) {
     return (
       <View style={styles.centeredView}>
-        <Text style={styles.permissionText}>We need your permission to show the camera</Text>
+        <Text style={styles.permissionText}>
+          We need your permission to show the camera
+        </Text>
         <Button onPress={requestPermission} title="Grant Permission" />
       </View>
     );
   }
 
   const toggleCameraFacing = () => {
-    setFacing(current => (current === "back" ? "front" : "back"));
+    setFacing((current) => (current === "back" ? "front" : "back"));
   };
 
   const capturePhoto = async () => {
@@ -88,7 +103,7 @@ export default function CameraComp() {
     setLoading(true);
     try {
       const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.7,
+        quality: 0.8,
         base64: true,
       });
 
@@ -97,10 +112,16 @@ export default function CameraComp() {
           resizeImage(photo.uri),
           classifyImage(photo.uri), // Pass the original URI for classification
         ]);
-        await SecureStore.setItemAsync("imageUri", optimizedUri);
-        await SecureStore.setItemAsync("isEmergency", classificationResult.isEmergency);
-        await SecureStore.setItemAsync("report_type", classificationResult.class);
-        router.push('/pages/pictureForm')
+        await SecureStore.setItemAsync("imageUri", photo.uri);
+        await SecureStore.setItemAsync(
+          "isEmergency",
+          classificationResult.isEmergency
+        );
+        await SecureStore.setItemAsync(
+          "report_type",
+          classificationResult.class
+        );
+        router.push("/pages/pictureForm");
       } else {
         console.error("Photo capturing failed: photo is undefined.");
       }
@@ -117,7 +138,7 @@ export default function CameraComp() {
       const result = await manipulateAsync(
         uri,
         [{ resize: { width: 224, height: 224 } }],
-        { compress: 0.6, format: SaveFormat.JPEG }
+        { format: SaveFormat.JPEG }
       );
       return result.uri;
     } catch (error) {
@@ -131,7 +152,7 @@ export default function CameraComp() {
       const base64image = await FileSystem.readAsStringAsync(uri, {
         encoding: FileSystem.EncodingType.Base64,
       });
-  
+
       const res = await axios.post(
         "https://detect.roboflow.com/image_classification_fv/1",
         base64image,
@@ -140,35 +161,45 @@ export default function CameraComp() {
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
         }
       );
-  
+
       const result = getHighestConfidenceClass(res.data.predictions);
-  
-      console.log("Classified result:", result.class);
-  
+
+      console.log("Classified result:", result);
+
       return {
         class: result.class,
-        isEmergency: ["Fires", "Floods", "Road Accident"].includes(result.class) ? "Yes" : "No",
+        isEmergency: ["Fires", "Floods", "Road Accident"].includes(result.class)
+          ? "Yes"
+          : "No",
       };
-      
-    } catch (error:any) {
+    } catch (error: any) {
       console.error("Error during classification:", error.message);
       alert("Error classifying image. Please try again.");
       // Handle error appropriately (e.g., return a default value or rethrow)
-      return { class: 'Unknown', isEmergency: "No" }; // Default return on error
+      return { class: "Unknown", isEmergency: "No" }; // Default return on error
     }
   };
-  
-  const getHighestConfidenceClass = (results: Prediction[]) => {
-    return results.reduce((prev, current) => (prev.confidence > current.confidence ? prev : current));
-  };
 
+  const getHighestConfidenceClass = (results: Prediction[]) => {
+    console.log(results);
+    return results.reduce((prev, current) =>
+      prev.confidence > current.confidence ? prev : current
+    );
+  };
 
   return (
     <View style={styles.cameraContainer}>
       <CameraView style={styles.cameraView} facing={facing} ref={cameraRef}>
         <View style={styles.cameraControls}>
-          <TouchableOpacity style={styles.iconButton} onPress={toggleCameraFacing}>
-            <MaterialCommunityIcons name="camera-switch" size={width * 0.1} color="white" />
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={toggleCameraFacing}
+          >
+            <MaterialCommunityIcons
+              name="camera-switch"
+              size={width * 0.1}
+              color="white"
+            />
           </TouchableOpacity>
         </View>
         <View style={styles.captureButtonContainer}>
@@ -180,7 +211,11 @@ export default function CameraComp() {
             {loading ? (
               <ActivityIndicator size={width * 0.15} color="#0C3B2D" />
             ) : (
-              <MaterialCommunityIcons name="camera-iris" size={width * 0.15} color="#0C3B2D" />
+              <MaterialCommunityIcons
+                name="camera-iris"
+                size={width * 0.15}
+                color="#0C3B2D"
+              />
             )}
           </TouchableOpacity>
         </View>
@@ -194,13 +229,24 @@ const styles = StyleSheet.create({
   cameraView: { width: "100%", height: "100%" },
   centeredView: { flex: 1, justifyContent: "center", alignItems: "center" },
   permissionText: { fontSize: 20, fontWeight: "bold" },
-  cameraControls: { position: "absolute", top: "5%", width: "100%", flexDirection: "row", justifyContent: "space-between" },
+  cameraControls: {
+    position: "absolute",
+    top: "5%",
+    width: "100%",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
   iconButton: { margin: 5 },
-  captureButtonContainer: { position: "absolute", bottom: "13%", width: "100%", alignItems: "center" },
+  captureButtonContainer: {
+    position: "absolute",
+    bottom: "13%",
+    width: "100%",
+    alignItems: "center",
+  },
   captureButton: {
     width: 75,
     height: 75,
-    borderRadius: 37.5, 
+    borderRadius: 37.5,
     backgroundColor: "white",
     justifyContent: "center",
     alignItems: "center",

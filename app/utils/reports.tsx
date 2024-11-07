@@ -1,4 +1,12 @@
-import { collection, deleteDoc, doc, getDoc, getDocs, getFirestore, setDoc } from "firebase/firestore";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  getFirestore,
+  setDoc,
+} from "firebase/firestore";
 import { app } from "@/firebase/firebaseConfig";
 import * as FileSystem from "expo-file-system";
 import api from "@/app/api/axios";
@@ -22,6 +30,9 @@ export interface Reports {
   downvoteCount: number | any;
   voted: "upvote" | "downvote" | null;
   is_validated: boolean;
+  status: string;
+  userFeedback: string[];
+  workerFeedback: string[];
 }
 
 const db = getFirestore(app);
@@ -44,8 +55,11 @@ export class Report implements Reports {
   public upvoteCount: number | any;
   public downvoteCount: number | any;
   public voted: "upvote" | "downvote" | null;
-  public is_validated: boolean; 
-  
+  public is_validated: boolean;
+  public status: string;
+  public userFeedback: string[] = []; // Initialize as an empty array
+  public workerFeedback: string[] = []; // Initialize as an empty array
+
   constructor(reportData: Reports) {
     this.id = reportData.id;
     this.user_id = reportData.user_id;
@@ -65,9 +79,14 @@ export class Report implements Reports {
     this.downvoteCount = reportData.downvoteCount;
     this.voted = reportData.voted;
     this.is_validated = reportData.is_validated;
+    this.status = reportData.status;
+    this.userFeedback = []; // Initialize as empty array
+    this.workerFeedback = []; // Initialize as empty array
   }
-  
-  public static async fetchReportsByCategory(category: string): Promise<Report[]> {
+
+  public static async fetchReportsByCategory(
+    category: string
+  ): Promise<Report[]> {
     const reports: Report[] = [];
 
     try {
@@ -88,87 +107,100 @@ export class Report implements Reports {
     }
   }
 
-  public static async deleteReports(reportId:string, selectedReport: Reports, username: string){
-      try {
-        const reportRef = doc(
-          db,
-          `reports/${selectedReport.type_of_report.toLowerCase()}/reports`,
-          reportId
-        );
-    
-        // Get the report data before deleting
-        const reportSnap = await getDoc(reportRef);
-        if (!reportSnap.exists()) {
-          console.error("Report does not exist!");
-          return;
-        }
-        const reportData = reportSnap.data();
-    
-        // Move report to deletedReports
-        const deletedReportRef = doc(db, "deletedReports", reportId);
-        await setDoc(deletedReportRef, {
-          ...reportData,
-          deleted_at: new Date().toISOString(),
-          deleted_by: username,
-        });
-    
-        // Delete original report
-        await deleteDoc(reportRef);
-        
-      } catch (error: any) {
-        console.error(error.message)
+  public static async deleteReports(
+    reportId: string,
+    selectedReport: Reports,
+    username: string
+  ) {
+    try {
+      const reportRef = doc(
+        db,
+        `reports/${selectedReport.type_of_report.toLowerCase()}/reports`,
+        reportId
+      );
+
+      // Get the report data before deleting
+      const reportSnap = await getDoc(reportRef);
+      if (!reportSnap.exists()) {
+        console.error("Report does not exist!");
+        return;
       }
+      const reportData = reportSnap.data();
+
+      // Move report to deletedReports
+      const deletedReportRef = doc(db, "deletedReports", reportId);
+      await setDoc(deletedReportRef, {
+        ...reportData,
+        deleted_at: new Date().toISOString(),
+        deleted_by: username,
+      });
+
+      // Delete original report
+      await deleteDoc(reportRef);
+    } catch (error: any) {
+      console.error(error.message);
+    }
   }
 
-  public static async addReports(type_of_report: string,
+  public static async addReports(
+    type_of_report: string,
     report_description: string,
     longitude: string,
     latitude: string,
     is_emergency: string,
     image_path: string,
     custom_type: string,
-    floor_number: string) {
-      const formData = new FormData();
-      formData.append("type_of_report", type_of_report);
-      formData.append("report_description", report_description);
-      formData.append("longitude", longitude);
-      formData.append("latitude", latitude);
-      formData.append("is_emergency", is_emergency); 
-      const imageBase64 = await FileSystem.readAsStringAsync(image_path, {
-        encoding: FileSystem.EncodingType.Base64,
+    floor_number: string
+  ) {
+    const formData = new FormData();
+    formData.append("type_of_report", type_of_report);
+    formData.append("report_description", report_description);
+    formData.append("longitude", longitude);
+    formData.append("latitude", latitude);
+    formData.append("is_emergency", is_emergency);
+    const imageBase64 = await FileSystem.readAsStringAsync(image_path, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    formData.append("image_path", `data:image/jpeg;base64,${imageBase64}`);
+    formData.append("custom_type", custom_type);
+    formData.append("floor_number", floor_number);
+    try {
+      const res = await api.post("api/create-report/", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
-      formData.append("image_path", `data:image/jpeg;base64,${imageBase64}`);
-      formData.append("custom_type", custom_type);
-      formData.append("floor_number", floor_number);
-      try {
-        const res = await api.post("api/create-report/", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data" },
-         });
-        if (res.status === 201 || res.status === 200) {
-          return res;
-        }
-      } catch (error: any) {
-        console.error("Error details:", error); 
-        if (error.response) {
-          console.error("Error response data:", error.response.data); 
-          console.error("Error response status:", error.response.status); 
-          throw new Error(
-            `An unexpected error occurred: ${
-              error.response.data.message || error.message
-            }`
-          );
-        } else {
-          throw new Error(`An unexpected error occurred: ${error.message}`);
-        }
+      if (res.status === 201 || res.status === 200) {
+        return res;
       }
+    } catch (error: any) {
+      console.error("Error details:", error);
+      if (error.response) {
+        console.error("Error response data:", error.response.data);
+        console.error("Error response status:", error.response.status);
+        throw new Error(
+          `An unexpected error occurred: ${
+            error.response.data.message || error.message
+          }`
+        );
+      } else {
+        throw new Error(`An unexpected error occurred: ${error.message}`);
+      }
+    }
   }
-  
+
   // Fetch all reports across all categories
   public static async fetchAllReports(): Promise<Report[]> {
-    const categories = ["fires", "street light", "potholes", "floods", "others", "road accidents"];
+    const categories = [
+      "fires",
+      "street light",
+      "potholes",
+      "floods",
+      "others",
+      "road accidents",
+    ];
     const allReports: Report[] = [];
-  
+
     try {
       // Fetch all reports in parallel for each category
       await Promise.all(

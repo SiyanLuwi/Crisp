@@ -58,6 +58,10 @@ interface Report {
   downvoteCount: number | any;
   voted: "upvote" | "downvote" | null;
   is_validated: boolean;
+  user_id: number;
+  status: string;
+  userFeedback: string[];
+  workerFeedback: string[];
 }
 interface Location {
   latitude: number;
@@ -94,6 +98,9 @@ export default function Reports() {
   const { getUserInfo } = useAuth();
   const [isVerified, setIsVerified] = useState(false);
   const [visibleReportsCount, setVisibleReportsCount] = useState(5);
+  const [feedbackStatus, setFeedbackStatus] = useState<{
+    [key: string]: boolean;
+  }>({});
   if (!USER_ID) {
     return;
   }
@@ -134,7 +141,7 @@ export default function Reports() {
       "potholes",
       "floods",
       "others",
-      "road incidents",
+      "road accident",
     ];
     const unsubscribeFunctions = categories.map((category) => {
       return onSnapshot(
@@ -156,13 +163,36 @@ export default function Reports() {
               const userVote = reportVotes?.find(
                 (vote) => vote.userId === userId
               );
-              const voted = userVote ? userVote.vote : null;
+              const voted = userVote ? userVote.vote : null; // Fetch user and worker feedback
+
+              const userFeedbackRef = collection(
+                db,
+                `reports/${category}/reports/${reportId}/userFeedback`
+              );
+              const workerFeedbackRef = collection(
+                db,
+                `reports/${category}/reports/${reportId}/workerFeedback`
+              );
+
+              const userFeedbackSnapshot = await getDocs(userFeedbackRef);
+              const workerFeedbackSnapshot = await getDocs(workerFeedbackRef);
+
+              const userFeedbackDescriptions = userFeedbackSnapshot.docs.map(
+                (doc) => doc.data().description
+              );
+              const workerFeedbackDescriptions =
+                workerFeedbackSnapshot.docs.map(
+                  (doc) => doc.data().description
+                );
+
               return {
                 id: reportId,
                 ...data,
                 upvoteCount: upvotes,
                 downvoteCount: downvotes,
                 voted: voted,
+                userFeedback: userFeedbackDescriptions, // Add user feedback
+                workerFeedback: workerFeedbackDescriptions, // Add worker feedback
               };
             })
           );
@@ -406,10 +436,43 @@ export default function Reports() {
     }
   };
 
+  useEffect(() => {
+    const checkFeedbackForReports = async () => {
+      const feedbackCheckPromises = reports.map(async (report) => {
+        const feedbackRef = doc(
+          db,
+          `reports/${report.type_of_report.toLowerCase()}/reports/${report.id}/validation/${USER_ID}`
+        );
+        const feedbackDoc = await getDoc(feedbackRef);
+        return { id: report.id, exists: feedbackDoc.exists() };
+      });
+
+      try {
+        const feedbackResults = await Promise.all(feedbackCheckPromises);
+        const newFeedbackStatus: { [key: string]: boolean } =
+          feedbackResults.reduce(
+            (acc, { id, exists }) => {
+              acc[id] = exists;
+              return acc;
+            },
+            {} as { [key: string]: boolean }
+          );
+        setFeedbackStatus(newFeedbackStatus);
+      } catch (error) {
+        console.error("Error checking feedback status:", error);
+      }
+    };
+
+    if (reports.length > 0) {
+      checkFeedbackForReports();
+    }
+  }, [reports, USER_ID]);
+
   const renderItem = ({ item }: { item: Report }) => {
     const [datePart, timePart] = item.report_date.split("T");
     const formattedDate = datePart.replace(/-/g, "/");
     const formattedTime = timePart.split(".")[0];
+    const feedbackExists = feedbackStatus[item.id] || false;
 
     return (
       <View className="bg-white w-auto rounded-[20px] mx-3 p-4 my-2 mb-4">
@@ -527,15 +590,27 @@ export default function Reports() {
                 <TouchableOpacity
                   className="p-2"
                   onPress={() => {
-                    setSelectedReport(item); // Ensure the selected report is set
-                    setReportModalVisible(true); // Then open the report modal
+                    if (!isVerified) {
+                      alert(
+                        "You are not verified. Please verify your account before validating the report."
+                      );
+                    } else if (item.user_id.toString() === USER_ID) {
+                      alert("You mark your own report as False.");
+                    } else {
+                      setSelectedReport(item); // Ensure the selected report is set
+                      setReportModalVisible(true); // Then open the report modal
+                    }
                   }}
-                  disabled={!isVerified}
+                  // disabled={!isVerified || item.user_id.toString() === USER_ID}
                 >
                   <MaterialCommunityIcons
                     name="format-align-justify"
                     size={width * 0.06}
-                    color={isVerified ? "#0C3B2D" : "#A0A0A0"}
+                    color={
+                      isVerified && item.user_id.toString() !== USER_ID
+                        ? "#0C3B2D"
+                        : "#A0A0A0"
+                    }
                   />
                 </TouchableOpacity>
               </View>
@@ -545,15 +620,34 @@ export default function Reports() {
               <View className="flex-1 mr-3">
                 <TouchableOpacity
                   className={`bg-[#0C3B2D] border-[#0C3B2D] border-2 p-2 rounded-lg h-auto items-center justify-center ${
-                    !isVerified ? "opacity-50" : ""
+                    !isVerified ||
+                    item.user_id.toString() === USER_ID ||
+                    feedbackExists
+                      ? "opacity-50"
+                      : ""
                   }`}
                   // onPress={onValidate} handleReportValidate
                   onPress={() => {
-                    setSelectedReport(item); // Set the selected report
-                    setIsModalVisible(true); // Show the modal
-                    setIsSuccess(false); // Reset success state
+                    if (!isVerified) {
+                      alert(
+                        "You are not verified. Please verify your account before validating the report."
+                      );
+                    } else if (item.user_id.toString() === USER_ID) {
+                      alert("You cannot validate your own report.");
+                    } else if (feedbackExists) {
+                      alert("You have already validated this report.");
+                    } else {
+                      // If no condition is triggered, proceed with the modal
+                      setSelectedReport(item); // Set the selected report
+                      setIsModalVisible(true); // Show the modal
+                      setIsSuccess(false); // Reset success state
+                    } // Reset success state
                   }}
-                  disabled={!isVerified}
+                  // disabled={
+                  //   !isVerified ||
+                  //   item.user_id.toString() === USER_ID ||
+                  //   feedbackExists
+                  // }
                 >
                   <Text className="text-md font-semibold text-white px-4">
                     Verify Report
@@ -563,13 +657,29 @@ export default function Reports() {
               <View className="flex-1">
                 <TouchableOpacity
                   className={`bg-white border-[#0C3B2D] border-2 p-2 rounded-lg h-auto items-center justify-center ${
-                    !isVerified ? "opacity-50" : ""
+                    !isVerified ||
+                    item.user_id.toString() === USER_ID ||
+                    feedbackExists
+                      ? "opacity-50"
+                      : ""
                   }`}
                   onPress={() => {
-                    setSelectedReport(item); // Ensure the selected report is set
-                    setReportModalVisible(true); // Then open the report modal
+                    if (!isVerified) {
+                      alert(
+                        "You are not verified. Please verify your account before validating the report."
+                      );
+                    } else if (item.user_id.toString() === USER_ID) {
+                      alert("You cannot mark your own report as False.");
+                    } else {
+                      setSelectedReport(item); // Ensure the selected report is set
+                      setReportModalVisible(true); // Then open the report modal
+                    }
                   }}
-                  disabled={!isVerified}
+                  // disabled={
+                  //   !isVerified ||
+                  //   item.user_id.toString() === USER_ID ||
+                  //   feedbackExists
+                  // }
                 >
                   <Text className="text-md font-semibold text-[#0C3B2D] px-4">
                     Mark as False
@@ -579,6 +689,58 @@ export default function Reports() {
             </View>
           )}
         </View>
+        {item.status === "pending_review" && (
+          <View className="w-full flex flex-col mt-2">
+            <View className="w-full h-px bg-slate-300 mb-2" />
+            <Text className="text-xl font-bold">Feedback:</Text>
+            {item.workerFeedback?.map((feedback, index) => (
+              <Text
+                key={index}
+                className="text-lg text-left pr-2 font-semibold text-slate-500"
+              >
+                Worker:
+                <Text className="text-lg font-normal text-black ml-2">
+                  {" " + feedback}
+                  {/* You can replace this with any other data */}
+                </Text>
+              </Text>
+            ))}
+          </View>
+        )}
+        {item.status === "done" && (
+          <View className="w-full flex flex-col mt-2">
+            <View className="w-full h-px bg-slate-300 mb-2" />
+            <Text className="text-xl font-bold">Feedback:</Text>
+            {item.workerFeedback?.map((feedback, index) => (
+              <Text
+                key={index}
+                className="text-lg text-left pr-2 font-semibold text-slate-500"
+              >
+                Worker:
+                <Text className="text-lg font-normal text-black ml-2">
+                  {" " + feedback}
+                  {/* You can replace this with any other data */}
+                </Text>
+              </Text>
+            ))}
+          </View>
+        )}
+        {item.status === "done" && (
+          <View className="w-full flex flex-col">
+            {item.userFeedback?.map((feedback, index) => (
+              <Text
+                key={index}
+                className="text-lg text-left pr-2 font-semibold text-slate-500"
+              >
+                {item.username}
+                <Text className="text-lg font-normal text-black ml-2">
+                  {" " + feedback}
+                  {/* You can replace this with any other data */}
+                </Text>
+              </Text>
+            ))}
+          </View>
+        )}
       </View>
     );
   };
@@ -680,7 +842,7 @@ export default function Reports() {
 
         <Modal
           visible={modalVisible}
-          animationType="slide"
+          animationType="fade"
           transparent={true}
           onRequestClose={() => setModalVisible(false)}
         >

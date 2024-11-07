@@ -384,7 +384,7 @@ export default function VerifyPage() {
           {/* Modal for Verification */}
           <Modal
             transparent={true}
-            animationType="slide"
+            animationType="fade"
             visible={validationModalVisible}
             onRequestClose={() => setValidationModalVisible(false)}
           >
@@ -412,7 +412,7 @@ export default function VerifyPage() {
           {/* // Success Modal */}
           <Modal
             transparent={true}
-            animationType="slide"
+            animationType="fade"
             visible={modalVisible}
             onRequestClose={() => setModalVisible(false)}
           >

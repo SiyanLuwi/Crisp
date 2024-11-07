@@ -24,6 +24,8 @@ import {
   collection,
   getDocs,
   onSnapshot,
+  doc,
+  getDoc,
 } from "firebase/firestore";
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
 import { app } from "@/firebase/firebaseConfig";
@@ -64,6 +66,9 @@ export default function Reports() {
   const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [feedbackStatus, setFeedbackStatus] = useState<{
+    [key: string]: boolean;
+  }>({});
   const { USER_ID } = useAuth();
 
   const fetchAllDocuments = async () => {
@@ -172,10 +177,43 @@ export default function Reports() {
     requestLocationPermission();
   }, []);
 
+  useEffect(() => {
+    const checkFeedbackForReports = async () => {
+      const feedbackCheckPromises = reports.map(async (report) => {
+        const feedbackRef = doc(
+          db,
+          `reports/${report.category}/reports/${report.id}/workerFeedback/${USER_ID}`
+        );
+        const feedbackDoc = await getDoc(feedbackRef);
+        return { id: report.id, exists: feedbackDoc.exists() };
+      });
+
+      try {
+        const feedbackResults = await Promise.all(feedbackCheckPromises);
+        const newFeedbackStatus: { [key: string]: boolean } =
+          feedbackResults.reduce(
+            (acc, { id, exists }) => {
+              acc[id] = exists;
+              return acc;
+            },
+            {} as { [key: string]: boolean }
+          );
+        setFeedbackStatus(newFeedbackStatus);
+      } catch (error) {
+        console.error("Error checking feedback status:", error);
+      }
+    };
+
+    if (reports.length > 0) {
+      checkFeedbackForReports();
+    }
+  }, [reports, USER_ID]);
+
   const renderItem = ({ item }: { item: Report }) => {
     const [datePart, timePart] = item.report_date.split("T");
     const formattedDate = datePart.replace(/-/g, "/");
     const formattedTime = timePart.split(".")[0];
+    const feedbackExists = feedbackStatus[item.id] || false;
 
     return (
       <View className="bg-white w-auto rounded-[20px] mx-3 p-4 my-2 mb-4">
@@ -240,14 +278,14 @@ export default function Reports() {
         ) : null}
         <View className="flex flex-row justify-end w-full mt-3">
           <TouchableOpacity
-            className="bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center"
-            // onPress={onConfirm}
+            className={`bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center ${
+              feedbackExists ? "opacity-50" : ""
+            }`}
             onPress={() => {
               setFeedbackModalVisible(true);
               setSelectedReport(item);
-              // onConfirm();
-              // router.back();
             }}
+            disabled={feedbackExists}
           >
             <Text className="text-md font-extrabold text-white px-5">Done</Text>
           </TouchableOpacity>
