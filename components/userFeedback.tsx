@@ -47,7 +47,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
       // Save the description and proof in Firebase under the feedback path
       const feedbackRef = doc(
         db,
-        `reports/${category}/reports/${reportId}/workerFeedback/${userId}`
+        `reports/${category.toLowerCase()}/reports/${reportId}/userFeedback/${userId}`
       );
 
       const localDate = new Date();
@@ -66,12 +66,15 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
       await setDoc(feedbackRef, feedbackData);
 
       // Update the report with an `update_date` and `status`
-      const reportRef = doc(db, `reports/${category}/reports/${reportId}`);
+      const reportRef = doc(
+        db,
+        `reports/${category.toLowerCase()}/reports/${reportId}`
+      );
 
       // Assuming status should be updated to 'pending_review' or a similar status
       const updatedReportData = {
         update_date: localDateISOString, // Use the same timestamp for the update date
-        status: "pending_review", // Adjust status as needed (e.g., 'pending_review', 'under_review', etc.)
+        status: "done", // Adjust status as needed (e.g., 'pending_review', 'under_review', etc.)
       };
 
       // Update the report data
@@ -137,7 +140,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
             {feedbackSuccess ? ( // Conditional rendering for success message
               <View className="full p-3 bg-white rounded-xl items-start">
                 <Text className="text-xl font-bold text-[#0C3B2D] mb-5">
-                  Your feedback has been submitted successfully!
+                  Your has been submitted successfully!
                 </Text>
                 <View className="flex flex-row justify-end w-full ">
                   <TouchableOpacity

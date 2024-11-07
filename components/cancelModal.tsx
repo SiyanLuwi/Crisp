@@ -17,7 +17,7 @@ const CancelModal: React.FC<CancelModalModalProps> = ({
   return (
     <Modal
       transparent={true}
-      animationType="slide"
+      animationType="fade"
       visible={visible}
       onRequestClose={onCancel}
     >

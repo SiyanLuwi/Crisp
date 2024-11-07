@@ -156,10 +156,10 @@ function App() {
 
   const cancelSave = () => {
     // Revert to previous values
-    setName(prevValues.name);
-    setAddress(prevValues.address);
-    setEmail(prevValues.email);
-    setContact(prevValues.contact);
+    setName(name);
+    setAddress(address);
+    setEmail(email);
+    setContact(contact);
     setShowSaveConfirmation(false);
     setIsEditing(false); // Exit edit mode
   };
@@ -267,6 +267,7 @@ function App() {
                 onChangeText={setContact}
                 placeholderTextColor="#888"
                 placeholder="Phone Number"
+                keyboardType="numeric"
               />
               <View style={{ width: "100%", alignItems: "flex-start" }}>
                 <Text className="text-md text-white mb-1">

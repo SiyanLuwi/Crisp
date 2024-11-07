@@ -23,7 +23,7 @@ const SaveConfirmationModal: React.FC<SaveConfirmationModalProps> = ({
   onCancel,
 }) => {
   return (
-    <Modal transparent={true} visible={visible} animationType="slide">
+    <Modal transparent={true} visible={visible} animationType="fade">
       <View className="flex-1 justify-center items-center bg-black/50">
         <View className="w-4/5 py-5 px-3 bg-white rounded-xl items-start border-2 border-[#0C3B2D]">
           <Text className="text-2xl font-extrabold text-[#0C3B2D] mb-5 px-3">

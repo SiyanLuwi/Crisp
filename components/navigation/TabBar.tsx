@@ -97,7 +97,7 @@ const TabBar = ({
       {/* Modal for verification */}
       <Modal
         transparent={true}
-        animationType="slide"
+        animationType="fade"
         visible={modalVisible}
         onRequestClose={handleClose}
       >

@@ -107,7 +107,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
   };
 
   return (
-    <Modal transparent visible={visible} animationType="slide">
+    <Modal transparent visible={visible} animationType="fade">
       <View className="flex-1 justify-center items-center bg-black/50">
         <View className="w-4/5 py-5 px-3 bg-white rounded-xl items-start border-2 border-[#0C3B2D]">
           {!success ? (

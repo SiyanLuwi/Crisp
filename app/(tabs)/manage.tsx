@@ -18,6 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import { router } from "expo-router";
 import DeleteReportModal from "@/components/deleteReport";
+import FeedbackModal from "@/components/userFeedback";
 const bgImage = require("@/assets/images/bgImage.png");
 import { app } from "@/firebase/firebaseConfig";
 import { useAuth } from "@/AuthContext/AuthContext";
@@ -67,6 +68,7 @@ export default function ManageReports() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [fullImageModalVisible, setFullImageModalVisible] = useState(false);
   const [selectedReport, setSelectedReport] = useState<Reports | null>(null);
+  const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
   const [locationPermissionGranted, setLocationPermissionGranted] =
     useState(false);
   const [region, setRegion] = useState<Region | null>(initialRegion);
@@ -100,7 +102,7 @@ export default function ManageReports() {
       "potholes",
       "floods",
       "others",
-      "road incidents",
+      "road accident",
     ];
 
     // Retrieve the user ID securely
@@ -128,6 +130,27 @@ export default function ManageReports() {
               );
               const voted = userVote ? userVote.vote : null;
 
+              // Fetch user and worker feedback
+              const userFeedbackRef = collection(
+                db,
+                `reports/${category}/reports/${reportId}/userFeedback`
+              );
+              const workerFeedbackRef = collection(
+                db,
+                `reports/${category}/reports/${reportId}/workerFeedback`
+              );
+
+              const userFeedbackSnapshot = await getDocs(userFeedbackRef);
+              const workerFeedbackSnapshot = await getDocs(workerFeedbackRef);
+
+              const userFeedbackDescriptions = userFeedbackSnapshot.docs.map(
+                (doc) => doc.data().description
+              );
+              const workerFeedbackDescriptions =
+                workerFeedbackSnapshot.docs.map(
+                  (doc) => doc.data().description
+                );
+
               // Only return the report if the user ID matches
               if (data.user_id?.toString() === users_id?.toString()) {
                 return {
@@ -136,6 +159,8 @@ export default function ManageReports() {
                   upvoteCount: upvotes,
                   downvoteCount: downvotes,
                   voted: voted,
+                  userFeedback: userFeedbackDescriptions, // Add user feedback
+                  workerFeedback: workerFeedbackDescriptions, // Add worker feedback
                 };
               }
               return null; // Exclude reports that don't match user_id
@@ -344,19 +369,15 @@ export default function ManageReports() {
       const validationPath = `reports/${reportType.toLowerCase()}/reports/${reportId}/validation`;
       const votesPath = `reports/${reportType.toLowerCase()}/reports/${reportId}/votes`;
       const reasonsPath = `reports/${reportType.toLowerCase()}/reports/${reportId}/reported/`;
-      const feedbackPath = `reports/${reportType.toLowerCase()}/reports/${reportId}/feedback`;
+      const userFeedbackPath = `reports/${reportType.toLowerCase()}/reports/${reportId}/userFeedback`;
+      const workerFeedbackPath = `reports/${reportType.toLowerCase()}/reports/${reportId}/workerFeedback`;
 
       // Delete documents in validation collection
       await deleteSubCollectionDocuments(validationPath);
-
-      // Delete documents in votes collection
       await deleteSubCollectionDocuments(votesPath);
-
-      // Delete documents in reasons collection
       await deleteSubCollectionDocuments(reasonsPath);
-
-      // Delete documents in feedback collection
-      await deleteSubCollectionDocuments(feedbackPath);
+      await deleteSubCollectionDocuments(userFeedbackPath);
+      await deleteSubCollectionDocuments(workerFeedbackPath);
     } catch (error) {
       console.error("Error deleting documents in sub-collections:", error);
     }
@@ -467,6 +488,21 @@ export default function ManageReports() {
             <Text className="text-lg mx-1">{item.downvoteCount}</Text>
           </View>
           <View className="flex flex-row items-center">
+            {item.status === "pending_review" && (
+              <TouchableOpacity
+                className="bg-[#0C3B2D] p-2 rounded-md h-auto items-center justify-center"
+                onPress={() => {
+                  setFeedbackModalVisible(true);
+                  setSelectedReport(item);
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="check-decagram-outline"
+                  size={width * 0.04}
+                  color="white"
+                />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
               className="p-2"
               onPress={() => {
@@ -475,13 +511,66 @@ export default function ManageReports() {
               }}
             >
               <MaterialCommunityIcons
-                name="format-align-justify"
+                name="trash-can-outline"
                 size={width * 0.06}
                 color="#0C3B2D"
               />
             </TouchableOpacity>
           </View>
         </View>
+
+        {item.status === "pending_review" && (
+          <View className="w-full flex flex-col mt-2">
+            <View className="w-full h-px bg-slate-300 mb-2" />
+            <Text className="text-xl font-bold">Feedback:</Text>
+            {item.workerFeedback?.map((feedback, index) => (
+              <Text
+                key={index}
+                className="text-lg text-left pr-2 font-semibold text-slate-500"
+              >
+                Worker:
+                <Text className="text-lg font-normal text-black ml-2">
+                  {" " + feedback}
+                  {/* You can replace this with any other data */}
+                </Text>
+              </Text>
+            ))}
+          </View>
+        )}
+        {item.status === "done" && (
+          <View className="w-full flex flex-col mt-2">
+            <View className="w-full h-px bg-slate-300 mb-2" />
+            <Text className="text-xl font-bold">Feedback:</Text>
+            {item.workerFeedback?.map((feedback, index) => (
+              <Text
+                key={index}
+                className="text-lg text-left pr-2 font-semibold text-slate-500"
+              >
+                Worker:
+                <Text className="text-lg font-normal text-black ml-2">
+                  {" " + feedback}
+                  {/* You can replace this with any other data */}
+                </Text>
+              </Text>
+            ))}
+          </View>
+        )}
+        {item.status === "done" && (
+          <View className="w-full flex flex-col">
+            {item.userFeedback?.map((feedback, index) => (
+              <Text
+                key={index}
+                className="text-lg text-left pr-2 font-semibold text-slate-500"
+              >
+                {item.username}
+                <Text className="text-lg font-normal text-black ml-2">
+                  {" " + feedback}
+                  {/* You can replace this with any other data */}
+                </Text>
+              </Text>
+            ))}
+          </View>
+        )}
       </View>
     );
   };
@@ -560,7 +649,7 @@ export default function ManageReports() {
 
         <Modal
           visible={modalVisible}
-          animationType="slide"
+          animationType="fade"
           transparent={true}
           onRequestClose={() => setModalVisible(false)}
         >
@@ -645,6 +734,13 @@ export default function ManageReports() {
           onClose={() => setDeleteModalVisible(false)} // Hide modal
           onConfirm={handleDeleteReport} // Pass the delete handler
           reportId={selectedReport?.id || null} // Pass the selected report's ID
+        />
+        <FeedbackModal
+          visible={feedbackModalVisible}
+          onClose={() => setFeedbackModalVisible(false)} // Hide modal
+          reportId={selectedReport?.id || ""} // Pass the selected report ID
+          category={selectedReport?.type_of_report || ""} // Pass the report category
+          userId={USER_ID || ""} // Pass the USER_ID (this should be the actual user's ID)
         />
       </SafeAreaView>
     </ImageBackground>
