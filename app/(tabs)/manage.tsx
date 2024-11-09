@@ -19,6 +19,8 @@ import { RFPercentage } from "react-native-responsive-fontsize";
 import { router } from "expo-router";
 import DeleteReportModal from "@/components/deleteReport";
 import FeedbackModal from "@/components/userFeedback";
+import ImageModal from "@/components/imageModal";
+import ReportLocationModal from "@/components/reportLocationModal";
 const bgImage = require("@/assets/images/bgImage.png");
 import { app } from "@/firebase/firebaseConfig";
 import { useAuth } from "@/AuthContext/AuthContext";
@@ -40,26 +42,7 @@ import { Report, Reports } from "../utils/reports";
 const db = getFirestore(app);
 const { height, width } = Dimensions.get("window");
 
-const posts = Array.from({ length: 10 }, (_, index) => ({
-  id: index.toString(),
-  imageUri: "https://via.placeholder.com/150",
-  location: `Image Location ${index + 1}`,
-  type: `Image Type ${index + 1}`,
-  description: `Image Description ${index + 1}`,
-}));
-
-interface Location {
-  latitude: number;
-  longitude: number;
-}
 export default function ManageReports() {
-  const initialRegion = {
-    latitude: 13.4125,
-    longitude: 122.5621,
-    latitudeDelta: 0.01,
-    longitudeDelta: 0.01,
-  };
-
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,9 +52,6 @@ export default function ManageReports() {
   const [fullImageModalVisible, setFullImageModalVisible] = useState(false);
   const [selectedReport, setSelectedReport] = useState<Reports | null>(null);
   const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
-  const [locationPermissionGranted, setLocationPermissionGranted] =
-    useState(false);
-  const [region, setRegion] = useState<Region | null>(initialRegion);
   const [refreshing, setRefreshing] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
   const { USER_ID } = useAuth();
@@ -144,12 +124,18 @@ export default function ManageReports() {
               const workerFeedbackSnapshot = await getDocs(workerFeedbackRef);
 
               const userFeedbackDescriptions = userFeedbackSnapshot.docs.map(
-                (doc) => doc.data().description
+                (doc) => ({
+                  description: doc.data().description,
+                  proof: doc.data().proof,
+                  submited_at: doc.data().submited_at, // assuming 'submitted_at' is a Firestore timestamp
+                })
               );
               const workerFeedbackDescriptions =
-                workerFeedbackSnapshot.docs.map(
-                  (doc) => doc.data().description
-                );
+                workerFeedbackSnapshot.docs.map((doc) => ({
+                  description: doc.data().description,
+                  proof: doc.data().proof,
+                  submited_at: doc.data().submited_at, // assuming 'submitted_at' is a Firestore timestamp
+                }));
 
               // Only return the report if the user ID matches
               if (data.user_id?.toString() === users_id?.toString()) {
@@ -237,63 +223,6 @@ export default function ManageReports() {
     setReports([]);
     await fetchAllDocuments(USER_ID, votes); // Fetch the reports
     setRefreshing(false); // Stop refreshing
-  };
-
-  useEffect(() => {
-    const requestLocationPermission = async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      // console.log("Location permission status:", status);
-
-      if (status === "granted") {
-        setLocationPermissionGranted(true);
-        getCurrentLocation();
-      } else {
-        console.log("Location permission denied");
-        setLocationPermissionGranted(false);
-        setRegion(null);
-      }
-    };
-
-    const getCurrentLocation = async () => {
-      try {
-        const location = await Location.getCurrentPositionAsync({});
-        const { latitude, longitude } = location.coords;
-        setUserLocation({ latitude, longitude });
-        setRegion({
-          latitude,
-          longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        });
-      } catch (error) {
-        console.error("Error getting location:", error);
-      }
-    };
-
-    requestLocationPermission();
-  }, []);
-
-  const haversineDistance = (
-    userLocation: Location,
-    selectedReport: Report
-  ): number => {
-    const toRad = (value: number) => (value * Math.PI) / 180;
-
-    const lat1 = toRad(userLocation.latitude);
-    const lon1 = toRad(userLocation.longitude);
-    const lat2 = toRad(selectedReport.latitude);
-    const lon2 = toRad(selectedReport.longitude);
-
-    const dLat = lat2 - lat1;
-    const dLon = lon2 - lon1;
-
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const radius = 6371000; // Earth's radius in meters
-    return radius * c; // Distance in meters
   };
 
   // Fetch username when the component mounts
@@ -403,6 +332,17 @@ export default function ManageReports() {
       );
     }
   }
+
+  const formatDate = (timestamp: string): string => {
+    return new Date(timestamp).toLocaleString("en-GB", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  };
 
   const renderItem = ({ item }: { item: Report }) => {
     const [datePart, timePart] = item.report_date.split("T");
@@ -526,50 +466,56 @@ export default function ManageReports() {
             {item.workerFeedback?.map((feedback, index) => (
               <Text
                 key={index}
-                className="text-lg text-left pr-2 font-semibold text-slate-500"
+                className="text-lg text-left pr-2 font-semibold text-slate-700"
               >
-                Worker:
+                Worker
+                <Text className="text-sm font-semibold text-slate-500 ml-2 items-center">
+                  {"   " + formatDate(feedback.submited_at)}
+                </Text>
                 <Text className="text-lg font-normal text-black ml-2">
-                  {" " + feedback}
-                  {/* You can replace this with any other data */}
+                  {"\n" + feedback.description}
                 </Text>
               </Text>
             ))}
           </View>
         )}
         {item.status === "done" && (
-          <View className="w-full flex flex-col mt-2">
-            <View className="w-full h-px bg-slate-300 mb-2" />
-            <Text className="text-xl font-bold">Feedback:</Text>
-            {item.workerFeedback?.map((feedback, index) => (
-              <Text
-                key={index}
-                className="text-lg text-left pr-2 font-semibold text-slate-500"
-              >
-                Worker:
-                <Text className="text-lg font-normal text-black ml-2">
-                  {" " + feedback}
-                  {/* You can replace this with any other data */}
+          <>
+            <View className="w-full flex flex-col mt-2">
+              <View className="w-full h-px bg-slate-300 mb-2" />
+              <Text className="text-xl font-bold">Feedback:</Text>
+              {item.workerFeedback?.map((feedback, index) => (
+                <Text
+                  key={index}
+                  className="text-lg text-left pr-2 font-semibold text-slate-700"
+                >
+                  Worker
+                  <Text className="text-sm font-semibold text-slate-500 ml-2 items-center">
+                    {"   " + formatDate(feedback.submited_at)}
+                  </Text>
+                  <Text className="text-lg font-normal text-black ml-2">
+                    {"\n" + feedback.description}
+                  </Text>
                 </Text>
-              </Text>
-            ))}
-          </View>
-        )}
-        {item.status === "done" && (
-          <View className="w-full flex flex-col">
-            {item.userFeedback?.map((feedback, index) => (
-              <Text
-                key={index}
-                className="text-lg text-left pr-2 font-semibold text-slate-500"
-              >
-                {item.username}
-                <Text className="text-lg font-normal text-black ml-2">
-                  {" " + feedback}
-                  {/* You can replace this with any other data */}
+              ))}
+            </View>
+            <View className="w-full flex flex-col">
+              {item.userFeedback?.map((feedback, index) => (
+                <Text
+                  key={index}
+                  className="text-lg text-left pr-2 font-semibold text-slate-700"
+                >
+                  {item.username}
+                  <Text className="text-sm font-semibold text-slate-500 ml-2 items-center">
+                    {"   " + formatDate(feedback.submited_at)}
+                  </Text>
+                  <Text className="text-lg font-normal text-black ml-2">
+                    {"\n" + feedback.description}
+                  </Text>
                 </Text>
-              </Text>
-            ))}
-          </View>
+              ))}
+            </View>
+          </>
         )}
       </View>
     );
@@ -614,120 +560,17 @@ export default function ManageReports() {
           />
         )}
 
-        {/* Full Screen Image Modal */}
-        <Modal
-          visible={fullImageModalVisible}
-          transparent={true}
-          animationType="fade"
-        >
-          <TouchableWithoutFeedback
-            onPress={() => setFullImageModalVisible(false)}
-          >
-            <View
-              style={{
-                flex: 1,
-                backgroundColor: "rgba(0, 0, 0, 0.7)",
-                justifyContent: "center",
-                alignItems: "center",
-                padding: 10,
-              }}
-            >
-              {selectedImage && (
-                <Image
-                  source={{ uri: selectedImage }}
-                  style={{
-                    width: width * 0.9,
-                    height: height * 0.55,
-                    borderRadius: 10,
-                  }}
-                  resizeMode="contain"
-                />
-              )}
-            </View>
-          </TouchableWithoutFeedback>
-        </Modal>
+        <ImageModal
+          fullImageModalVisible={fullImageModalVisible}
+          setFullImageModalVisible={setFullImageModalVisible}
+          selectedImage={selectedImage}
+        />
 
-        <Modal
-          visible={modalVisible}
-          animationType="fade"
-          transparent={true}
-          onRequestClose={() => setModalVisible(false)}
-        >
-          <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
-            <View
-              style={{
-                flex: 1,
-                backgroundColor: "rgba(0, 0, 0, 0.7)",
-                justifyContent: "center",
-                alignItems: "center",
-                padding: 10,
-              }}
-            >
-              <TouchableWithoutFeedback onPress={() => {}}>
-                <View
-                  style={{
-                    width: width * 0.9,
-                    height: height * 0.55,
-                    backgroundColor: "white",
-                    borderRadius: 10,
-                  }}
-                >
-                  {selectedReport && (
-                    <>
-                      <MapView
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          borderRadius: 10,
-                        }}
-                        initialRegion={{
-                          latitude: selectedReport.latitude,
-                          longitude: selectedReport.longitude,
-                          latitudeDelta: 0.01,
-                          longitudeDelta: 0.01,
-                        }}
-                      >
-                        <Marker
-                          coordinate={userLocation}
-                          title={"You are here"}
-                          pinColor="blue"
-                        />
-                        <Marker
-                          coordinate={{
-                            latitude: selectedReport.latitude,
-                            longitude: selectedReport.longitude,
-                          }}
-                          title={selectedReport.type_of_report}
-                        />
-                      </MapView>
-                      <Text style={{ padding: 10, color: "white" }}>
-                        Distance from the Report:{" "}
-                        {userLocation
-                          ? (() => {
-                              const distance = haversineDistance(
-                                userLocation,
-                                selectedReport
-                              );
-                              return distance > 1000
-                                ? `${(distance / 1000).toFixed(2)} km` // Convert to kilometers
-                                : `${distance.toFixed(2)} m`; // Keep in meters
-                            })()
-                          : "Calculating..."}
-                      </Text>
-                    </>
-                  )}
-                </View>
-              </TouchableWithoutFeedback>
-            </View>
-          </TouchableWithoutFeedback>
-        </Modal>
-        <TouchableOpacity className="p-2">
-          <MaterialCommunityIcons
-            name="thumb-down-outline"
-            size={width * 0.15} // Responsive icon size
-            color="#0C3B2D"
-          />
-        </TouchableOpacity>
+        <ReportLocationModal
+          modalVisible={modalVisible}
+          setModalVisible={setModalVisible}
+          selectedReport={selectedReport}
+        />
 
         <DeleteReportModal
           visible={deleteModalVisible}
@@ -742,6 +585,13 @@ export default function ManageReports() {
           category={selectedReport?.type_of_report || ""} // Pass the report category
           userId={USER_ID || ""} // Pass the USER_ID (this should be the actual user's ID)
         />
+        <TouchableOpacity className="p-2">
+          <MaterialCommunityIcons
+            name="thumb-down-outline"
+            size={width * 0.15} // Responsive icon size
+            color="#0C3B2D"
+          />
+        </TouchableOpacity>
       </SafeAreaView>
     </ImageBackground>
   );

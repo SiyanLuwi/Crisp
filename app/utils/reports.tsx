@@ -31,8 +31,13 @@ export interface Reports {
   voted: "upvote" | "downvote" | null;
   is_validated: boolean;
   status: string;
-  userFeedback: string[];
-  workerFeedback: string[];
+  userFeedback: Feedback[]; // Updated type
+  workerFeedback: Feedback[];
+}
+interface Feedback {
+  description: string;
+  proof: string;
+  submited_at: string;
 }
 
 const db = getFirestore(app);
@@ -57,8 +62,8 @@ export class Report implements Reports {
   public voted: "upvote" | "downvote" | null;
   public is_validated: boolean;
   public status: string;
-  public userFeedback: string[] = []; // Initialize as an empty array
-  public workerFeedback: string[] = []; // Initialize as an empty array
+  public userFeedback: Feedback[] = []; // Initialize as an empty array
+  public workerFeedback: Feedback[] = []; // Initialize as an empty array
 
   constructor(reportData: Reports) {
     this.id = reportData.id;
