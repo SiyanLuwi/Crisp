@@ -36,10 +36,13 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
   const [description, setDescription] = useState<string>("");
   const [proof, setProof] = useState<string | null>(null);
   const [feedbackSuccess, setFeedbackSuccess] = useState<boolean>(false);
+  const [errors, setErrors] = useState("");
 
   const handleConfirm = async () => {
     if (description.trim() === "") {
-      alert("Please provide a description.");
+      setTimeout(() => {
+        setErrors("Please provide a description.");
+      }, 3000);
       return;
     }
 
@@ -83,12 +86,13 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
       setFeedbackSuccess(true);
     } catch (error) {
       console.error("Error submitting feedback: ", error);
-      alert("Failed to submit feedback. Please try again.");
+      setErrors("Failed to submit feedback. Please try again.");
     }
   };
 
   const handleClose = () => {
     setDescription(""); // Reset the description state
+    setErrors(""); // Reset the description state
     setProof(null); // Reset the proof state
     setFeedbackSuccess(false); // Reset feedback success state
     onClose();
@@ -190,6 +194,11 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
                     </TouchableOpacity>
                   </View>
                 </View>
+                {errors ? (
+                  <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24">
+                    {errors}
+                  </Text>
+                ) : null}
                 <View className="flex flex-row justify-end w-full mt-6 px-3">
                   <TouchableOpacity
                     onPress={handleConfirm}

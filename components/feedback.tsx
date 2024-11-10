@@ -71,7 +71,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
       // Assuming status should be updated to 'pending_review' or a similar status
       const updatedReportData = {
         update_date: localDateISOString, // Use the same timestamp for the update date
-        status: "pending_review", // Adjust status as needed (e.g., 'pending_review', 'under_review', etc.)
+        status: "reviewing", // Adjust status as needed (e.g., 'pending_review', 'under_review', etc.)
       };
 
       // Update the report data
