@@ -7,13 +7,9 @@ import {
   Dimensions,
   FlatList,
   ImageBackground,
-  Modal,
-  TouchableWithoutFeedback,
   RefreshControl,
-  StyleSheet,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import MapView, { Marker, Region } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import ReportReportModal from "@/components/reportReport";
@@ -28,7 +24,6 @@ import {
   getDocs,
   onSnapshot,
   doc,
-  updateDoc,
   setDoc,
   getDoc,
   deleteDoc,
@@ -37,13 +32,10 @@ import {
 } from "firebase/firestore";
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
 import { app } from "@/firebase/firebaseConfig";
-import * as SecureStore from "expo-secure-store";
-import * as Location from "expo-location";
 import { useAuth } from "@/AuthContext/AuthContext";
 const { height, width } = Dimensions.get("window");
 import { Vote } from "../utils/voteCounts";
 import { Report, Reports } from "../utils/reports";
-import { Picker } from "@react-native-picker/picker";
 const db = getFirestore(app);
 
 interface Location {
@@ -68,6 +60,9 @@ export default function ReportPage() {
   const [visibleReportsCount, setVisibleReportsCount] = useState(5);
   const [selectedCategory, setSelectedCategory] = useState<string>("Category");
   const [isDropdownVisible, setIsDropdownVisible] = useState<boolean>(false);
+  const [selectedStatus, setSelectedStatus] = useState<string>("all");
+  const [isStatusDropdownVisible, setIsStatusDropdownVisible] =
+    useState<boolean>(false);
   const categories = [
     "all",
     "fires",
@@ -77,6 +72,7 @@ export default function ReportPage() {
     "road accident",
     "others",
   ];
+  const statuses = ["all", "Pending", "ongoing", "reviewing", "done"];
   const [feedbackStatus, setFeedbackStatus] = useState<{
     [key: string]: boolean;
   }>({});
@@ -113,6 +109,7 @@ export default function ReportPage() {
       console.error("Error fetching all votes:", error);
     }
   }
+
   const fetchAllDocuments = async (userId: string, votes: any[]) => {
     const categories = [
       "fires",
@@ -123,7 +120,6 @@ export default function ReportPage() {
       "road accident",
     ];
 
-    // Ensure we're only fetching reports from the selected category
     const categoriesToFetch =
       selectedCategory === "all" || selectedCategory === "Category"
         ? categories
@@ -149,7 +145,7 @@ export default function ReportPage() {
               const userVote = reportVotes?.find(
                 (vote) => vote.userId === userId
               );
-              const voted = userVote ? userVote.vote : null; // Fetch user and worker feedback
+              const voted = userVote ? userVote.vote : null;
 
               const userFeedbackRef = collection(
                 db,
@@ -167,14 +163,14 @@ export default function ReportPage() {
                 (doc) => ({
                   description: doc.data().description,
                   proof: doc.data().proof,
-                  submited_at: doc.data().submited_at, // assuming 'submitted_at' is a Firestore timestamp
+                  submited_at: doc.data().submited_at,
                 })
               );
               const workerFeedbackDescriptions =
                 workerFeedbackSnapshot.docs.map((doc) => ({
                   description: doc.data().description,
                   proof: doc.data().proof,
-                  submited_at: doc.data().submited_at, // assuming 'submitted_at' is a Firestore timestamp
+                  submited_at: doc.data().submited_at,
                 }));
 
               return {
@@ -183,23 +179,31 @@ export default function ReportPage() {
                 upvoteCount: upvotes,
                 downvoteCount: downvotes,
                 voted: voted,
-                userFeedback: userFeedbackDescriptions, // Add user feedback
-                workerFeedback: workerFeedbackDescriptions, // Add worker feedback
+                userFeedback: userFeedbackDescriptions,
+                workerFeedback: workerFeedbackDescriptions,
               };
             })
           );
 
-          // Filter for reports that are validated
-          const validatedReports = reports.filter(
-            (report) => report.is_validated
-          );
+          // Filter reports based on selected status
+          const filteredReports =
+            selectedStatus === "all"
+              ? reports
+              : reports.filter(
+                  (report) =>
+                    report.status.toLowerCase() === selectedStatus.toLowerCase()
+                );
 
           setReports((prevReports) => {
-            // Combine previous reports with new ones
-            const combinedReports = [...prevReports, ...reports];
-            // const combinedReports = [...prevReports, ...validatedReports];
+            // Filter out any duplicate reports based on report ID
+            const newReports = filteredReports.filter(
+              (report) => !prevReports.some((r) => r.id === report.id)
+            );
 
-            // Sort all reports by date
+            // Combine previous reports with the new ones
+            const combinedReports = [...prevReports, ...newReports];
+
+            // Sort the reports by date
             const sortedReports = combinedReports.sort((a, b) => {
               return (
                 new Date(b.report_date).getTime() -
@@ -207,11 +211,7 @@ export default function ReportPage() {
               );
             });
 
-            // Return sorted reports only if they have changed
-            if (JSON.stringify(prevReports) !== JSON.stringify(sortedReports)) {
-              return sortedReports;
-            }
-            return prevReports; // Return previous state if no change
+            return sortedReports;
           });
         },
         (error) => {
@@ -303,11 +303,17 @@ export default function ReportPage() {
 
   useEffect(() => {
     loadReports(); // Trigger report fetch whenever the selected category or status changes
-  }, [selectedCategory]); // Add both selectedCategory and selectedStatus to the dependency array
+  }, [selectedCategory, selectedStatus]); // Add both selectedCategory and selectedStatus to the dependency array
 
   const handleSelectCategory = (category: string) => {
     setSelectedCategory(category === "all" ? "Category" : category);
     setIsDropdownVisible(false); // Close dropdown after selection
+  };
+
+  // Handle status selection
+  const handleSelectStatus = (status: string) => {
+    setSelectedStatus(status === "all" ? "all" : status);
+    setIsStatusDropdownVisible(false); // Close the status dropdown
   };
 
   const handleUpvote = async (reportId: string, category: string) => {
@@ -352,6 +358,12 @@ export default function ReportPage() {
 
   const handleReportValidate = async (reportId: string, category: string) => {
     try {
+      // Reference to the validation subcollection for this report
+      const validationRef = collection(
+        db,
+        `reports/${category.toLowerCase()}/reports/${reportId}/validation`
+      );
+
       const reportRef = doc(
         db,
         `reports/${category.toLowerCase()}/reports/${reportId}/validation/${USER_ID}`
@@ -360,12 +372,40 @@ export default function ReportPage() {
         user_id: USER_ID,
         validated: "validated",
       };
-
       await setDoc(reportRef, data);
-      console.log("Report validated successfully!", reportId);
 
-      setIsSuccess(true); // Set success state
-      // Optionally, you might want to close the modal here after a short delay
+      // Get the number of documents in the validation subcollection
+      const validationSnapshot = await getDocs(validationRef);
+      const validationDocsCount = validationSnapshot.size;
+
+      const localDate = new Date();
+      const localOffset = localDate.getTimezoneOffset() * 60000;
+      const localTimeAdjusted = new Date(localDate.getTime() - localOffset);
+      const localDateISOString = localTimeAdjusted.toISOString().slice(0, -1);
+
+      // If there are 3 validation documents, proceed to update the report
+      if (validationDocsCount === 3) {
+        const reportRef = doc(
+          db,
+          `reports/${category.toLowerCase()}/reports/${reportId}`
+        );
+
+        await setDoc(
+          reportRef,
+          {
+            is_validated: true,
+            update_date: localDateISOString,
+          },
+          { merge: true }
+        );
+        console.log("Report validated and updated successfully!", reportId);
+        setIsSuccess(true); // Optionally set success state
+      } else {
+        console.log(
+          "Validation count not met. Current count:",
+          validationDocsCount
+        );
+      }
     } catch (error) {
       console.error("Error handling validation:", error);
     }
@@ -378,6 +418,7 @@ export default function ReportPage() {
         selectedReport.type_of_report
       );
     }
+    setIsSuccess(true);
   };
 
   useEffect(() => {
@@ -423,11 +464,6 @@ export default function ReportPage() {
     });
   };
 
-  const handleOpenImageModal = (imageUri: string) => {
-    setSelectedImage(imageUri);
-    setFullImageModalVisible(true);
-  };
-
   const renderItem = ({ item }: { item: Report }) => {
     const [datePart, timePart] = item.report_date.split("T");
     const formattedDate = datePart.replace(/-/g, "/");
@@ -444,7 +480,7 @@ export default function ReportPage() {
               style={{ padding: 5, color: "#0C3B2D" }}
             />
             <View className="flex flex-col items-start">
-              <View className="relative">
+              <View className="absolute">
                 <TouchableOpacity
                   onPress={() => {
                     setModalMessage(
@@ -456,11 +492,11 @@ export default function ReportPage() {
                 >
                   <View
                     className={`absolute top-0 left-60 w-8 h-8 border rounded-full mt-2 mr-2 ${
-                      item.status === "pending"
+                      item.status === "Pending"
                         ? "bg-yellow-400" // Amber for pending
                         : item.status === "ongoing"
                           ? "bg-blue-500" // Blue for ongoing
-                          : item.status === "pending_review"
+                          : item.status === "reviewing"
                             ? "bg-orange-500" // Orange for pending review
                             : item.status === "done"
                               ? "bg-green-500" // Green for done
@@ -705,7 +741,7 @@ export default function ReportPage() {
               </View>
             )}
           </View>
-          {item.status === "pending_review" && (
+          {item.status === "reviewing" && (
             <View className="w-full flex flex-col mt-2">
               <View className="w-full h-px bg-slate-300 mb-2" />
               <Text className="text-xl font-bold">Feedback:</Text>
@@ -715,8 +751,8 @@ export default function ReportPage() {
                   className="text-lg text-left pr-2 font-semibold text-slate-700"
                 >
                   Worker:
-                  <Text className="text-lg font-normal text-black ml-2">
-                    {"   " + feedback.description + "\n"}
+                  <Text className="text-md font-normal text-[#0C3B2D]">
+                    {" " + feedback.description + "\n"}
                   </Text>
                   <Text className="text-xs font-semibold text-slate-500 ml-2 mt-3 items-center">
                     {formatDate(feedback.submited_at)}
@@ -736,8 +772,8 @@ export default function ReportPage() {
                     className="text-lg text-left pr-2 font-semibold text-slate-700"
                   >
                     Worker:
-                    <Text className="text-lg font-normal text-black ml-2">
-                      {"   " + feedback.description + "\n"}
+                    <Text className="text-md font-normal text-[#0C3B2D]">
+                      {" " + feedback.description + "\n"}
                     </Text>
                     <Text className="text-xs font-semibold text-slate-500 ml-2 mt-3 items-center">
                       {formatDate(feedback.submited_at)}
@@ -752,8 +788,8 @@ export default function ReportPage() {
                     className="text-lg text-left pr-2 font-semibold text-slate-700"
                   >
                     {item.username + ":"}
-                    <Text className="text-lg font-normal text-black ml-2">
-                      {"   " + feedback.description + "\n"}
+                    <Text className="text-md font-normal text-[#0C3B2D]">
+                      {" " + feedback.description + "\n"}
                     </Text>
                     <Text className="text-xs font-semibold text-slate-500 ml-2 mt-3 items-center">
                       {formatDate(feedback.submited_at)}
@@ -816,6 +852,46 @@ export default function ReportPage() {
                 renderItem={({ item }) => (
                   <TouchableOpacity
                     onPress={() => handleSelectCategory(item)}
+                    className="px-4 py-2"
+                  >
+                    <Text className="text-base text-[#0C3B2D]">
+                      {item.charAt(0).toUpperCase() + item.slice(1)}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                keyExtractor={(item) => item}
+              />
+            </View>
+          )}
+          <TouchableOpacity
+            onPress={() => setIsStatusDropdownVisible(!isStatusDropdownVisible)}
+            className="h-12 absolute left-44 bg-white border-2 border-[#0C3B2D] rounded-full flex justify-between items-center mx-3 px-4 flex-row"
+          >
+            <Text className="text-normal text-[#0C3B2D]">
+              {selectedStatus.toLowerCase() === "all"
+                ? "Status"
+                : selectedStatus.charAt(0).toUpperCase() +
+                  selectedStatus.slice(1)}
+            </Text>
+            <MaterialCommunityIcons
+              name={
+                isStatusDropdownVisible
+                  ? "menu-right-outline"
+                  : "menu-down-outline"
+              }
+              size={width * 0.05} // Responsive icon size
+              color="#0C3B2D"
+            />
+          </TouchableOpacity>
+
+          {/* Dropdown Options */}
+          {isStatusDropdownVisible && (
+            <View className="absolute top-16 left-48 bg-white border border-[#0C3B2D] rounded-2xl shadow-lg z-50">
+              <FlatList
+                data={statuses}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    onPress={() => handleSelectStatus(item)}
                     className="px-4 py-2"
                   >
                     <Text className="text-base text-[#0C3B2D]">
