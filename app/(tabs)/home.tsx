@@ -267,6 +267,12 @@ export default function Home() {
     return radius * c; // Distance in meters
   };
 
+  // Helper function to determine if it's day or night
+  const isDaytime = () => {
+    const currentHour = new Date().getHours(); // Get the current hour (0 - 23)
+    return currentHour >= 6 && currentHour < 18; // Daytime is between 6 AM and 6 PM
+  };
+
   const getWeatherDescription = (code: number) => {
     const weatherConditions: { [key: number]: string } = {
       0: "Clear sky",
@@ -288,33 +294,70 @@ export default function Home() {
     return weatherConditions[code] || "Unknown weather condition";
   };
 
+  // Get Weather Image based on the weather code and whether it's day or night
   const getWeatherImage = (code: number) => {
-    const weatherConditions: { [key: number]: { image: any } } = {
-      0: { image: require("../../assets/images/weather/Clear-sky.png") },
-      1: { image: require("../../assets/images/weather/Clear-sky.png") },
-      2: { image: require("../../assets/images/weather/partly-cloudy.png") },
-      3: { image: require("../../assets/images/weather/Overcast.png") },
-      45: { image: require("../../assets/images/weather/Fog.png") },
-      48: {
-        image: require("../../assets/images/weather/Depositing-rime-fog.png"),
+    const weatherConditions: { [key: number]: { day: any; night: any } } = {
+      0: {
+        day: require("../../assets/images/weather/Clear-sky.png"),
+        night: require("../../assets/images/weather/Clear-sky-Night.png"),
       },
-      51: { image: require("../../assets/images/weather/Drizzle-Light.png") },
+      1: {
+        day: require("../../assets/images/weather/Clear-sky.png"),
+        night: require("../../assets/images/weather/Clear-sky-Night.png"),
+      },
+      2: {
+        day: require("../../assets/images/weather/partly-cloudy.png"),
+        night: require("../../assets/images/weather/partly-cloudy-night.png"),
+      },
+      3: {
+        day: require("../../assets/images/weather/Overcast.png"),
+        night: require("../../assets/images/weather/Overcast-Night.png"),
+      },
+      45: {
+        day: require("../../assets/images/weather/Fog.png"),
+        night: require("../../assets/images/weather/Fog.png"),
+      },
+      48: {
+        day: require("../../assets/images/weather/Depositing-rime-fog.png"),
+        night: require("../../assets/images/weather/Depositing-rime-fog.png"),
+      },
+      51: {
+        day: require("../../assets/images/weather/Drizzle-Light.png"),
+        night: require("../../assets/images/weather/Drizzle-Light.png"),
+      },
       53: {
-        image: require("../../assets/images/weather/Drizzle-Moderate.png"),
+        day: require("../../assets/images/weather/Drizzle-Moderate.png"),
+        night: require("../../assets/images/weather/Drizzle-Moderate-Night.png"),
       },
       61: {
-        image: require("../../assets/images/weather/Rain-Slight.png"),
+        day: require("../../assets/images/weather/Rain-Slight.png"),
+        night: require("../../assets/images/weather/Rain-Slight.png"),
       },
-      63: { image: require("../../assets/images/weather/Rain-Moderate.png") },
-      65: { image: require("../../assets/images/weather/Rain-Heavy.png") },
-      80: { image: require("../../assets/images/weather/Rain-Slight.png") },
-      81: { image: require("../../assets/images/weather/Rain-Moderate.png") },
-      95: { image: require("../../assets/images/weather/Thunderstorm.png") },
+      63: {
+        day: require("../../assets/images/weather/Rain-Moderate.png"),
+        night: require("../../assets/images/weather/Rain-Moderate.png"),
+      },
+      65: {
+        day: require("../../assets/images/weather/Rain-Heavy.png"),
+        night: require("../../assets/images/weather/Rain-Heavy.png"),
+      },
+      80: {
+        day: require("../../assets/images/weather/Rain-Slight.png"),
+        night: require("../../assets/images/weather/Rain-Slight.png"),
+      },
+      81: {
+        day: require("../../assets/images/weather/Rain-Moderate.png"),
+        night: require("../../assets/images/weather/Rain-Moderate.png"),
+      },
+      95: {
+        day: require("../../assets/images/weather/Thunderstorm.png"),
+        night: require("../../assets/images/weather/Thunderstorm.png"),
+      },
     };
 
-    return weatherConditions[code] && weatherConditions[code].image;
+    const timeOfDay = isDaytime() ? "day" : "night";
+    return weatherConditions[code] && weatherConditions[code][timeOfDay];
   };
-
   const getLocalDay = () => {
     const optionsDay: Intl.DateTimeFormatOptions = { weekday: "long" }; // Correct type
     return new Date().toLocaleDateString("en-PH", optionsDay);
@@ -405,7 +448,7 @@ export default function Home() {
               </Marker>
             ))}
 
-            {deptAdmins.map((item, index) => (
+            {deptAdmins.map((item: deptAdmin, index) => (
               <Marker
                 key={`${item.id}-${index}`}
                 coordinate={{
