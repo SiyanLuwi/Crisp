@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import {
-  StyleSheet,
   View,
   Text,
   Image,
@@ -8,12 +7,9 @@ import {
   Dimensions,
   FlatList,
   ImageBackground,
-  Modal,
-  TouchableWithoutFeedback,
   RefreshControl,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import MapView, { Marker, Region } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import { router } from "expo-router";
@@ -36,7 +32,6 @@ import {
   getDocs,
 } from "firebase/firestore";
 import * as SecureStore from "expo-secure-store";
-import * as Location from "expo-location";
 import { Report, Reports } from "../utils/reports";
 
 const db = getFirestore(app);
@@ -45,8 +40,6 @@ const { height, width } = Dimensions.get("window");
 export default function ManageReports() {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [reports, setReports] = useState<Report[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [userLocation, setUserLocation] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [fullImageModalVisible, setFullImageModalVisible] = useState(false);
@@ -428,7 +421,7 @@ export default function ManageReports() {
             <Text className="text-lg mx-1">{item.downvoteCount}</Text>
           </View>
           <View className="flex flex-row items-center">
-            {item.status === "pending_review" && (
+            {item.status === "reviewing" && (
               <TouchableOpacity
                 className="bg-[#0C3B2D] p-2 rounded-md h-auto items-center justify-center"
                 onPress={() => {
@@ -459,7 +452,7 @@ export default function ManageReports() {
           </View>
         </View>
 
-        {item.status === "pending_review" && (
+        {item.status === "reviewing" && (
           <View className="w-full flex flex-col mt-2">
             <View className="w-full h-px bg-slate-300 mb-2" />
             <Text className="text-xl font-bold">Feedback:</Text>
