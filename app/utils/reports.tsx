@@ -198,7 +198,7 @@ export class Report implements Reports {
   public static async fetchAllReports(): Promise<Report[]> {
     const categories = [
       "fires",
-      "street light",
+      "street lights",
       "potholes",
       "floods",
       "others",

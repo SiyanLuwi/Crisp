@@ -68,7 +68,7 @@ export default function ReportPage() {
   const categories = [
     "all",
     "fires",
-    "street light",
+    "street lights",
     "potholes",
     "floods",
     "road accident",
@@ -115,7 +115,7 @@ export default function ReportPage() {
   const fetchAllDocuments = async (userId: string, votes: any[]) => {
     const categories = [
       "fires",
-      "street light",
+      "street lights",
       "potholes",
       "floods",
       "others",

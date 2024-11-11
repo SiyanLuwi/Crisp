@@ -9,34 +9,23 @@ import {
 import React, { useEffect, useState } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
-import * as Location from "expo-location";
-import { collection, onSnapshot, getFirestore } from "firebase/firestore";
+import { collection, onSnapshot, query, where, getFirestore } from "firebase/firestore";
 import { app } from "@/firebase/firebaseConfig";
+import { useAuth } from '@/AuthContext/AuthContext'; // Import your Auth context to get USER_ID
+import { useNavigation } from '@react-navigation/native'; // Import useNavigation for navigation
+import { router } from "expo-router";
 
 const db = getFirestore(app);
 
-interface Report {
-  id: string;
-  type_of_report: string;
-  report_description: string;
-  longitude: number;
-  latitude: number;
-  is_emergency: string;
-  report_date: string;
-}
-
 const bgImage = require("@/assets/images/bgImage.png");
-
-const { height, width } = Dimensions.get("window");
-
-const types = ["Emergency", "Road blockage", "Weather"];
 
 const NotificationItem: React.FC<{
   content: string;
   type: string;
   time: string;
-}> = ({ content, type, time }) => (
-  <TouchableOpacity className="w-full bg-white my-2 p-4 rounded-lg shadow">
+  onPress: () => void; // Change event to onPress and make it a function
+}> = ({ content, type, time, onPress }) => (
+  <TouchableOpacity className="w-full bg-white my-2 p-4 rounded-lg shadow" onPress={onPress}>
     <View className="flex flex-row items-center">
       <View className="border-2 border-[#0C3B2D] bg-[#f0fff2] rounded-full p-4">
         <MaterialCommunityIcons
@@ -44,8 +33,8 @@ const NotificationItem: React.FC<{
             type === "Emergency"
               ? "alert"
               : type === "Weather"
-                ? "weather-rainy"
-                : "road-variant"
+              ? "weather-rainy"
+              : "road-variant"
           }
           size={45}
           color="#0C3B2D"
@@ -63,73 +52,27 @@ const NotificationItem: React.FC<{
 );
 
 export default function NotificationForm() {
-  const [userLocation, setUserLocation] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
-  const [reports, setReports] = useState<Report[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const { USER_ID } = useAuth(); 
+  const navigation = useNavigation(); // Get the navigation object
 
   useEffect(() => {
-    const requestLocationPermission = async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === "granted") {
-        try {
-          const location = await Location.getCurrentPositionAsync({});
-          setUserLocation(location.coords);
-        } catch (error) {
-          console.error("Error getting location:", error);
-        }
-      }
-    };
-    requestLocationPermission();
-  }, []);
+    if (!USER_ID) return; 
 
-  useEffect(() => {
-    if (!userLocation) return;
+    const notificationsRef = collection(db, 'notifications');
+    const q = query(notificationsRef, where('userId', '==', USER_ID)); 
 
-    const categories = [
-      "fires",
-      "potholes",
-      "floods",
-      "road accident",
-      "street light",
-      "others",
-    ];
-    const unsubscribeArray = categories.map((category) =>
-      onSnapshot(collection(db, `reports/${category}/reports`), (snapshot) => {
-        const newReports = snapshot.docs.map(
-          (doc) => ({ id: doc.id, ...doc.data() }) as Report
-        );
-        const nearbyReports = newReports.filter((report) => {
-          const distance = haversineDistance(userLocation, {
-            latitude: report.longitude,
-            longitude: report.latitude,
-          });
-          return distance <= 100; // Reports within 100 meters
-        });
-        setReports((prevReports) => [...prevReports, ...nearbyReports]);
-      })
-    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedNotifications = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setNotifications(fetchedNotifications);
+    });
 
-    return () =>
-      unsubscribeArray.forEach((unsubscribe) => unsubscribe && unsubscribe());
-  }, [userLocation]);
-
-  const haversineDistance = (
-    loc1: { latitude: number; longitude: number },
-    loc2: { latitude: number; longitude: number }
-  ): number => {
-    const toRad = (value: number) => (value * Math.PI) / 180;
-    const dLat = toRad(loc2.latitude - loc1.latitude);
-    const dLon = toRad(loc2.longitude - loc1.longitude);
-
-    const a =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos(toRad(loc1.latitude)) *
-        Math.cos(toRad(loc2.latitude)) *
-        Math.sin(dLon / 2) ** 2;
-    return 6371000 * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))); // Earth's radius in meters
-  };
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, [USER_ID]); 
 
   return (
     <ImageBackground
@@ -144,13 +87,14 @@ export default function NotificationForm() {
           </Text>
         </View>
         <FlatList
-          data={reports}
+          data={notifications}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <NotificationItem
-              content={item.is_emergency}
-              type={item.type_of_report}
-              time={item.report_date}
+              content={item.description} 
+              type={item.title} 
+              time={new Date(item.createdAt.seconds * 1000).toLocaleString()}
+              onPress={() => router.push(item.screen)} 
             />
           )}
           className="w-full h-auto flex px-8"
