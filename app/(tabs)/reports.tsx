@@ -63,6 +63,8 @@ export default function ReportPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [isStatusDropdownVisible, setIsStatusDropdownVisible] =
     useState<boolean>(false);
+  const [hasNewNotification, setHasNewNotification] = useState<boolean>(true);
+
   const categories = [
     "all",
     "fires",
@@ -479,43 +481,44 @@ export default function ReportPage() {
               size={RFPercentage(5)}
               style={{ padding: 5, color: "#0C3B2D" }}
             />
-            <View className="flex flex-col items-start">
-              <View className="absolute">
-                <TouchableOpacity
-                  onPress={() => {
-                    setModalMessage(
-                      `Status of the Report is: ${item.status.toUpperCase()}`
-                    );
-                    setIsSuccess(false);
-                    setIsModalVisible(true);
-                  }}
-                >
-                  <View
-                    className={`absolute top-0 left-60 w-8 h-8 border rounded-full mt-2 mr-2 ${
-                      item.status === "Pending"
-                        ? "bg-yellow-400" // Amber for pending
-                        : item.status === "ongoing"
-                          ? "bg-blue-500" // Blue for ongoing
-                          : item.status === "reviewing"
-                            ? "bg-orange-500" // Orange for pending review
-                            : item.status === "done"
-                              ? "bg-green-500" // Green for done
-                              : "bg-gray-400" // Default gray if no status
-                    }`}
-                  />
-                </TouchableOpacity>
-              </View>
-              <Text className="pl-3 text-xl font-bold">
-                {item.username.length > 18
-                  ? item.username.slice(0, 18) + "..."
-                  : item.username}
-              </Text>
-              <Text className="pl-3 text-md font-bold text-slate-500">
-                {formattedDate} {"\n"}
-                <Text className="text-md font-normal text-slate-500">
-                  {formattedTime}
+            <View className="flex flex-row w-full justify-between items-start">
+              <View className="flex flex-col items-start ">
+                <Text className="pl-3 text-xl font-bold">
+                  {item.username.length > 18
+                    ? item.username.slice(0, 18) + "..."
+                    : item.username}
                 </Text>
-              </Text>
+
+                <Text className="pl-3 text-md font-bold text-slate-500">
+                  {formattedDate} {"\n"}
+                  <Text className="text-md font-normal text-slate-500">
+                    {formattedTime}
+                  </Text>
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  setModalMessage(
+                    `Status of the Report is: ${item.status.toUpperCase()}`
+                  );
+                  setIsSuccess(false);
+                  setIsModalVisible(true);
+                }}
+              >
+                <View
+                  className={`w-8 h-8 border rounded-full mt-2 mr-16 ${
+                    item.status === "Pending"
+                      ? "bg-yellow-400" // Amber for pending
+                      : item.status === "ongoing"
+                        ? "bg-blue-500" // Blue for ongoing
+                        : item.status === "reviewing"
+                          ? "bg-orange-500" // Orange for pending review
+                          : item.status === "done"
+                            ? "bg-green-500" // Green for done
+                            : "bg-gray-400" // Default gray if no status
+                  }`}
+                />
+              </TouchableOpacity>
             </View>
           </View>
           <TouchableOpacity
@@ -633,13 +636,7 @@ export default function ReportPage() {
                     className="p-2"
                     onPress={() => {
                       setModalMessage("");
-                      if (!isVerified) {
-                        setModalMessage(
-                          "You are not verified. Please verify your account before validating the report."
-                        );
-                        setIsSuccess(false);
-                        setIsModalVisible(true);
-                      } else if (item.user_id.toString() === USER_ID) {
+                      if (item.user_id.toString() === USER_ID) {
                         setModalMessage(
                           "You cannot mark your own report as False."
                         );
@@ -668,9 +665,7 @@ export default function ReportPage() {
                 <View className="flex-1 mr-3">
                   <TouchableOpacity
                     className={`bg-[#0C3B2D] border-[#0C3B2D] border-2 p-2 rounded-lg h-auto items-center justify-center ${
-                      !isVerified ||
-                      item.user_id.toString() === USER_ID ||
-                      feedbackExists
+                      item.user_id.toString() === USER_ID || feedbackExists
                         ? "opacity-50"
                         : ""
                     }`}
@@ -678,13 +673,7 @@ export default function ReportPage() {
                     onPress={() => {
                       setIsSuccess(false);
                       setModalMessage("");
-                      if (!isVerified) {
-                        setModalMessage(
-                          "You are not verified. Please verify your account before validating the report."
-                        );
-                        setIsSuccess(false);
-                        setIsModalVisible(true);
-                      } else if (item.user_id.toString() === USER_ID) {
+                      if (item.user_id.toString() === USER_ID) {
                         setModalMessage("You cannot validate your own report.");
                         setIsSuccess(false);
                         setIsModalVisible(true);
@@ -709,19 +698,11 @@ export default function ReportPage() {
                 <View className="flex-1">
                   <TouchableOpacity
                     className={`bg-white border-[#0C3B2D] border-2 p-2 rounded-lg h-auto items-center justify-center ${
-                      !isVerified || item.user_id.toString() === USER_ID
-                        ? "opacity-50"
-                        : ""
+                      item.user_id.toString() === USER_ID ? "opacity-50" : ""
                     }`}
                     onPress={() => {
                       setModalMessage("");
-                      if (!isVerified) {
-                        setModalMessage(
-                          "You are not verified. Please verify your account before validating the report."
-                        );
-                        setIsSuccess(false);
-                        setIsModalVisible(true);
-                      } else if (item.user_id.toString() === USER_ID) {
+                      if (item.user_id.toString() === USER_ID) {
                         setModalMessage(
                           "You cannot mark your own report as False."
                         );
@@ -810,23 +791,37 @@ export default function ReportPage() {
       className="flex-1 justify-center items-center"
       resizeMode="cover"
     >
-      <SafeAreaView className="flex-1">
-        <View className="flex flex-row h-auto w-full items-center justify-between px-6">
+      <SafeAreaView className="flex-1 w-full">
+        <View className="flex flex-row h-auto w-full items-center justify-between px-8">
           <Text className="font-bold text-4xl text-white mt-3 mb-2">
             Reports
           </Text>
           <TouchableOpacity
             onPress={() => router.push({ pathname: "/pages/notification" })}
           >
-            <MaterialCommunityIcons
-              name="bell"
-              size={RFPercentage(3.5)}
-              color="#ffffff"
-            />
+            <View className="relative">
+              <MaterialCommunityIcons
+                name="bell"
+                size={RFPercentage(3.5)}
+                color="#ffffff"
+              />
+              {/* Conditionally render the red dot */}
+              {hasNewNotification && (
+                <View
+                  className="absolute top-0 right-0 bg-red-600 w-3 h-3 rounded-full border border-white"
+                  style={{
+                    transform: [
+                      { translateX: RFPercentage(1.3) },
+                      { translateY: RFPercentage(-1.3) },
+                    ],
+                  }}
+                />
+              )}
+            </View>
           </TouchableOpacity>
         </View>
 
-        <View className="w-full px-4 flex flex-row">
+        <View className="w-full px-4 flex flex-row z-10">
           <TouchableOpacity
             onPress={() => setIsDropdownVisible(!isDropdownVisible)}
             className="h-12 bg-white border-2 border-[#0C3B2D] rounded-full flex justify-between items-center mx-3 px-4 flex-row"
@@ -846,7 +841,7 @@ export default function ReportPage() {
 
           {/* Dropdown Options */}
           {isDropdownVisible && (
-            <View className="absolute top-16 left-7 bg-white border border-[#0C3B2D] rounded-2xl shadow-lg z-50">
+            <View className="absolute top-16 left-7 bg-white border border-[#0C3B2D] rounded-2xl shadow-lg ">
               <FlatList
                 data={categories}
                 renderItem={({ item }) => (
@@ -886,7 +881,7 @@ export default function ReportPage() {
 
           {/* Dropdown Options */}
           {isStatusDropdownVisible && (
-            <View className="absolute top-16 left-48 bg-white border border-[#0C3B2D] rounded-2xl shadow-lg z-50">
+            <View className="absolute top-16 left-48 bg-white border border-[#0C3B2D] rounded-2xl shadow-lg">
               <FlatList
                 data={statuses}
                 renderItem={({ item }) => (
@@ -906,34 +901,36 @@ export default function ReportPage() {
         </View>
 
         {reports.length === 0 ? (
-          <View className="flex-1 justify-center items-center -z-10">
+          <View className="flex-1 justify-center items-center">
             <Text className="text-lg text-slate-500">No reports yet</Text>
           </View>
         ) : (
-          <FlatList
-            data={reports.slice(0, visibleReportsCount)}
-            keyExtractor={(item, index) => `${item.id}-${index}}`}
-            className="w-full h-auto flex p-4 mt-2 -z-10"
-            showsVerticalScrollIndicator={false}
-            renderItem={renderItem}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing} // Control refreshing state
-                onRefresh={loadReports} // Trigger loadReports on refresh
-              />
-            }
-            onEndReached={loadMoreReports} // Load more reports when reaching the end
-            onEndReachedThreshold={0.0}
-            ListFooterComponent={
-              visibleReportsCount >= reports.length ? ( // Check if we've displayed all reports
-                <Text
-                  style={{ padding: 20, color: "white", textAlign: "center" }}
-                >
-                  You've reached the end of the page.
-                </Text>
-              ) : null
-            }
-          />
+          <View className="w-full">
+            <FlatList
+              data={reports.slice(0, visibleReportsCount)}
+              keyExtractor={(item, index) => `${item.id}-${index}}`}
+              className="w-full h-auto flex p-4 mt-1 mb-44"
+              showsVerticalScrollIndicator={false}
+              renderItem={renderItem}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing} // Control refreshing state
+                  onRefresh={loadReports} // Trigger loadReports on refresh
+                />
+              }
+              onEndReached={loadMoreReports} // Load more reports when reaching the end
+              onEndReachedThreshold={0.0}
+              ListFooterComponent={
+                visibleReportsCount >= reports.length ? ( // Check if we've displayed all reports
+                  <Text
+                    style={{ padding: 30, color: "white", textAlign: "center" }}
+                  >
+                    You've reached the end of the page.
+                  </Text>
+                ) : null
+              }
+            />
+          </View>
         )}
 
         <ReportReportModal
@@ -971,14 +968,6 @@ export default function ReportPage() {
           setModalVisible={setModalVisible}
           selectedReport={selectedReport}
         />
-
-        <View className="p-2">
-          <MaterialCommunityIcons
-            name="thumb-down-outline"
-            size={width * 0.15} // Responsive icon size
-            color="#0C3B2D"
-          />
-        </View>
       </SafeAreaView>
     </ImageBackground>
   );

@@ -13,15 +13,27 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { RFPercentage } from "react-native-responsive-fontsize";
 
+interface SosPageProps {
+  visible: boolean;
+  onClose: () => void;
+}
+
 // Get screen dimensions
 const { width, height } = Dimensions.get("window");
+type ButtonType =
+  | "fire"
+  | "flood"
+  | "carAccident"
+  | "civilDisturbance"
+  | "medical"
+  | "close";
 
-export default function SosPage() {
-  const [expandedButton, setExpandedButton] = useState(null);
+const SosPage: React.FC<SosPageProps> = ({ visible, onClose }) => {
+  const [expandedButton, setExpandedButton] = useState<ButtonType | null>(null);
   const [confirmCall, setConfirmCall] = useState(false);
   const containerRef = useRef(null);
 
-  const toggleExpand = (button) => {
+  const toggleExpand = (button: ButtonType) => {
     if (button === "close") {
       BackHandler.exitApp(); // Close the app tho ayaw pa HASAHSASHA
     } else if (expandedButton === button && confirmCall) {
@@ -40,7 +52,7 @@ export default function SosPage() {
     setConfirmCall(false);
   };
 
-  const makeCall = (button) => {
+  const makeCall = (button: ButtonType) => {
     let phoneNumber = "";
 
     switch (button) {
@@ -74,139 +86,164 @@ export default function SosPage() {
 
   return (
     <TouchableWithoutFeedback onPress={handleOutsidePress}>
-      <SafeAreaView className="w-full h-full flex-1 justify-start items-center absolute bg-slate-800">
+      <SafeAreaView className="w-full h-full flex-1 justify-start items-center absolute bg-slate-800 z-10">
         <View className="flex flex-row w-full items-center justify-center px-6 ">
-          <Text className="font-extrabold text-3xl text-white my-2">
+          <Text className="font-extrabold text-3xl text-white my-8">
             CRISP SOS
           </Text>
         </View>
         <View
-          className="w-full flex flex-col justify-start items-center"
+          className="w-full flex flex-col justify-center items-center mt-2"
           ref={containerRef}
         >
-          <TouchableOpacity
-            className={`mt-5 w-auto rounded-xl p-6 shadow-lg border-2 justify-center items-center ${
-              expandedButton === "fire"
-                ? "bg-[#fc0303] border-red-400"
-                : "bg-white border-slate-400"
-            }`}
-            onPress={() => toggleExpand("fire")}
-            style={{
-              transform: [{ scale: expandedButton === "fire" ? 1.2 : 1 }],
-            }}
-          >
-            <MaterialCommunityIcons
-              name="fire"
-              size={RFPercentage(4.5)}
-              color={expandedButton === "fire" ? "#ffffff" : "#fc0303"}
-            />
-          </TouchableOpacity>
-          <Text className="text-xs py-2 font-extrabold text-white">FIRE</Text>
+          <View className="flex flex-row w-full items-center justify-between px-16 py-4">
+            <View className="flex flex-col items-center justify-center">
+              <TouchableOpacity
+                className={`mt-5 w-auto rounded-xl p-6 shadow-lg border-2 justify-center items-center ${
+                  expandedButton === "fire"
+                    ? "bg-[#fc0303] border-red-400"
+                    : "bg-white border-slate-400"
+                }`}
+                onPress={() => toggleExpand("fire")}
+                style={{
+                  transform: [{ scale: expandedButton === "fire" ? 1.2 : 1 }],
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="fire"
+                  size={RFPercentage(4.5)}
+                  color={expandedButton === "fire" ? "#ffffff" : "#fc0303"}
+                />
+              </TouchableOpacity>
+              <Text className="text-xs py-2 font-extrabold text-white">
+                FIRE
+              </Text>
+            </View>
 
-          <TouchableOpacity
-            className={`mt-3 w-auto rounded-xl p-6 shadow-lg border-2 justify-center items-center ${
-              expandedButton === "flood"
-                ? "bg-[#034afc] border-blue-500"
-                : "bg-white border-slate-400"
-            }`}
-            onPress={() => toggleExpand("flood")}
-            style={{
-              transform: [{ scale: expandedButton === "flood" ? 1.2 : 1 }],
-            }}
-          >
-            <MaterialCommunityIcons
-              name="home-flood"
-              size={RFPercentage(4.5)}
-              color={expandedButton === "flood" ? "#ffffff" : "#034afc"}
-            />
-          </TouchableOpacity>
-          <Text className="text-xs py-2 font-extrabold text-white">FLOOD</Text>
+            <View className="flex flex-col items-center justify-center">
+              <TouchableOpacity
+                className={`mt-5 w-auto rounded-xl p-6 shadow-lg border-2 justify-center items-center ${
+                  expandedButton === "flood"
+                    ? "bg-[#034afc] border-blue-500"
+                    : "bg-white border-slate-400"
+                }`}
+                onPress={() => toggleExpand("flood")}
+                style={{
+                  transform: [{ scale: expandedButton === "flood" ? 1.2 : 1 }],
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="home-flood"
+                  size={RFPercentage(4.5)}
+                  color={expandedButton === "flood" ? "#ffffff" : "#034afc"}
+                />
+              </TouchableOpacity>
+              <Text className="text-xs py-2 font-extrabold text-white">
+                FLOOD
+              </Text>
+            </View>
+          </View>
 
-          <TouchableOpacity
-            className={`mt-3 w-auto rounded-xl p-6 shadow-lg border-2 justify-center items-center ${
-              expandedButton === "carAccident"
-                ? "bg-[#017501] border-green-500"
-                : "bg-white border-slate-400"
-            }`}
-            onPress={() => toggleExpand("carAccident")}
-            style={{
-              transform: [
-                { scale: expandedButton === "carAccident" ? 1.2 : 1 },
-              ],
-            }}
-          >
-            <MaterialCommunityIcons
-              name="car-emergency"
-              size={RFPercentage(4.5)}
-              color={expandedButton === "carAccident" ? "#ffffff" : "#017501"}
-            />
-          </TouchableOpacity>
-          <Text className="text-xs py-2 font-extrabold text-white">
-            CAR ACCIDENT
-          </Text>
+          <View className="flex flex-row w-full items-center justify-between px-16 py-4">
+            <View className="flex flex-col items-center justify-center">
+              <TouchableOpacity
+                className={`mt-3 w-auto rounded-xl p-6 shadow-lg border-2 justify-center items-center ${
+                  expandedButton === "carAccident"
+                    ? "bg-[#017501] border-green-500"
+                    : "bg-white border-slate-400"
+                }`}
+                onPress={() => toggleExpand("carAccident")}
+                style={{
+                  transform: [
+                    { scale: expandedButton === "carAccident" ? 1.2 : 1 },
+                  ],
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="car-emergency"
+                  size={RFPercentage(4.5)}
+                  color={
+                    expandedButton === "carAccident" ? "#ffffff" : "#017501"
+                  }
+                />
+              </TouchableOpacity>
+              <Text className="text-xs py-2 font-extrabold text-white">
+                CAR ACCIDENT
+              </Text>
+            </View>
 
-          <TouchableOpacity
-            className={`mt-3 w-auto rounded-xl p-6 shadow-lg border-2 justify-center items-center ${
-              expandedButton === "civilDisturbance"
-                ? "bg-[#000000] border-slate-500"
-                : "bg-white border-slate-400"
-            }`}
-            onPress={() => toggleExpand("civilDisturbance")}
-            style={{
-              transform: [
-                { scale: expandedButton === "civilDisturbance" ? 1.2 : 1 },
-              ],
-            }}
-          >
-            <MaterialCommunityIcons
-              name="police-station"
-              size={RFPercentage(4.5)}
-              color={
-                expandedButton === "civilDisturbance" ? "#ffffff" : "#0C3B2D"
-              }
-            />
-          </TouchableOpacity>
-          <Text className="text-xs py-2 font-extrabold text-white">
-            CIVIL DISTURBANCE
-          </Text>
+            <View className="flex flex-col items-center justify-center">
+              <TouchableOpacity
+                className={`mt-3 w-auto rounded-xl p-6 shadow-lg border-2 justify-center items-center ${
+                  expandedButton === "civilDisturbance"
+                    ? "bg-[#000000] border-slate-500"
+                    : "bg-white border-slate-400"
+                }`}
+                onPress={() => toggleExpand("civilDisturbance")}
+                style={{
+                  transform: [
+                    { scale: expandedButton === "civilDisturbance" ? 1.2 : 1 },
+                  ],
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="police-station"
+                  size={RFPercentage(4.5)}
+                  color={
+                    expandedButton === "civilDisturbance"
+                      ? "#ffffff"
+                      : "#0C3B2D"
+                  }
+                />
+              </TouchableOpacity>
+              <Text className="text-xs py-2 font-extrabold text-white text-center">
+                CIVIL{"\n"}DISTURBANCE
+              </Text>
+            </View>
+          </View>
+          <View className="py-4 items-center justify-center w-full">
+            <TouchableOpacity
+              className={`mt-3 w-auto rounded-xl p-4 shadow-lg border-2 justify-center items-center ${
+                expandedButton === "medical"
+                  ? "bg-[#fc0303] border-red-400"
+                  : "bg-white border-slate-400"
+              }`}
+              onPress={() => toggleExpand("medical")}
+              style={{
+                transform: [{ scale: expandedButton === "medical" ? 1.2 : 1 }],
+              }}
+            >
+              <MaterialCommunityIcons
+                name="hospital"
+                size={RFPercentage(6)}
+                color={expandedButton === "medical" ? "#ffffff" : "#fc0303"}
+              />
+            </TouchableOpacity>
+            <Text className="text-xs py-2 font-extrabold text-white">
+              MEDICAL
+            </Text>
+          </View>
 
-          <TouchableOpacity
-            className={`mt-3 w-auto rounded-xl p-4 shadow-lg border-2 justify-center items-center ${
-              expandedButton === "medical"
-                ? "bg-[#fc0303] border-red-400"
-                : "bg-white border-slate-400"
-            }`}
-            onPress={() => toggleExpand("medical")}
-            style={{
-              transform: [{ scale: expandedButton === "medical" ? 1.2 : 1 }],
-            }}
-          >
-            <MaterialCommunityIcons
-              name="hospital"
-              size={RFPercentage(6)}
-              color={expandedButton === "medical" ? "#ffffff" : "#fc0303"}
-            />
-          </TouchableOpacity>
-          <Text className="text-xs py-2 font-extrabold text-white">
-            MEDICAL
-          </Text>
-
-          <TouchableOpacity
-            className={`mt-5 w-auto rounded-full p-6 shadow-lg border-2 justify-center items-center ${
-              expandedButton === "close"
-                ? "bg-black border-slate-700"
-                : "bg-white border-slate-400"
-            }`}
-            onPress={() => toggleExpand("close")}
-          >
-            <MaterialCommunityIcons
-              name="close"
-              size={RFPercentage(3.5)}
-              color={expandedButton === "close" ? "#ffffff" : "#000000"}
-            />
-          </TouchableOpacity>
+          <View className="py-2 items-center justify-center w-full">
+            <TouchableOpacity
+              className={`mt-5 w-auto rounded-full p-6 shadow-lg border-2 justify-center items-center ${
+                expandedButton === "close"
+                  ? "bg-black border-slate-700"
+                  : "bg-white border-slate-400"
+              }`}
+              onPress={onClose}
+            >
+              <MaterialCommunityIcons
+                name="close"
+                size={RFPercentage(3.5)}
+                color={expandedButton === "close" ? "#ffffff" : "#000000"}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
       </SafeAreaView>
     </TouchableWithoutFeedback>
   );
-}
+};
+
+export default SosPage;
