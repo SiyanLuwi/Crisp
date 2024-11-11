@@ -15,7 +15,7 @@ export const startLocationUpdates = async () => {
     { 
       accuracy: Location.Accuracy.High, 
       distanceInterval: 1, 
-      timeInterval: 10000 
+      timeInterval: 3000 
     },
     async (location) => {
       const reports = await Report.fetchAllReports(); // Fetch all reports using the new method
@@ -36,7 +36,7 @@ const checkForNearbyReports = (userLocation: any, reports: Report[]) => {
     const distance = haversineDistance(userLocation, report);
     if (distance <= 200) { // Adjust the distance as needed
       if (!notifiedReports.has(report.id)) { // Check if the report has already notified
-        scheduleNotification('New Report Nearby!', `A new report has been filed near you: ${report.type_of_report}`, 1);
+        scheduleNotification('New Report Nearby!', `A new report has been filed near you: ${report.type_of_report}`, 1,  " /(tabs)/home");
         notifiedReports.add(report.id); // Add report ID to notified set
       }
     } else {
