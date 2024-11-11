@@ -18,6 +18,7 @@ import axios from "axios";
 import Constants from "expo-constants";
 import * as FileSystem from "expo-file-system";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
+import SosPage from "@/components/sosPage";
 
 // Get screen dimensions
 const { height, width } = Dimensions.get("window");
@@ -50,6 +51,7 @@ export default function CameraComp() {
   const [facing, setFacing] = useState<CameraType>("back");
   const [permission, requestPermission] = useCameraPermissions();
   const [loading, setLoading] = useState(false);
+  const [emergencyCall, setEmergencyCall] = useState(false);
   const cameraRef = React.useRef<CameraView>(null);
 
   useEffect(() => {
@@ -84,8 +86,8 @@ export default function CameraComp() {
 
   if (!permission.granted) {
     return (
-      <View style={styles.centeredView}>
-        <Text style={styles.permissionText}>
+      <View className="w-full h-full flex justify-center items-center">
+        <Text className="items-center justify-center text-2xl font-bold">
           We need your permission to show the camera
         </Text>
         <Button onPress={requestPermission} title="Grant Permission" />
@@ -188,23 +190,36 @@ export default function CameraComp() {
   };
 
   return (
-    <View style={styles.cameraContainer}>
-      <CameraView style={styles.cameraView} facing={facing} ref={cameraRef}>
-        <View style={styles.cameraControls}>
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={toggleCameraFacing}
-          >
+    <View className="w-full h-full flex justify-center items-center">
+      <CameraView
+        className="w-full h-full flex justify-center items-center"
+        facing={facing}
+        ref={cameraRef}
+      >
+        <View className="absolute top-[5%] w-full flex-row justify-between">
+          <TouchableOpacity className="m-5 ml-8" onPress={toggleCameraFacing}>
             <MaterialCommunityIcons
               name="camera-switch"
               size={width * 0.1}
               color="white"
             />
           </TouchableOpacity>
-        </View>
-        <View style={styles.captureButtonContainer}>
           <TouchableOpacity
-            style={styles.captureButton}
+            className="m-5 mr-8 mt-6"
+            onPress={() => {
+              setEmergencyCall(true); // Then open the report modal
+            }}
+          >
+            <MaterialCommunityIcons
+              name="phone-plus"
+              size={width * 0.1}
+              color="white"
+            />
+          </TouchableOpacity>
+        </View>
+        <View className="absolute bottom-[13%] w-full flex-row justify-center">
+          <TouchableOpacity
+            className="w-auto h-full rounded-full bg-white justify-center items-center p-2 mx-[10%] border-2 border-[#0C3B2D]"
             onPress={capturePhoto}
             disabled={loading}
           >
@@ -220,6 +235,13 @@ export default function CameraComp() {
           </TouchableOpacity>
         </View>
       </CameraView>
+
+      {emergencyCall && (
+        <SosPage
+          visible={emergencyCall}
+          onClose={() => setEmergencyCall(false)} // Close SosPage when the user dismisses it
+        />
+      )}
     </View>
   );
 }

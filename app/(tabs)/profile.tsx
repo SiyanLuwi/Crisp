@@ -194,16 +194,29 @@ function App() {
         </View>
         <ScrollView className="w-full h-full flex">
           <View className="flex flex-col w-full h-full items-center ">
-            <TouchableOpacity onPress={isEditing ? pickImage : undefined}>
-              <Image
-                source={{
-                  uri:
-                    selectedImage ||
-                    "https://static.vecteezy.com/system/resources/thumbnails/020/911/740/small_2x/user-profile-icon-profile-avatar-user-icon-male-icon-face-icon-profile-icon-free-png.png",
+            <View className="relative">
+              <TouchableOpacity onPress={isEditing ? pickImage : undefined}>
+                <Image
+                  source={{
+                    uri:
+                      selectedImage ||
+                      "https://static.vecteezy.com/system/resources/thumbnails/020/911/740/small_2x/user-profile-icon-profile-avatar-user-icon-male-icon-face-icon-profile-icon-free-png.png",
+                  }}
+                  className="w-48 h-48 rounded-full border-4 border-white mb-8 mt-8 bg-white"
+                />
+              </TouchableOpacity>
+              <View
+                className="absolute top-10 right-0 bg-white w-12 h-12 rounded-full border border-white items-center justify-center"
+                style={{
+                  transform: [
+                    { translateX: RFPercentage(5.3) },
+                    { translateY: RFPercentage(-0.3) },
+                  ],
                 }}
-                className="w-48 h-48 rounded-full border-4 border-white mb-8 mt-8 bg-white"
-              />
-            </TouchableOpacity>
+              >
+                <Text>100</Text>
+              </View>
+            </View>
             <View className="justify-center w-full items-center px-12 mt-6">
               <View style={{ width: "100%", alignItems: "flex-start" }}>
                 <Text className="text-md text-white mb-1">Name:</Text>
