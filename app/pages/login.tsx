@@ -54,7 +54,7 @@ export default function Login() {
 
       // Redirect based on account type
       if (account_type === "citizen") {
-        router.push("/(tabs)/home");
+        router.push("/(tabs)/camera");
       } else if (account_type === "worker") {
         router.push("/(tabs)_employee/home");
       } else {

@@ -29,7 +29,10 @@ import * as Location from "expo-location"; // Import Location
 import * as Notifications from "expo-notifications";
 import { scheduleNotification } from "../utils/notifications";
 import { Report } from "../utils/reports";
+import { addDoc, collection, getFirestore } from "firebase/firestore";
+import { app } from "@/firebase/firebaseConfig";
 const { width, height } = Dimensions.get("window");
+const db = getFirestore(app)
 
 export default function PictureForm() {
   const [isOpen, setIsOpen] = useState(false);
@@ -94,10 +97,21 @@ export default function PictureForm() {
         customType,
         floorNumber
       );
-      
+      const user_id = await SecureStore.getItemAsync('user_id');
+      if (!user_id) {
+        console.error("USER_ID is missing!");
+        return;
+      }
       if (res) {
         setLoading(false);
-        scheduleNotification("Your Report Has Been Submitted!", `Thank you for caring! Your report about the ${selectedItem} has been submitted.`)
+        scheduleNotification("Your Report Has Been Submitted!", `Thank you for caring! Your report about the ${selectedItem} has been submitted.`, 1, '/(tabs)/manage')
+        await addDoc(collection(db, 'notifications'), {
+          userId: user_id,
+          title: 'Your Report Has Been Submitted!',
+          description: `Thank you for caring! Your report about the ${selectedItem} has been submitted.`,
+          screen: '/(tabs)/manage',
+          createdAt: new Date() // Store the timestamp
+        });
         setReportResult(res);
         handleReportSuccess();
       }
