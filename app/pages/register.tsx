@@ -76,8 +76,21 @@ export default function Register() {
     }
     return true;
   };
+  // Email regex for validation
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email);
+  };
 
   const handleRegister = async () => {
+    // Reset errors
+    setErrors("");
+
+    // Validate email format
+    if (!isValidEmail(username)) {
+      setErrors("Please enter a valid email address.");
+      return; // Stop execution if email is invalid
+    }
     try {
       const validatedFields = emptyFieldChecker();
       if (!validatedFields) return;
