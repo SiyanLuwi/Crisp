@@ -45,12 +45,36 @@ export default function VerifyPage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const { verifyAccount } = useAuth();
 
+  const validateName = (text: string) => {
+    // Regular expression to allow letters (A-Z, a-z) and spaces
+    const namePattern = /^[A-Za-z ]*$/; // Allow empty string (this handles backspace)
+
+    // Only set the state with valid characters (no empty string return)
+    if (namePattern.test(text)) {
+      return text; // Allow the input if it matches the pattern
+    } else {
+      return text.slice(0, -1); // Remove last character if invalid (essentially block invalid chars)
+    }
+  };
+
   const handleVerify = async () => {
+    console.log("Verifying with inputs:", {
+      firstName,
+      middleName,
+      lastName,
+      address,
+      // birthday,
+      idNumber,
+      selfie,
+      photo,
+      idPicture,
+    });
     try {
       const emptyFields = [];
 
       if (!firstName) emptyFields.push("First Name");
       if (!lastName) emptyFields.push("Last Name");
+      if (!middleName) emptyFields.push("Middle Name");
       if (!address) emptyFields.push("Address");
       // if (!birthday) emptyFields.push("Birthday");
       if (!idNumber) emptyFields.push("ID Number");
@@ -109,9 +133,9 @@ export default function VerifyPage() {
           setAddress("");
           setBirthday("");
           setIdNumber("");
-          setSelfie(null);
-          setPhoto(null);
-          setIdPicture(null);
+          setSelfie("");
+          setPhoto("");
+          setIdPicture("");
         }, 2000); // Auto close modal after 2 seconds
       }
     } catch (error: any) {
@@ -233,21 +257,21 @@ export default function VerifyPage() {
                   placeholderTextColor="#888"
                   placeholder="Last Name"
                   value={lastName}
-                  onChangeText={setLastName}
+                  onChangeText={(text) => setLastName(validateName(text))}
                 />
                 <TextInput
                   className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                   placeholderTextColor="#888"
                   placeholder="First Name"
                   value={firstName}
-                  onChangeText={setFirstName}
+                  onChangeText={(text) => setFirstName(validateName(text))}
                 />
                 <TextInput
                   className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                   placeholderTextColor="#888"
                   placeholder="Middle Name"
                   value={middleName}
-                  onChangeText={setMiddleName}
+                  onChangeText={(text) => setMiddleName(validateName(text))}
                 />
                 <TextInput
                   className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
@@ -283,6 +307,7 @@ export default function VerifyPage() {
                   placeholder="ID Number"
                   value={idNumber}
                   onChangeText={setIdNumber}
+                  keyboardType="numeric"
                 />
                 {/* ID Photo Upload Button */}
                 <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">

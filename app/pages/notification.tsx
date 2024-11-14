@@ -9,10 +9,16 @@ import {
 import React, { useEffect, useState } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { collection, onSnapshot, query, where, getFirestore } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+  query,
+  where,
+  getFirestore,
+} from "firebase/firestore";
 import { app } from "@/firebase/firebaseConfig";
-import { useAuth } from '@/AuthContext/AuthContext'; // Import your Auth context to get USER_ID
-import { useNavigation } from '@react-navigation/native'; // Import useNavigation for navigation
+import { useAuth } from "@/AuthContext/AuthContext"; // Import your Auth context to get USER_ID
+import { useNavigation } from "@react-navigation/native"; // Import useNavigation for navigation
 import { router } from "expo-router";
 
 const db = getFirestore(app);
@@ -25,7 +31,10 @@ const NotificationItem: React.FC<{
   time: string;
   onPress: () => void; // Change event to onPress and make it a function
 }> = ({ content, type, time, onPress }) => (
-  <TouchableOpacity className="w-full bg-white my-2 p-4 rounded-lg shadow" onPress={onPress}>
+  <TouchableOpacity
+    className="w-full bg-white my-2 p-4 rounded-lg shadow"
+    onPress={onPress}
+  >
     <View className="flex flex-row items-center">
       <View className="border-2 border-[#0C3B2D] bg-[#f0fff2] rounded-full p-4">
         <MaterialCommunityIcons
@@ -33,8 +42,8 @@ const NotificationItem: React.FC<{
             type === "Emergency"
               ? "alert"
               : type === "Weather"
-              ? "weather-rainy"
-              : "road-variant"
+                ? "weather-rainy"
+                : "road-variant"
           }
           size={45}
           color="#0C3B2D"
@@ -53,17 +62,17 @@ const NotificationItem: React.FC<{
 
 export default function NotificationForm() {
   const [notifications, setNotifications] = useState<any[]>([]);
-  const { USER_ID } = useAuth(); 
+  const { USER_ID } = useAuth();
   const navigation = useNavigation(); // Get the navigation object
 
   useEffect(() => {
-    if (!USER_ID) return; 
+    if (!USER_ID) return;
 
-    const notificationsRef = collection(db, 'notifications');
-    const q = query(notificationsRef, where('userId', '==', USER_ID)); 
+    const notificationsRef = collection(db, "notifications");
+    const q = query(notificationsRef, where("userId", "==", USER_ID));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedNotifications = snapshot.docs.map(doc => ({
+      const fetchedNotifications = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
@@ -72,7 +81,7 @@ export default function NotificationForm() {
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
-  }, [USER_ID]); 
+  }, [USER_ID]);
 
   return (
     <ImageBackground
@@ -91,10 +100,10 @@ export default function NotificationForm() {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <NotificationItem
-              content={item.description} 
-              type={item.title} 
+              content={item.description}
+              type={item.title}
               time={new Date(item.createdAt.seconds * 1000).toLocaleString()}
-              onPress={() => router.push(item.screen)} 
+              onPress={() => router.push(item.screen)}
             />
           )}
           className="w-full h-auto flex px-8"

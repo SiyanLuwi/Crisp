@@ -96,7 +96,7 @@ export default function Index() {
         setAccountType(accountType);
         // Redirect based on account type
         if (accountType === "citizen") {
-          router.push("/(tabs)/camera");
+          router.push("/(tabs)/home");
         } else if (accountType === "worker") {
           router.push("/(tabs)_employee/home");
         } else {
@@ -128,10 +128,10 @@ export default function Index() {
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener((response) => {
         const data = response.notification.request.content.data;
-      // Navigate to the specific screen based on the notification data
-      if (data && data.screen) {
-        router.push(data.screen); // Use the screen name provided in the notification data
-      }
+        // Navigate to the specific screen based on the notification data
+        if (data && data.screen) {
+          router.push(data.screen); // Use the screen name provided in the notification data
+        }
       });
 
     return () => {
