@@ -42,6 +42,7 @@ interface Report {
   custom_type: string;
   floor_number: string;
   is_validated: boolean;
+  status: string;
 }
 interface Location {
   latitude: number;
@@ -115,6 +116,7 @@ export default function Home() {
               custom_type: data.custom_type || "",
               floor_number: data.floor_number || "",
               is_validated: data.is_validated,
+              status: data.status || "",
             };
           });
 
@@ -403,50 +405,52 @@ export default function Home() {
               pinColor="pink"
             />
 
-            {reports.map((item, index) => (
-              <Marker
-                key={`${item.id}-${index}`}
-                coordinate={{
-                  latitude: item.latitude,
-                  longitude: item.longitude,
-                }}
-                pinColor={item.is_validated ? "green" : "red"}
-              >
-                <Callout
-                  onPress={() => {
-                    setSelectedReport(item);
-                    setModalVisible(true);
+            {reports
+              .filter((item) => item.status !== "done")
+              .map((item, index) => (
+                <Marker
+                  key={`${item.id}-${index}`}
+                  coordinate={{
+                    latitude: item.latitude,
+                    longitude: item.longitude,
                   }}
+                  pinColor={item.is_validated ? "green" : "red"}
                 >
-                  <View className="w-auto justify-center items-center">
-                    <Text className="font-bold text-sm">
-                      {" " + item.type_of_report}
-                      {item.custom_type && item.custom_type.length > 0 && (
-                        <Text>{", " + item.custom_type}</Text>
-                      )}
-                    </Text>
+                  <Callout
+                    onPress={() => {
+                      setSelectedReport(item);
+                      setModalVisible(true);
+                    }}
+                  >
+                    <View className="w-auto justify-center items-center">
+                      <Text className="font-bold text-sm">
+                        {" " + item.type_of_report}
+                        {item.custom_type && item.custom_type.length > 0 && (
+                          <Text>{", " + item.custom_type}</Text>
+                        )}
+                      </Text>
 
-                    <Text className="text-xs text-slate-600 mt-1">
-                      Distance:{" "}
-                      {userLocation
-                        ? (() => {
-                            const distance = haversineDistance(
-                              userLocation,
-                              item
-                            );
-                            return distance > 1000
-                              ? `${(distance / 1000).toFixed(2)} km` // Convert to kilometers
-                              : `${distance.toFixed(2)} m`; // Keep in meters
-                          })()
-                        : "Calculating..."}
-                    </Text>
-                    <Text className="text-xs text-slate-400 mt-1">
-                      More Info
-                    </Text>
-                  </View>
-                </Callout>
-              </Marker>
-            ))}
+                      <Text className="text-xs text-slate-600 mt-1">
+                        Distance:{" "}
+                        {userLocation
+                          ? (() => {
+                              const distance = haversineDistance(
+                                userLocation,
+                                item
+                              );
+                              return distance > 1000
+                                ? `${(distance / 1000).toFixed(2)} km` // Convert to kilometers
+                                : `${distance.toFixed(2)} m`; // Keep in meters
+                            })()
+                          : "Calculating..."}
+                      </Text>
+                      <Text className="text-xs text-slate-400 mt-1">
+                        More Info
+                      </Text>
+                    </View>
+                  </Callout>
+                </Marker>
+              ))}
 
             {deptAdmins.map((item: deptAdmin, index) => (
               <Marker

@@ -35,7 +35,22 @@ export default function Login() {
   const IS_EMAIL_VERIFIED = "is_email_verified";
   const ACCOUNT_TYPE = "account_type";
 
+  // Email regex for validation
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email);
+  };
+
   const handleLogin = async () => {
+    // Reset errors
+    setErrors("");
+
+    // Validate email format
+    if (!isValidEmail(username)) {
+      setErrors("Please enter a valid email address.");
+      return; // Stop execution if email is invalid
+    }
+
     setLoading(true);
     try {
       const result = await onLogin!(username, password);
@@ -54,7 +69,7 @@ export default function Login() {
 
       // Redirect based on account type
       if (account_type === "citizen") {
-        router.push("/(tabs)/camera");
+        router.push("/(tabs)/home");
       } else if (account_type === "worker") {
         router.push("/(tabs)_employee/home");
       } else {
