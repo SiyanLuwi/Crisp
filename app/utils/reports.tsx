@@ -33,6 +33,7 @@ export interface Reports {
   status: string;
   userFeedback: Feedback[]; // Updated type
   workerFeedback: Feedback[];
+  location: string;
 }
 interface Feedback {
   description: string;
@@ -64,6 +65,7 @@ export class Report implements Reports {
   public status: string;
   public userFeedback: Feedback[] = []; // Initialize as an empty array
   public workerFeedback: Feedback[] = []; // Initialize as an empty array
+  public location: string;
 
   constructor(reportData: Reports) {
     this.id = reportData.id;
@@ -87,6 +89,7 @@ export class Report implements Reports {
     this.status = reportData.status;
     this.userFeedback = []; // Initialize as empty array
     this.workerFeedback = []; // Initialize as empty array
+    this.location = reportData.location;
   }
 
   public static async fetchReportsByCategory(
@@ -155,7 +158,8 @@ export class Report implements Reports {
     is_emergency: string,
     image_path: string,
     custom_type: string,
-    floor_number: string
+    floor_number: string,
+    location: string
   ) {
     const formData = new FormData();
     formData.append("type_of_report", type_of_report);
@@ -169,12 +173,22 @@ export class Report implements Reports {
     formData.append("image_path", `data:image/jpeg;base64,${imageBase64}`);
     formData.append("custom_type", custom_type);
     formData.append("floor_number", floor_number);
+    formData.append("location", location);
     try {
       const res = await api.post("api/create-report/", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
+      console.log(type_of_report,
+        report_description,
+        longitude,
+        latitude,
+        is_emergency,
+        image_path,
+        custom_type,
+        floor_number,
+        location)
       if (res.status === 201 || res.status === 200) {
         return res;
       }

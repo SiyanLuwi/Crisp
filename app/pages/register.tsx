@@ -14,7 +14,7 @@ import {
   Keyboard,
 } from "react-native";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import MapPicker from "@/components/mapPicker";
@@ -33,6 +33,7 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [errors, setErrors] = useState("");
   const [address, setAddress] = useState("");
+  const [coordinates, setCoordinates] = useState("");
   const [contact_number, setContactNumber] = useState("");
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -56,13 +57,47 @@ export default function Register() {
     const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(password);
     return hasUpperCase && hasNumber && hasSymbol;
   };
-
-  const handleLocationSelect = (location: {
+  const getAddressFromCoordinates = async (latitude:number, longitude:number) => {
+    const url = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`;
+  
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'CRISP/1.0.9 crisp.uccbscs@gmail.com' // Replace with your app name and contact email
+        }
+      });
+  
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error fetching address:", errorText);
+        return null;
+      }
+  
+      const data = await response.json();
+  
+      if (data && data.address) {
+        console.log(data)
+        const { residential, town, state, country } = data.address;
+        const addressParts = [residential, town, state, country].filter(Boolean);
+        const address = addressParts.join(', '); // Join non-empty parts
+        return address || "Address not found";
+      } else {
+        console.error("Nominatim API error:", data);
+        return "Address not found";
+      }
+    } catch (error) {
+      console.error("Error fetching address:", error);
+      return null;
+    }
+  };
+  const handleLocationSelect = async (location: {
     latitude: number;
     longitude: number;
   }) => {
     // Convert coordinates to address if needed
-    setAddress(`${location.latitude}, ${location.longitude}`);
+    const address: any = await getAddressFromCoordinates(location.latitude, location.longitude)
+    setAddress(address);
+    setCoordinates(`${location.latitude}, ${location.longitude}`);
     setShowMapPicker(false); // Close the map picker
   };
 
@@ -78,23 +113,25 @@ export default function Register() {
   };
   // Email regex for validation
   const isValidEmail = (email: string) => {
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    return emailRegex.test(email);
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+    return emailRegex.test(email) && !/\.\./.test(email); 
   };
+
 
   const handleRegister = async () => {
     // Reset errors
     setErrors("");
-
+  
     // Validate email format
-    if (!isValidEmail(username)) {
+    if (!isValidEmail(email)) {
       setErrors("Please enter a valid email address.");
       return; // Stop execution if email is invalid
     }
+  
     try {
       const validatedFields = emptyFieldChecker();
       if (!validatedFields) return;
-
+  
       // Check password complexity
       if (!isPasswordComplex(password)) {
         alert(
@@ -102,14 +139,16 @@ export default function Register() {
         );
         return;
       }
-
+  
       if (password !== password_confirm) {
         alert("Passwords do not match.");
         return;
       }
+
       setLoading(true);
+
       if (!onRegister) {
-        throw new Error("Undefied onRegister");
+        throw new Error("Undefined onRegister");
       }
       const res = await onRegister!(
         username,
@@ -117,25 +156,32 @@ export default function Register() {
         password,
         password_confirm,
         address,
+        coordinates,
         contact_number
       );
-      console.log(res.status);
-
+      if (res.error) {
+        alert(res.msg || "Registration failed. Please try again.");
+        return;
+      }
+  
       if (res.status !== 200 && res.status !== 201) {
-        console.log(res.data);
         throw new Error("Register Error!");
       }
+  
       scheduleNotification(
         "Welcome to CRISP!",
-        "Welcome to the community! Start exploring the app now."
+        "Welcome to the community! Start exploring the app now.",
+        1,
+        ""
       );
       router.push("/pages/verifyEmail");
     } catch (error: any) {
-      alert(error);
+      alert(error?.message || "An error occurred during registration.");
     } finally {
       setLoading(false);
     }
   };
+  
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>

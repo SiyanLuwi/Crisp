@@ -53,6 +53,7 @@ export default function PictureForm() {
   const [reportResult, setReportResult] = useState<any>(null);
   const [result, setResult] = useState<any>(null);
   const [isFetch, setFetch] = useState<any>(null);
+  const [coordinates, setCoordinates] = useState<string>("");
   const { createReport } = useAuth();
 
   const report = async () => {
@@ -62,7 +63,7 @@ export default function PictureForm() {
         throw new Error("Location is missing");
       }
 
-      const [latitude, longitude] = location.split(",");
+      const [latitude, longitude] = coordinates.split(",");
 
       let is_emergency =
         isEmergency?.toLocaleLowerCase() === "Emergency"
@@ -74,7 +75,8 @@ export default function PictureForm() {
         !description ||
         !longitude ||
         !latitude ||
-        !is_emergency
+        !is_emergency ||
+        !location 
       ) {
         throw new Error("Some required fields are missing");
       }
@@ -92,10 +94,11 @@ export default function PictureForm() {
         description,
         longitude,
         latitude,
-        is_emergency,
+        is_emergency,    
         imageUri,
         customType,
-        floorNumber
+        floorNumber,
+        location
       );
       const user_id = await SecureStore.getItemAsync('user_id');
       if (!user_id) {
@@ -130,15 +133,17 @@ export default function PictureForm() {
 
   const fetchData = async () => {
     try {
-      const [uri, locations, report_type, isEmergency] = await Promise.all([
+      const [uri, locations, coordinates, report_type, isEmergency] = await Promise.all([
         SecureStore.getItemAsync("imageUri"),
         SecureStore.getItemAsync("currentLocation"),
+        SecureStore.getItemAsync("coordinates"),
         SecureStore.getItemAsync("report_type"),
         SecureStore.getItemAsync("isEmergency"),
       ]);
-
+      console.log(locations, coordinates)
       setIsEmergency(isEmergency);
       setSelectedItem(report_type);
+      setCoordinates(coordinates as string);
       setLocation(locations);
       setImageUri(uri);
       setFetch(true);
@@ -157,33 +162,6 @@ export default function PictureForm() {
   };
 
   // Function to convert coordinates to address
-  const getAddressFromCoordinates = async (
-    latitude: number,
-    longitude: number
-  ) => {
-    try {
-      const [result] = await Location.reverseGeocodeAsync({
-        latitude,
-        longitude,
-      });
-      return `${result.name}, ${result.city}, ${result.region}, ${result.country}`;
-    } catch (error) {
-      console.error("Error fetching address:", error);
-      return null;
-    }
-  };
-
-  const handleLocationSelect = async (location: {
-    latitude: number;
-    longitude: number;
-  }) => {
-    const address = await getAddressFromCoordinates(
-      location.latitude,
-      location.longitude
-    );
-    setLocation(address); // Set the location to the text-based address
-    setShowMapPicker(false); // Close the map picker
-  };
 
   return (
     <ImageBackground
@@ -383,14 +361,6 @@ export default function PictureForm() {
           </Modal>
         </KeyboardAvoidingView>
       </SafeAreaView>
-      {showMapPicker && (
-        <View className="absolute top-0 left-0 right-0 bottom-0 justify-center items-center bg-black/50">
-          <MapPicker
-            onLocationSelect={handleLocationSelect}
-            onClose={() => setShowMapPicker(false)}
-          />
-        </View>
-      )}
     </ImageBackground>
   );
 }

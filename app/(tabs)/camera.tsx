@@ -39,26 +39,40 @@ export default function CameraComp() {
   const cameraRef = React.useRef<CameraView>(null);
   const [locationPermissionGranted, setLocationPermissionGranted] = useState(false);
 
-  const getAddressFromCoordinates = async (latitude: number, longitude: number) => {
-    const apiKey = 'AIzaSyAe1iu4272Y5pQ6ccdJUYEAp6qyTAbM_-0'; // Replace with your API key
-  const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
 
-  try {
-    const response = await fetch(url);
-    const data = await response.json();
-
-    if (data.status === "OK" && data.results.length > 0) {
-      const address = data.results[0].formatted_address; // Get the formatted address
-      return address;
-    } else {
-      return "Address not found";
-    }
-  } catch (error) {
-    console.error("Error fetching address:", error);
-    return null;
-  }
-  };
+  const getAddressFromCoordinates = async (latitude:number, longitude:number) => {
+    const url = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`;
   
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'CRISP/1.0.9 crisp.uccbscs@gmail.com' // Replace with your app name and contact email
+        }
+      });
+  
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error fetching address:", errorText);
+        return null;
+      }
+  
+      const data = await response.json();
+  
+      if (data && data.address) {
+        console.log(data)
+        const { residential, town, state, country } = data.address;
+        const addressParts = [residential, town, state, country].filter(Boolean);
+        const address = addressParts.join(', '); // Join non-empty parts
+        return addressParts || "Address not found";
+      } else {
+        console.error("Nominatim API error:", data);
+        return "Address not found";
+      }
+    } catch (error) {
+      console.error("Error fetching address:", error);
+      return null;
+    }
+  };
   // Inside your component
   useEffect(() => {
     console.log("Checking location permission...");
@@ -83,10 +97,15 @@ export default function CameraComp() {
   
         // Await the address fetching
         const address = await getAddressFromCoordinates(latitude, longitude);
-        console.log("Fetched address:", address);
+        console.log("Fetched address:", address); 
+        console.log("Fetched lat and long:", latitude, longitude)
   
         // Store the current location as a string
-        await SecureStore.setItemAsync('currentLocation', `${latitude},${longitude}`);
+        await SecureStore.setItemAsync('currentLocation', `${address}`);
+        if(!latitude || !longitude){
+           return;
+        }
+        await SecureStore.setItemAsync('coordinates', `${latitude}, ${longitude}`);
       } catch (error) {
         console.error("Error getting location:", error);
       }
