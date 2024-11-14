@@ -94,6 +94,7 @@ export const AuthProvider = ({ children }: any) => {
     loadToken();
   }, []);
 
+
   //register function
   const register = async (
     username: string,

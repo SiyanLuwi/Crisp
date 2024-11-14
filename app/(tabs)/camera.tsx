@@ -8,6 +8,7 @@ import {
   Button,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -29,23 +30,6 @@ interface Prediction {
   confidence: number;
 }
 
-const getAddressFromCoordinates = async (
-  latitude: number,
-  longitude: number
-) => {
-  try {
-    const [result] = await Location.reverseGeocodeAsync({
-      latitude,
-      longitude,
-    });
-    return result
-      ? `${result.name}, ${result.city}, ${result.region}, ${result.country}`
-      : "Address not found";
-  } catch (error) {
-    console.error("Error fetching address:", error);
-    return null;
-  }
-};
 
 export default function CameraComp() {
   const [facing, setFacing] = useState<CameraType>("back");
@@ -53,32 +37,63 @@ export default function CameraComp() {
   const [loading, setLoading] = useState(false);
   const [emergencyCall, setEmergencyCall] = useState(false);
   const cameraRef = React.useRef<CameraView>(null);
+  const [locationPermissionGranted, setLocationPermissionGranted] = useState(false);
 
+  const getAddressFromCoordinates = async (latitude: number, longitude: number) => {
+    const apiKey = 'AIzaSyAe1iu4272Y5pQ6ccdJUYEAp6qyTAbM_-0'; // Replace with your API key
+  const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
+
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.status === "OK" && data.results.length > 0) {
+      const address = data.results[0].formatted_address; // Get the formatted address
+      return address;
+    } else {
+      return "Address not found";
+    }
+  } catch (error) {
+    console.error("Error fetching address:", error);
+    return null;
+  }
+  };
+  
+  // Inside your component
   useEffect(() => {
-    const fetchLocation = async () => {
-      await SecureStore.setItemAsync("report_type", "");
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        alert("Permission to access location was denied");
-        return;
-      }
-      // Get current location with high accuracy
-      let location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
-      const { latitude, longitude } = location.coords;
-      const address = await getAddressFromCoordinates(latitude, longitude);
-      if (address) {
-        await SecureStore.setItemAsync(
-          "currentLocation",
-          `${latitude}, ${longitude}`
-        );
-      } else {
-        console.error("Failed to get address.");
+    console.log("Checking location permission...");
+    const fetchLocationPermission = async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      setLocationPermissionGranted(status === "granted");
+    };
+  
+    fetchLocationPermission();
+  }, []);
+  
+  useEffect(() => {
+    console.log("Location permission granted:", locationPermissionGranted);
+    const getCurrentLocation = async () => {
+      if (!locationPermissionGranted) return;
+  
+      try {
+        const location = await Location.getCurrentPositionAsync({});
+        const { latitude, longitude } = location.coords;
+  
+        console.log(`Current location: ${latitude}, ${longitude}`);
+  
+        // Await the address fetching
+        const address = await getAddressFromCoordinates(latitude, longitude);
+        console.log("Fetched address:", address);
+  
+        // Store the current location as a string
+        await SecureStore.setItemAsync('currentLocation', `${latitude},${longitude}`);
+      } catch (error) {
+        console.error("Error getting location:", error);
       }
     };
-    fetchLocation();
-  }, []);
+  
+    getCurrentLocation();
+  }, [locationPermissionGranted]);
 
   if (!permission) {
     return <View />;
@@ -105,31 +120,27 @@ export default function CameraComp() {
     setLoading(true);
     try {
       const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.8,
+        quality: 0.5,
         base64: true,
+        skipProcessing: true,
       });
 
       if (photo?.uri) {
-        const [optimizedUri, classificationResult] = await Promise.all([
-          resizeImage(photo.uri),
-          classifyImage(photo.uri), // Pass the original URI for classification
-        ]);
+        const optimizedUri = await resizeImage(photo.uri);
+        const classificationResult = await classifyImage(optimizedUri);
+
+        // Store results securely
         await SecureStore.setItemAsync("imageUri", photo.uri);
-        await SecureStore.setItemAsync(
-          "isEmergency",
-          classificationResult.isEmergency
-        );
-        await SecureStore.setItemAsync(
-          "report_type",
-          classificationResult.class
-        );
+        await SecureStore.setItemAsync("isEmergency", classificationResult.isEmergency);
+        await SecureStore.setItemAsync("report_type", classificationResult.class);
+        
         router.push("/pages/pictureForm");
       } else {
         console.error("Photo capturing failed: photo is undefined.");
       }
     } catch (error) {
       console.error("Error capturing photo:", error);
-      alert("Error capturing photo. Please try again.");
+      Alert.alert("Error capturing photo. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -151,7 +162,7 @@ export default function CameraComp() {
 
   const classifyImage = async (uri: string) => {
     try {
-      const base64image = await FileSystem.readAsStringAsync(uri, {
+    const base64image = await FileSystem.readAsStringAsync(uri, {
         encoding: FileSystem.EncodingType.Base64,
       });
 
@@ -165,29 +176,27 @@ export default function CameraComp() {
       );
 
       const result = getHighestConfidenceClass(res.data.predictions);
-
       console.log("Classified result:", result);
 
-      return {
+      const classification = {
         class: result.class,
-        isEmergency: ["Fires", "Floods", "Road Accident"].includes(result.class)
-          ? "Yes"
-          : "No",
+        isEmergency: ["Fires", "Floods", "Road Accident"].includes(result.class) ? "Yes" : "No",
       };
+
+      return classification;
     } catch (error: any) {
       console.error("Error during classification:", error.message);
-      alert("Error classifying image. Please try again.");
-      // Handle error appropriately (e.g., return a default value or rethrow)
+      Alert.alert("Error classifying image. Please try again.");
       return { class: "Unknown", isEmergency: "No" }; // Default return on error
     }
   };
 
-  const getHighestConfidenceClass = (results: Prediction[]) => {
-    console.log(results);
+  const getHighestConfidenceClass = (results: any[]) => {
     return results.reduce((prev, current) =>
       prev.confidence > current.confidence ? prev : current
     );
   };
+
 
   return (
     <View className="w-full h-full flex justify-center items-center">
