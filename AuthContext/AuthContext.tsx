@@ -14,6 +14,7 @@ interface AuthProps {
     password: string,
     password_confirm: string,
     address: string,
+    coordinates: string,
     contact_no: string
   ) => Promise<any>;
   onLogin?: (username: string, password: string) => Promise<any>;
@@ -94,6 +95,7 @@ export const AuthProvider = ({ children }: any) => {
     loadToken();
   }, []);
 
+
   //register function
   const register = async (
     username: string,
@@ -101,28 +103,41 @@ export const AuthProvider = ({ children }: any) => {
     password: string,
     password_confirm: string,
     address: string,
+    coordinates: string,
     contact_no: string
   ) => {
     const ipv = await Network.getIpAddressAsync();
     try {
-      const res = await api.post(`api/citizen/registration/`, {
+      const res = await api.post("api/citizen/registration/", {
         username,
         email,
         password,
         password_confirm,
         address,
+        coordinates,
         contact_number: contact_no,
         ipv,
       });
-
+  
       await SecureStore.setItemAsync("email", email.toString());
-
+  
       return res;
-    } catch (error) {
-      console.error(error);
-      return { error: true, msg: "Register error!" };
+    } catch (error: any) {
+      if (error.response && error.response.data) {
+        console.error("Register error details:", error.response.data); 
+        const errorMessage = error.response.data?.username || error.response.data?.email || error.response.data?.contact_number || error.response.data?.ipv || "Unknown error occurred";
+        return {
+          error: true,
+          msg: errorMessage, 
+        };
+      } else {
+        console.error("Register error:", error);
+        return { error: true, msg: "An unknown error occurred during registration." };
+      }
     }
   };
+  
+  
 
   //Login function
   const login = async (username: string, password: string) => {

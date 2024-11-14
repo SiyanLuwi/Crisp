@@ -532,7 +532,7 @@ export default function ReportPage() {
             <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
               Location:
               <Text className="text-lg font-normal text-black ml-2">
-                {" " + item.latitude + ", " + item.longitude}
+                {" " + item.location}
               </Text>
             </Text>
           </TouchableOpacity>

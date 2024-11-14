@@ -1,13 +1,12 @@
 import * as Location from 'expo-location';
 import { scheduleNotification } from './notifications';
-import { Report } from './reports'; 
+import { Report } from './reports';
 import { haversineDistance } from './haversieDistace'; 
 import { app } from '@/firebase/firebaseConfig'; 
 import { collection, addDoc, query, where, getDocs, getFirestore } from 'firebase/firestore'; 
-import { useAuth } from '@/AuthContext/AuthContext';
-import * as SecureStore from 'expo-secure-store'
-let watchSubscription: Location.LocationSubscription | null = null; 
+import * as SecureStore from 'expo-secure-store';
 
+let watchSubscription: Location.LocationSubscription | null = null; 
 const db = getFirestore(app);
 
 export const startLocationUpdates = async () => {
@@ -22,17 +21,46 @@ export const startLocationUpdates = async () => {
       timeInterval: 3000 
     },
     async (location) => {
-      const reports = await Report.fetchAllReports(); // Fetch all reports using the new method
-      await checkForNearbyReports(location.coords, reports);
+      try {
+        const reports = await fetchAllReports(); // Fetch all reports using the new method
+        await checkForNearbyReports(location.coords, reports);
+      } catch (error) {
+        console.error("Error fetching reports:", error);
+      }
     }
   );
 };
 
-const requestPermissions = async () => {
+const requestPermissions = async (): Promise<void> => {
   const { status } = await Location.requestForegroundPermissionsAsync();
   if (status !== 'granted') {
     console.log('Permission to access location was denied');
+    return; // Exit if permission is not granted
   }
+};
+
+const fetchAllReports = async () => {
+  const categories = [
+    "fires",
+    "street lights",
+    "potholes",
+    "floods",
+    "others",
+    "road accidents",
+  ];
+  
+  const allReports: Report[] = [];
+
+  try {
+    await Promise.all(categories.map(async (category) => {
+      const reports = await Report.fetchReportsByCategory(category);
+      allReports.push(...reports);
+    }));
+  } catch (error) {
+    console.error("Error fetching reports:", error);
+  }
+
+  return allReports;
 };
 
 const checkForNearbyReports = async (userLocation: any, reports: Report[]) => {
@@ -60,7 +88,7 @@ const scheduleAndStoreNotification = async (report: Report, distance: number) =>
   const screen = "/(tabs)/home";
 
   // Schedule the notification
-  scheduleNotification(title, description, 1, screen);
+  await scheduleNotification(title, description, 1, screen);
 
   const user_id = await SecureStore.getItemAsync('user_id'); // Get USER_ID from the context
   if (!user_id) {
