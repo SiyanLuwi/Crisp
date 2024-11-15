@@ -19,6 +19,7 @@ import { RFPercentage } from "react-native-responsive-fontsize";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import CancelModal from "@/components/cancelModal";
+import ImageModal from "@/components/imageModal";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 const bgImage = require("@/assets/images/bgImage.png");
 import MapPicker from "@/components/mapPicker";
@@ -32,7 +33,7 @@ import { Report } from "../utils/reports";
 import { addDoc, collection, getFirestore } from "firebase/firestore";
 import { app } from "@/firebase/firebaseConfig";
 const { width, height } = Dimensions.get("window");
-const db = getFirestore(app)
+const db = getFirestore(app);
 
 export default function PictureForm() {
   const [isOpen, setIsOpen] = useState(false);
@@ -54,6 +55,9 @@ export default function PictureForm() {
   const [result, setResult] = useState<any>(null);
   const [isFetch, setFetch] = useState<any>(null);
   const [coordinates, setCoordinates] = useState<string>("");
+  const [missingFieldsModalVisible, setMissingFieldsModalVisible] =
+    useState(false);
+  const [missingFieldsMessage, setMissingFieldsMessage] = useState("");
   const { createReport } = useAuth();
 
   const report = async () => {
@@ -70,15 +74,31 @@ export default function PictureForm() {
           ? "emergency"
           : "not emergency";
 
+      // Check if all required fields are filled
       if (
         !selectedItem ||
         !description ||
         !longitude ||
         !latitude ||
         !is_emergency ||
-        !location 
+        !location
       ) {
-        throw new Error("Some required fields are missing");
+        let missingFields = [];
+        if (!selectedItem) missingFields.push("Report type");
+        if (!description) missingFields.push("Description");
+        if (!longitude || !latitude) missingFields.push("Location coordinates");
+        if (!is_emergency) missingFields.push("Emergency status");
+        if (!location) missingFields.push("Location");
+        // If "Others" is selected, ensure that customType is provided
+        if (selectedItem === "Others" && !customType) {
+          missingFields.push("Custom type");
+        }
+
+        setMissingFieldsMessage(
+          `Please fill in the following fields: ${missingFields.join(", ")}`
+        );
+        setMissingFieldsModalVisible(true);
+        return;
       }
 
       if (!createReport) {
@@ -94,26 +114,31 @@ export default function PictureForm() {
         description,
         longitude,
         latitude,
-        is_emergency,    
+        is_emergency,
         imageUri,
         customType,
         floorNumber,
         location
       );
-      const user_id = await SecureStore.getItemAsync('user_id');
+      const user_id = await SecureStore.getItemAsync("user_id");
       if (!user_id) {
         console.error("USER_ID is missing!");
         return;
       }
       if (res) {
         setLoading(false);
-        scheduleNotification("Your Report Has Been Submitted!", `Thank you for caring! Your report about the ${selectedItem} has been submitted.`, 1, '/(tabs)/manage')
-        await addDoc(collection(db, 'notifications'), {
+        scheduleNotification(
+          "Your Report Has Been Submitted!",
+          `Thank you for caring! Your report about the ${selectedItem} has been submitted.`,
+          1,
+          "/(tabs)/manage"
+        );
+        await addDoc(collection(db, "notifications"), {
           userId: user_id,
-          title: 'Your Report Has Been Submitted!',
+          title: "Your Report Has Been Submitted!",
           description: `Thank you for caring! Your report about the ${selectedItem} has been submitted.`,
-          screen: '/(tabs)/manage',
-          createdAt: new Date() // Store the timestamp
+          screen: "/(tabs)/manage",
+          createdAt: new Date(), // Store the timestamp
         });
         setReportResult(res);
         handleReportSuccess();
@@ -133,14 +158,15 @@ export default function PictureForm() {
 
   const fetchData = async () => {
     try {
-      const [uri, locations, coordinates, report_type, isEmergency] = await Promise.all([
-        SecureStore.getItemAsync("imageUri"),
-        SecureStore.getItemAsync("currentLocation"),
-        SecureStore.getItemAsync("coordinates"),
-        SecureStore.getItemAsync("report_type"),
-        SecureStore.getItemAsync("isEmergency"),
-      ]);
-      console.log(locations, coordinates)
+      const [uri, locations, coordinates, report_type, isEmergency] =
+        await Promise.all([
+          SecureStore.getItemAsync("imageUri"),
+          SecureStore.getItemAsync("currentLocation"),
+          SecureStore.getItemAsync("coordinates"),
+          SecureStore.getItemAsync("report_type"),
+          SecureStore.getItemAsync("isEmergency"),
+        ]);
+      console.log(locations, coordinates);
       setIsEmergency(isEmergency);
       setSelectedItem(report_type);
       setCoordinates(coordinates as string);
@@ -200,26 +226,16 @@ export default function PictureForm() {
                 )}
               </View>
               <View style={{ width: "100%", alignItems: "flex-start" }}>
-                <Text className="text-md text-white mb-1">Location</Text>
+                <Text className="text-md text-white mb-1">Location:</Text>
               </View>
               <View className="w-full bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
                 <TextInput
-                  className="w-4/5 text-md p-2 text-[#0C3B2D] font-semibold items-center justify-center"
+                  className="w-full text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
                   placeholderTextColor="#888"
                   placeholder="Location"
                   value={location || ""}
                   editable={false} // Make it read-only
                 />
-                <TouchableOpacity
-                  onPress={() => setShowMapPicker(true)}
-                  className="text-lg p-3 items-center justify-center"
-                >
-                  <MaterialCommunityIcons
-                    name="map-marker"
-                    size={24}
-                    color="#0C3B2D"
-                  />
-                </TouchableOpacity>
               </View>
 
               <View style={{ width: "100%", alignItems: "flex-start" }}>
@@ -289,13 +305,6 @@ export default function PictureForm() {
               </TouchableOpacity>
               <Text className="text-xl py-1 font-bold text-[#0C3B2D]">.</Text>
             </View>
-
-            {/* Cancel Modal */}
-            <CancelModal
-              visible={cancelModalVisible}
-              onConfirm={confirmCancel}
-              onCancel={() => setCancelModalVisible(false)}
-            />
           </ScrollView>
 
           <Modal
@@ -309,10 +318,10 @@ export default function PictureForm() {
               <View className="flex-1 justify-center items-center bg-black/50">
                 <View className="w-4/5 py-5 px-3 bg-white rounded-xl items-start border-2 border-[#0C3B2D]">
                   <View className="full p-3 bg-white rounded-xl items-start">
-                    <Text className="text-xl font-bold text-[#0C3B2D] mb-5">
+                    <Text className="text-xl font-bold text-[#0C3B2D] mb-5 ">
                       Report has been created successfully!
                     </Text>
-                    <View className="flex flex-row justify-end mt-3 w-full">
+                    <View className="flex flex-row justify-end mt-3 w-full ">
                       <TouchableOpacity
                         className="bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center"
                         onPress={() => setSuccessModalVisible(false)} // Close the modal here
@@ -327,38 +336,53 @@ export default function PictureForm() {
               </View>
             </TouchableWithoutFeedback>
           </Modal>
-
-          {/* Full Screen Image Modal */}
+          {/* // Add this new modal component for missing fields */}
           <Modal
-            visible={fullImageModalVisible}
+            visible={missingFieldsModalVisible}
             transparent={true}
             animationType="fade"
           >
             <TouchableWithoutFeedback
-              onPress={() => setFullImageModalVisible(false)}
+              onPress={() => setMissingFieldsModalVisible(false)}
             >
-              <View
-                style={{
-                  flex: 1,
-                  backgroundColor: "rgba(0, 0, 0, 0.7)",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  padding: 10,
-                }}
-              >
-                {selectedImage && (
-                  <Image
-                    source={{ uri: selectedImage }}
-                    style={{
-                      width: width * 0.9, // 90% of screen width
-                      height: height * 0.55, // 60% of screen height
-                      borderRadius: 10,
-                    }}
-                  />
-                )}
+              <View className="flex-1 justify-center items-center bg-black/50">
+                <View className="w-4/5 py-5 px-3 bg-white rounded-xl items-start border-2 border-[#0C3B2D]">
+                  <Text className="text-xl font-bold text-[#0C3B2D] mb-5  px-3">
+                    Some fields are missing!
+                  </Text>
+                  <Text className="text-md text-[#0C3B2D] mb-10  px-3">
+                    {missingFieldsMessage}
+                  </Text>
+                  <View className="flex flex-row justify-end mt-3 w-full  px-3">
+                    <TouchableOpacity
+                      className="bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center"
+                      onPress={() => {
+                        setMissingFieldsModalVisible(false);
+                        setLoading(false);
+                      }}
+                    >
+                      <Text className="text-md font-semibold text-white px-4">
+                        Close
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
             </TouchableWithoutFeedback>
           </Modal>
+
+          <ImageModal
+            fullImageModalVisible={fullImageModalVisible}
+            setFullImageModalVisible={setFullImageModalVisible}
+            selectedImage={selectedImage}
+          />
+
+          {/* Cancel Modal */}
+          <CancelModal
+            visible={cancelModalVisible}
+            onConfirm={confirmCancel}
+            onCancel={() => setCancelModalVisible(false)}
+          />
         </KeyboardAvoidingView>
       </SafeAreaView>
     </ImageBackground>

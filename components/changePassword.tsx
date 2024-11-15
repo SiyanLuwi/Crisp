@@ -72,7 +72,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
         setErrorMessage("Current password is incorrect.");
       }
     } catch (error) {
-      setErrorMessage("Error verifying password.");
+      setErrorMessage("Current password is incorrect.");
     } finally {
       setLoading(false);
     }
@@ -80,14 +80,38 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
 
   const handleConfirm = async () => {
     if (isCurrentPasswordValid) {
+      // Check if newPassword meets the requirements
       if (newPassword !== confirmPassword) {
         setErrorMessage("New passwords do not match.");
         return;
       }
+
+      // Password validation checks
+      if (newPassword.length < 6) {
+        setErrorMessage("Password must be at least 6 characters long.");
+        return;
+      }
+      if (!/[A-Z]/.test(newPassword)) {
+        setErrorMessage("Password must contain at least one uppercase letter.");
+        return;
+      }
+      if (!/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)) {
+        setErrorMessage(
+          "Password must contain at least one special character."
+        );
+        return;
+      }
+      if (!/\d/.test(newPassword)) {
+        setErrorMessage("Password must contain at least one number.");
+        return;
+      }
+
       if (!changePassword) {
         setErrorMessage("Change password function is not available.");
         return;
       }
+
+      // Proceed with changing password
       setLoading(true);
       setErrorMessage(null);
       setSuccessMessage(null);
@@ -99,7 +123,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
         setNewPassword("");
         setConfirmPassword("");
       } catch (error) {
-        // setErrorMessage(error.message);
+        // Handle error here (optional)
       } finally {
         setLoading(false);
       }

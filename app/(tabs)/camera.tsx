@@ -30,40 +30,69 @@ interface Prediction {
   confidence: number;
 }
 
-
 export default function CameraComp() {
   const [facing, setFacing] = useState<CameraType>("back");
   const [permission, requestPermission] = useCameraPermissions();
   const [loading, setLoading] = useState(false);
   const [emergencyCall, setEmergencyCall] = useState(false);
   const cameraRef = React.useRef<CameraView>(null);
-  const [locationPermissionGranted, setLocationPermissionGranted] = useState(false);
+  const [locationPermissionGranted, setLocationPermissionGranted] =
+    useState(false);
 
-
-  const getAddressFromCoordinates = async (latitude:number, longitude:number) => {
+  const getAddressFromCoordinates = async (
+    latitude: number,
+    longitude: number
+  ) => {
     const url = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`;
-  
+
     try {
       const response = await fetch(url, {
         headers: {
-          'User-Agent': 'CRISP/1.0.9 crisp.uccbscs@gmail.com' // Replace with your app name and contact email
-        }
+          "User-Agent": "CRISP/1.0.9 crisp.uccbscs@gmail.com", // Replace with your app name and contact email
+        },
       });
-  
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Error fetching address:", errorText);
         return null;
       }
-  
+
       const data = await response.json();
-  
+
       if (data && data.address) {
-        console.log(data)
-        const { residential, town, state, country } = data.address;
-        const addressParts = [residential, town, state, country].filter(Boolean);
-        const address = addressParts.join(', '); // Join non-empty parts
-        return addressParts || "Address not found";
+        // Try to extract all address components
+        const {
+          residential,
+          road,
+          neighbourhood,
+          suburb,
+          city_district,
+          city,
+          state_district,
+          region,
+          country,
+          postcode,
+        } = data.address;
+
+        // Include all parts to form a full address
+        const addressParts = [
+          residential,
+          road,
+          neighbourhood,
+          suburb,
+          city_district,
+          city,
+          state_district,
+          region,
+          postcode,
+          country,
+        ].filter(Boolean); // filter out null/undefined values
+
+        // Join all parts into a single string
+        const address = addressParts.join(", ") || "Address not found";
+        console.log("Fetched address:", address);
+        return address;
       } else {
         console.error("Nominatim API error:", data);
         return "Address not found";
@@ -73,6 +102,7 @@ export default function CameraComp() {
       return null;
     }
   };
+
   // Inside your component
   useEffect(() => {
     console.log("Checking location permission...");
@@ -80,37 +110,40 @@ export default function CameraComp() {
       const { status } = await Location.requestForegroundPermissionsAsync();
       setLocationPermissionGranted(status === "granted");
     };
-  
+
     fetchLocationPermission();
   }, []);
-  
+
   useEffect(() => {
     console.log("Location permission granted:", locationPermissionGranted);
     const getCurrentLocation = async () => {
       if (!locationPermissionGranted) return;
-  
+
       try {
         const location = await Location.getCurrentPositionAsync({});
         const { latitude, longitude } = location.coords;
-  
+
         console.log(`Current location: ${latitude}, ${longitude}`);
-  
+
         // Await the address fetching
         const address = await getAddressFromCoordinates(latitude, longitude);
-        console.log("Fetched address:", address); 
-        console.log("Fetched lat and long:", latitude, longitude)
-  
+        console.log("Fetched address:", address);
+        console.log("Fetched lat and long:", latitude, longitude);
+
         // Store the current location as a string
-        await SecureStore.setItemAsync('currentLocation', `${address}`);
-        if(!latitude || !longitude){
-           return;
+        await SecureStore.setItemAsync("currentLocation", `${address}`);
+        if (!latitude || !longitude) {
+          return;
         }
-        await SecureStore.setItemAsync('coordinates', `${latitude}, ${longitude}`);
+        await SecureStore.setItemAsync(
+          "coordinates",
+          `${latitude}, ${longitude}`
+        );
       } catch (error) {
         console.error("Error getting location:", error);
       }
     };
-  
+
     getCurrentLocation();
   }, [locationPermissionGranted]);
 
@@ -150,9 +183,15 @@ export default function CameraComp() {
 
         // Store results securely
         await SecureStore.setItemAsync("imageUri", photo.uri);
-        await SecureStore.setItemAsync("isEmergency", classificationResult.isEmergency);
-        await SecureStore.setItemAsync("report_type", classificationResult.class);
-        
+        await SecureStore.setItemAsync(
+          "isEmergency",
+          classificationResult.isEmergency
+        );
+        await SecureStore.setItemAsync(
+          "report_type",
+          classificationResult.class
+        );
+
         router.push("/pages/pictureForm");
       } else {
         console.error("Photo capturing failed: photo is undefined.");
@@ -181,7 +220,7 @@ export default function CameraComp() {
 
   const classifyImage = async (uri: string) => {
     try {
-    const base64image = await FileSystem.readAsStringAsync(uri, {
+      const base64image = await FileSystem.readAsStringAsync(uri, {
         encoding: FileSystem.EncodingType.Base64,
       });
 
@@ -199,7 +238,9 @@ export default function CameraComp() {
 
       const classification = {
         class: result.class,
-        isEmergency: ["Fires", "Floods", "Road Accident"].includes(result.class) ? "Yes" : "No",
+        isEmergency: ["Fires", "Floods", "Road Accident"].includes(result.class)
+          ? "Yes"
+          : "No",
       };
 
       return classification;
@@ -215,7 +256,6 @@ export default function CameraComp() {
       prev.confidence > current.confidence ? prev : current
     );
   };
-
 
   return (
     <View className="w-full h-full flex justify-center items-center">
