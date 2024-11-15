@@ -7,6 +7,7 @@ import * as FileSystem from "expo-file-system";
 interface AuthProps {
   onRefresh?: (refreshToken: string) => Promise<any>;
   USER_ID?: string;
+  hasNewNotification?: boolean;
   authState?: { token: string | null; authenticated: boolean | null };
   onRegister?: (
     username: string,
@@ -66,6 +67,7 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }: any) => {
+  const [hasNewNotification, setHasNewNotification] = useState<boolean>(false);
   const [authState, setAuthState] = useState<{
     token: string | null;
     authenticated: boolean | null;
@@ -246,7 +248,8 @@ export const AuthProvider = ({ children }: any) => {
     await SecureStore.deleteItemAsync(TOKEN_KEY);
     await SecureStore.deleteItemAsync(REFRESH_KEY);
     await SecureStore.deleteItemAsync(EXPIRATION);
-    await SecureStore.deleteItemAsync(ROLE);
+    await SecureStore.deleteItemAsync('user_id');
+    await SecureStore.deleteItemAsync('is_email_verified');
     setAuthState({
       token: null,
       authenticated: null,
@@ -570,7 +573,8 @@ export const AuthProvider = ({ children }: any) => {
     changePassword,
     verifyAccount,
     onRefresh: refreshAccessToken,
-    getAddressFromCoordinates
+    getAddressFromCoordinates,
+    hasNewNotification,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
