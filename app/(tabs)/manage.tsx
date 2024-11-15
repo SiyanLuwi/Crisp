@@ -48,7 +48,7 @@ export default function ManageReports() {
   const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
   const [visibleReportsCount, setVisibleReportsCount] = useState(5);
-  const [hasNewNotification, setHasNewNotification] = useState<boolean>(true);
+  const [hasNewNotification, setHasNewNotification] = useState<boolean>(false);
   const [modalMessage, setModalMessage] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -222,6 +222,13 @@ export default function ManageReports() {
     const fetchData = async () => {
       if (!USER_ID) {
         throw new Error("Cannot fetch USER_ID!");
+      }
+      const notif = await SecureStore.getItemAsync('notificationsFetched');
+      if (notif !== null) {
+        const isTrue = JSON.parse(notif);
+        setHasNewNotification(isTrue);
+      } else {
+        setHasNewNotification(false); 
       }
       const votes = await fetchAllVotes();
       if (!votes) {

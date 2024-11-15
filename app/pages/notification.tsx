@@ -9,6 +9,7 @@ import {
 import React, { useEffect, useState } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as SecureStore from 'expo-secure-store'
 import {
   collection,
   onSnapshot,
@@ -64,25 +65,32 @@ export default function NotificationForm() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const { USER_ID } = useAuth();
   const navigation = useNavigation(); // Get the navigation object
-
+  
   useEffect(() => {
-    if (!USER_ID) return;
+    const fetchNotifications = async () => {
+      if (!USER_ID) return;
 
-    const notificationsRef = collection(db, "notifications");
-    const q = query(notificationsRef, where("userId", "==", USER_ID));
+      const notificationsRef = collection(db, "notifications");
+      const q = query(notificationsRef, where("userId", "==", USER_ID));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedNotifications = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setNotifications(fetchedNotifications);
-    });
+      const unsubscribe = onSnapshot(q, async (snapshot) => {
+        const fetchedNotifications = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setNotifications(fetchedNotifications);
+        if (fetchedNotifications.length > 0) {
+          await SecureStore.setItemAsync('notificationsFetched', 'true');
+        } else {
+          await SecureStore.setItemAsync('notificationsFetched', 'false');
+        }
+      });
 
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
+      return () => unsubscribe();
+    };
+
+    fetchNotifications();
   }, [USER_ID]);
-
   return (
     <ImageBackground
       source={bgImage}
