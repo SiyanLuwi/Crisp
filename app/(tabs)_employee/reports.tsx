@@ -45,6 +45,7 @@ interface Report {
   category: string;
   image_path: string;
   report_date: string;
+  location: string;
 }
 
 export default function Reports() {
@@ -97,6 +98,7 @@ export default function Reports() {
               category: category, // Set the category based on the current loop
               image_path: data.image_path || "", // Default to empty string if missing
               report_date: data.report_date || "", // Default to empty string if missing
+              location: data.location || "", // Default to empty string if missing
             };
           });
 
@@ -243,7 +245,7 @@ export default function Reports() {
           <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
             Location:
             <Text className="text-lg font-normal text-black ml-2">
-              {" " + item.latitude + ", " + item.longitude}
+              {" " + item.location}
             </Text>
           </Text>
         </TouchableOpacity>

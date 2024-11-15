@@ -45,7 +45,7 @@ export default function VerifyEmail() {
 
   const sendOtp = async () => {
     try {
-      setLoading(true)
+      setLoading(true);
       const email = await SecureStore.getItemAsync("email");
       if (!email) throw new Error("Email is missing!");
 
@@ -56,28 +56,34 @@ export default function VerifyEmail() {
         setLoading(false);
         setTimeout(() => setOtpError(false), 3500);
       } else {
-        setLoading(false);
         router.push("/pages/login");
       }
     } catch (error) {
       setOtpError(true);
       setTimeout(() => setOtpError(false), 3000);
+    } finally {
+      // Stop loading in both success and error cases
+      setLoading(false);
     }
   };
 
   const resendOtp = async () => {
-    setTimer(120); 
+    setTimer(120);
     setCanResend(false);
     try {
       const email = await SecureStore.getItemAsync("email");
-      if (!email) throw new Error("Email is missing!");  
-      const res = await api.post('api/resend-otp/verify/', {email});
-      if(!res) throw new Error("Error resend-otp");
-      scheduleNotification('Email has been sent!', 'Please check your email.', 1, '')
+      if (!email) throw new Error("Email is missing!");
+      const res = await api.post("api/resend-otp/verify/", { email });
+      if (!res) throw new Error("Error resend-otp");
+      scheduleNotification(
+        "Email has been sent!",
+        "Please check your email.",
+        1,
+        ""
+      );
     } catch (error) {
-      console.log("Resend OTP: ", error)
+      console.log("Resend OTP: ", error);
     }
-
   };
 
   return (
@@ -89,11 +95,6 @@ export default function VerifyEmail() {
         <Text className="text-md text-[#7e9778] font-bold w-full flex text-left px-10 mb-10">
           CRISP has sent you an OTP to verify your email address.
         </Text>
-        {otpError && (
-          <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mb-2">
-            Please enter a valid OTP.
-          </Text>
-        )}
         <TextInput
           className="w-4/5 bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D] flex text-center"
           placeholder="Enter OTP"
@@ -103,11 +104,15 @@ export default function VerifyEmail() {
           onChangeText={handleOtpChange}
           value={otp}
         />
-
         {/* Timer and Resend Button */}
         <Text className="text-center text-[#0C3B2D] font-semibold mb-4">
           {canResend ? "Didn't receive the code?" : `Resend OTP in ${timer}s`}
         </Text>
+        {otpError && (
+          <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mb-2">
+            Please enter a valid OTP.
+          </Text>
+        )}
 
         <TouchableOpacity
           disabled={!canResend} // Disable button until timer reaches 0
@@ -116,17 +121,15 @@ export default function VerifyEmail() {
             canResend ? "bg-[#0C3B2D]" : "bg-gray-400"
           }`}
         >
-          <Text className="text-xl py-1 font-bold text-white">
-            Resend OTP
-          </Text>
+          <Text className="text-xl py-1 font-bold text-white">Resend OTP</Text>
         </TouchableOpacity>
 
         <LoadingButton
-              style="w-full max-w-[80%] bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center mt-4"
-              title="Verify"
-              onPress={sendOtp}
-              loading={loading}
-            />
+          style="w-full max-w-[80%] bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center mt-4"
+          title="Verify"
+          onPress={sendOtp}
+          loading={loading}
+        />
       </View>
     </TouchableWithoutFeedback>
   );

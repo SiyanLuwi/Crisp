@@ -34,7 +34,8 @@ interface AuthProps {
   updateProfile?: (
     username: string,
     address: string,
-    contact_no: string
+    contact_no: string,
+    coordinates: string
   ) => Promise<any>;
   verifyCurrentPassword?: (currentPassword: string) => Promise<any>;
   changePassword?: (
@@ -72,7 +73,7 @@ export const AuthProvider = ({ children }: any) => {
     token: null,
     authenticated: null,
   });
-  const [USER_ID, SET_USER_ID] = useState('')
+  const [USER_ID, SET_USER_ID] = useState("");
   useEffect(() => {
     const loadToken = async () => {
       const token = await SecureStore.getItemAsync(TOKEN_KEY);
@@ -86,15 +87,14 @@ export const AuthProvider = ({ children }: any) => {
       }
     };
     const loadId = async () => {
-      const user_id = await SecureStore.getItemAsync('user_id');
-      if(user_id){
-        SET_USER_ID(user_id)
+      const user_id = await SecureStore.getItemAsync("user_id");
+      if (user_id) {
+        SET_USER_ID(user_id);
       }
-    }
-    loadId()
+    };
+    loadId();
     loadToken();
   }, []);
-
 
   //register function
   const register = async (
@@ -118,26 +118,32 @@ export const AuthProvider = ({ children }: any) => {
         contact_number: contact_no,
         ipv,
       });
-  
+
       await SecureStore.setItemAsync("email", email.toString());
-  
+
       return res;
     } catch (error: any) {
       if (error.response && error.response.data) {
-        console.error("Register error details:", error.response.data); 
-        const errorMessage = error.response.data?.username || error.response.data?.email || error.response.data?.contact_number || error.response.data?.ipv || "Unknown error occurred";
+        // console.error("Register error details:", error.response.data);
+        const errorMessage =
+          error.response.data?.username ||
+          error.response.data?.email ||
+          error.response.data?.contact_number ||
+          error.response.data?.ipv ||
+          "Unknown error occurred";
         return {
           error: true,
-          msg: errorMessage, 
+          msg: errorMessage,
         };
       } else {
         console.error("Register error:", error);
-        return { error: true, msg: "An unknown error occurred during registration." };
+        return {
+          error: true,
+          msg: "An unknown error occurred during registration.",
+        };
       }
     }
   };
-  
-  
 
   //Login function
   const login = async (username: string, password: string) => {
@@ -160,7 +166,7 @@ export const AuthProvider = ({ children }: any) => {
         token: data.access,
         authenticated: true,
       });
-      SET_USER_ID(data.user_id.toString())
+      SET_USER_ID(data.user_id.toString());
       const expirationTime = Date.now() + 60 * 60 * 1000;
       axios.defaults.headers.common["Authorization"] = `Bearer ${data.access}`;
 
@@ -323,7 +329,8 @@ export const AuthProvider = ({ children }: any) => {
   const updateProfile = async (
     username: string,
     address: string,
-    contact_no: string
+    contact_no: string,
+    coordinates: string
   ) => {
     try {
       // const ipv = await Network.getIpAddressAsync(); // Get the current IP address if required
@@ -333,6 +340,7 @@ export const AuthProvider = ({ children }: any) => {
           username,
           address,
           contact_number: contact_no,
+          coordinates,
           // ipv, // Include the IP address if it's required for the update
         },
         {
@@ -346,6 +354,7 @@ export const AuthProvider = ({ children }: any) => {
       await SecureStore.setItemAsync("username", username);
       await SecureStore.setItemAsync("address", address);
       await SecureStore.setItemAsync("contact_number", contact_no);
+      await SecureStore.setItemAsync("coordinates", coordinates);
 
       return res.data; // Return the updated user data
     } catch (error: any) {
@@ -472,14 +481,16 @@ export const AuthProvider = ({ children }: any) => {
   };
   const refreshAccessToken = async (refreshToken: string) => {
     try {
-      console.log(refreshAccessToken)
-      const { data } = await api.post('api/token/refresh/', { refresh: refreshToken })
-  
+      console.log(refreshAccessToken);
+      const { data } = await api.post("api/token/refresh/", {
+        refresh: refreshToken,
+      });
+
       setAuthState({
         token: data.access,
         authenticated: true,
       });
-      SET_USER_ID(data.user_id.toString())
+      SET_USER_ID(data.user_id.toString());
       const expirationTime = Date.now() + 60 * 60 * 1000;
       axios.defaults.headers.common["Authorization"] = `Bearer ${data.access}`;
 
@@ -503,11 +514,11 @@ export const AuthProvider = ({ children }: any) => {
           SecureStore.setItemAsync(key, value.toString())
         )
       );
-  
-      return data; 
+
+      return data;
     } catch (error) {
-      console.error('Failed to refresh access token:', error);
-      return null; 
+      console.error("Failed to refresh access token:", error);
+      return null;
     }
   };
 

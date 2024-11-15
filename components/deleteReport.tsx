@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Modal, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  Modal,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 
 interface DeleteReportModalProps {
   visible: boolean;
@@ -13,17 +19,23 @@ const DeleteReportModal: React.FC<DeleteReportModalProps> = ({
   onClose,
   onConfirm,
   reportId,
-
 }) => {
   const [success, setSuccess] = useState(false);
   const [successMessageVisible, setSuccessMessageVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleConfirm = async () => {
     if (reportId) {
-      await onConfirm(reportId);
-      setSuccess(true);
-      setSuccessMessageVisible(true);
-      // Don't close the modal here
+      setLoading(true); // Set loading to true when confirmation begins
+      try {
+        await onConfirm(reportId);
+        setSuccess(true);
+        setSuccessMessageVisible(true);
+      } catch (error) {
+        console.error("Error deleting report:", error);
+      } finally {
+        setLoading(false); // Set loading to false after the process
+      }
     }
   };
 
@@ -63,9 +75,13 @@ const DeleteReportModal: React.FC<DeleteReportModalProps> = ({
                   onPress={handleConfirm}
                   className="bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center"
                 >
-                  <Text className="text-md font-semibold text-white px-4">
-                    Confirm
-                  </Text>
+                  {loading ? (
+                    <ActivityIndicator size="small" color="white" /> // Show loading spinner
+                  ) : (
+                    <Text className="text-md font-semibold text-white px-4">
+                      Confirm
+                    </Text>
+                  )}
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={onClose}
