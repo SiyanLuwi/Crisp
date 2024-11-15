@@ -180,7 +180,8 @@ export class Report implements Reports {
           "Content-Type": "multipart/form-data",
         },
       });
-      console.log(type_of_report,
+      console.log(
+        type_of_report,
         report_description,
         longitude,
         latitude,
@@ -188,7 +189,8 @@ export class Report implements Reports {
         image_path,
         custom_type,
         floor_number,
-        location)
+        location
+      );
       if (res.status === 201 || res.status === 200) {
         return res;
       }

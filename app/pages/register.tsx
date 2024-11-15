@@ -57,29 +57,43 @@ export default function Register() {
     const hasSymbol = /[!@#$%^&*(),.?":{}|<>]/.test(password);
     return hasUpperCase && hasNumber && hasSymbol;
   };
-  const getAddressFromCoordinates = async (latitude:number, longitude:number) => {
+
+  const getAddressFromCoordinates = async (
+    latitude: number,
+    longitude: number
+  ) => {
     const url = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`;
-  
+
     try {
       const response = await fetch(url, {
         headers: {
-          'User-Agent': 'CRISP/1.0.9 crisp.uccbscs@gmail.com' // Replace with your app name and contact email
-        }
+          "User-Agent": "CRISP/1.0.9 crisp.uccbscs@gmail.com", // Replace with your app name and contact email
+        },
       });
-  
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Error fetching address:", errorText);
         return null;
       }
-  
+
       const data = await response.json();
-  
+
       if (data && data.address) {
-        console.log(data)
-        const { residential, town, state, country } = data.address;
-        const addressParts = [residential, town, state, country].filter(Boolean);
-        const address = addressParts.join(', '); // Join non-empty parts
+        const { road, suburb, city, region, country, postal_code } =
+          data.address;
+
+        // Combine the parts into a complete address
+        const addressParts = [
+          road, // Street name
+          suburb, // Suburb
+          city, // City
+          region, // Region or State
+          country, // Country
+          postal_code, // Postal Code (if available)
+        ].filter(Boolean);
+
+        const address = addressParts.join(", "); // Join the non-empty parts
         return address || "Address not found";
       } else {
         console.error("Nominatim API error:", data);
@@ -90,12 +104,16 @@ export default function Register() {
       return null;
     }
   };
+
   const handleLocationSelect = async (location: {
     latitude: number;
     longitude: number;
   }) => {
     // Convert coordinates to address if needed
-    const address: any = await getAddressFromCoordinates(location.latitude, location.longitude)
+    const address: any = await getAddressFromCoordinates(
+      location.latitude,
+      location.longitude
+    );
     setAddress(address);
     setCoordinates(`${location.latitude}, ${location.longitude}`);
     setShowMapPicker(false); // Close the map picker
@@ -114,24 +132,23 @@ export default function Register() {
   // Email regex for validation
   const isValidEmail = (email: string) => {
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
-    return emailRegex.test(email) && !/\.\./.test(email); 
+    return emailRegex.test(email) && !/\.\./.test(email);
   };
-
 
   const handleRegister = async () => {
     // Reset errors
     setErrors("");
-  
+
     // Validate email format
     if (!isValidEmail(email)) {
       setErrors("Please enter a valid email address.");
       return; // Stop execution if email is invalid
     }
-  
+
     try {
       const validatedFields = emptyFieldChecker();
       if (!validatedFields) return;
-  
+
       // Check password complexity
       if (!isPasswordComplex(password)) {
         alert(
@@ -139,7 +156,7 @@ export default function Register() {
         );
         return;
       }
-  
+
       if (password !== password_confirm) {
         alert("Passwords do not match.");
         return;
@@ -160,14 +177,31 @@ export default function Register() {
         contact_number
       );
       if (res.error) {
-        alert(res.msg || "Registration failed. Please try again.");
+        const errorMessages: string[] = [];
+
+        // Check if res has a msg field (which will be used in case of error)
+        if (res.msg) {
+          errorMessages.push(res.msg);
+        }
+
+        // If error contains more specific error details like email or ipv, add them as well
+        if (res.error.email) {
+          errorMessages.push(res.error.email[0]);
+        }
+        if (res.error.ipv) {
+          errorMessages.push(res.error.ipv[0]);
+        }
+
+        // Update the error state with the combined messages
+        setErrors(errorMessages.join(", "));
+        console.log("Errors:", errorMessages.join(", "));
         return;
       }
-  
+
       if (res.status !== 200 && res.status !== 201) {
         throw new Error("Register Error!");
       }
-  
+
       scheduleNotification(
         "Welcome to CRISP!",
         "Welcome to the community! Start exploring the app now.",
@@ -181,7 +215,6 @@ export default function Register() {
       setLoading(false);
     }
   };
-  
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -281,11 +314,11 @@ export default function Register() {
                 />
               </TouchableOpacity>
             </View>
-            {errors ? (
+            {/* {errors ? (
               <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
                 {errors}
               </Text>
-            ) : null}
+            ) : null} */}
             {password.length > 0 && password.length < 6 && (
               <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
                 Password must be at least 6 characters long.
@@ -310,6 +343,11 @@ export default function Register() {
             {password_confirm.length > 0 && password_confirm !== password && (
               <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
                 Passwords do not match.
+              </Text>
+            )}
+            {errors && (
+              <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
+                {errors}
               </Text>
             )}
             <LoadingButton

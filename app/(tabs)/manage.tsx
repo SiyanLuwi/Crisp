@@ -462,7 +462,7 @@ export default function ManageReports() {
             <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
               Location:
               <Text className="text-lg font-normal text-black ml-2">
-                {" " + item.latitude + ", " + item.longitude}
+                {" " + item.location}
               </Text>
             </Text>
           </TouchableOpacity>
@@ -474,6 +474,16 @@ export default function ManageReports() {
               </Text>
             </Text>
           </View>
+          {item.floor_number ? (
+            <View className="w-full flex flex-row">
+              <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
+                Floor Number:
+                <Text className="text-lg font-normal text-black ml-2">
+                  {" " + item.floor_number}
+                </Text>
+              </Text>
+            </View>
+          ) : null}
           <View className="w-full flex flex-row">
             <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
               Description:
