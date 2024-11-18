@@ -7,6 +7,8 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
@@ -42,6 +44,13 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
     if (description.trim() === "") {
       setTimeout(() => {
         setErrors("Please provide a description.");
+      }, 3000);
+      return;
+    }
+
+    if (!proof) {
+      setTimeout(() => {
+        setErrors("Please provide proof (take a photo).");
       }, 3000);
       return;
     }
@@ -138,90 +147,97 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
 
   return (
     <Modal transparent={true} visible={visible} animationType="fade">
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View className="flex-1 justify-center items-center bg-black/50">
-          <View className="w-4/5 py-5 px-3 bg-white rounded-xl items-start border-2 border-[#0C3B2D]">
-            {feedbackSuccess ? ( // Conditional rendering for success message
-              <View className="full p-3 bg-white rounded-xl items-start">
-                <Text className="text-xl font-bold text-[#0C3B2D] mb-5">
-                  Your has been submitted successfully!
-                </Text>
-                <View className="flex flex-row justify-end w-full ">
-                  <TouchableOpacity
-                    className="bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center"
-                    onPress={handleClose}
-                  >
-                    <Text className="text-md font-semibold text-white px-4">
-                      Close
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ) : (
-              <>
-                <Text className="text-2xl font-extrabold text-[#0C3B2D] px-3">
-                  Feedback Form
-                </Text>
-                <View className="flex flex-col justify-center w-full mt-3 px-3">
-                  <TextInput
-                    className="w-full bg-slate-50 text-md p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
-                    placeholderTextColor="#888"
-                    placeholder="Description"
-                    multiline={true}
-                    scrollEnabled={true}
-                    value={description}
-                    onChangeText={setDescription}
-                    style={{
-                      maxHeight: 150,
-                      height: 150,
-                    }}
-                  />
-                  <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
-                    <TextInput
-                      className="w-3/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
-                      value={proof || ""}
-                      editable={false}
-                      placeholderTextColor="#888"
-                      placeholder="Take a Photo"
-                    />
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0} // Adjust this value if needed
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View className="flex-1 justify-center items-center bg-black/50">
+            <View className="w-4/5 py-5 px-3 bg-white rounded-xl items-start border-2 border-[#0C3B2D]">
+              {feedbackSuccess ? ( // Conditional rendering for success message
+                <View className="full p-3 bg-white rounded-xl items-start">
+                  <Text className="text-xl font-bold text-[#0C3B2D] mb-5">
+                    Your has been submitted successfully!
+                  </Text>
+                  <View className="flex flex-row justify-end w-full ">
                     <TouchableOpacity
-                      onPress={takeProof}
-                      className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg"
+                      className="bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center"
+                      onPress={handleClose}
                     >
-                      <Text className="text-white text-md font-normal">
-                        Take Proof
+                      <Text className="text-md font-semibold text-white px-4">
+                        Close
                       </Text>
                     </TouchableOpacity>
                   </View>
                 </View>
-                {errors ? (
-                  <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24">
-                    {errors}
+              ) : (
+                <>
+                  <Text className="text-2xl font-extrabold text-[#0C3B2D] px-3">
+                    Feedback Form
                   </Text>
-                ) : null}
-                <View className="flex flex-row justify-end w-full mt-6 px-3">
-                  <TouchableOpacity
-                    onPress={handleConfirm}
-                    className="bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center"
-                  >
-                    <Text className="text-md font-semibold text-white px-4">
-                      Confirm
+                  <View className="flex flex-col justify-center w-full mt-3 px-3">
+                    <TextInput
+                      className="w-full bg-slate-50 text-md p-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                      placeholderTextColor="#888"
+                      placeholder="Description"
+                      multiline={true}
+                      scrollEnabled={true}
+                      value={description}
+                      onChangeText={setDescription}
+                      style={{
+                        maxHeight: 150,
+                        height: 150,
+                      }}
+                    />
+                    <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
+                      <TextInput
+                        className="w-3/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
+                        value={proof || ""}
+                        editable={false}
+                        placeholderTextColor="#888"
+                        placeholder="Take a Photo"
+                      />
+                      <TouchableOpacity
+                        onPress={takeProof}
+                        className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg"
+                      >
+                        <Text className="text-white text-md font-normal">
+                          Take Proof
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                  {errors ? (
+                    <Text className="text-md text-red-800 font-semibold flex w-full text-right mt-2 pr-2">
+                      {errors}
                     </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={handleClose}
-                    className="bg-white border-[#0C3B2D] border-2 p-2 rounded-lg h-auto items-center justify-center ml-3"
-                  >
-                    <Text className="text-md font-semibold text-[#0C3B2D] px-4">
-                      Cancel
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </>
-            )}
+                  ) : null}
+
+                  <View className="flex flex-row justify-end w-full mt-6 px-3">
+                    <TouchableOpacity
+                      onPress={handleConfirm}
+                      className="bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center"
+                    >
+                      <Text className="text-md font-semibold text-white px-4">
+                        Confirm
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={handleClose}
+                      className="bg-white border-[#0C3B2D] border-2 p-2 rounded-lg h-auto items-center justify-center ml-3"
+                    >
+                      <Text className="text-md font-semibold text-[#0C3B2D] px-4">
+                        Cancel
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
+            </View>
           </View>
-        </View>
-      </TouchableWithoutFeedback>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };

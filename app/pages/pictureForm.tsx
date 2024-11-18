@@ -225,8 +225,13 @@ export default function PictureForm() {
                   />
                 )}
               </View>
-              <View style={{ width: "100%", alignItems: "flex-start" }}>
-                <Text className="text-md text-white mb-1">Location:</Text>
+              <View className="w-full flex flex-row">
+                <Text className="text-md font-semibold text-white mb-1">
+                  Location
+                </Text>
+                <Text className="text-md font-semibold text-red-400 ml-1">
+                  *
+                </Text>
               </View>
               <View className="w-full bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
                 <TextInput
@@ -238,8 +243,13 @@ export default function PictureForm() {
                 />
               </View>
 
-              <View style={{ width: "100%", alignItems: "flex-start" }}>
-                <Text className="text-md text-white mb-1">Type of Report:</Text>
+              <View className="w-full flex flex-row">
+                <Text className="text-md font-semibold text-white mb-1">
+                  Type of Report
+                </Text>
+                <Text className="text-md font-semibold text-red-400 ml-1">
+                  *
+                </Text>
               </View>
               <TextInput
                 className="w-full bg-white p-4 rounded-lg mb-4 border border-[#0C3B2D] justify-center text-md text-[#0C3B2D] font-semibold"
@@ -249,18 +259,24 @@ export default function PictureForm() {
 
               {/* Conditionally render TextInput if "Other" is selected */}
               {selectedItem === "Others" && (
-                <TextInput
-                  className="w-full bg-white p-4 rounded-lg mb-4 border border-[#0C3B2D] justify-center text-md text-[#0C3B2D] font-semibold"
-                  placeholder="Please specify..."
-                  placeholderTextColor={"#888"}
-                  value={customType}
-                  onChangeText={setCustomType}
-                />
+                <>
+                  <View className="w-full flex flex-row">
+                    <Text className="text-md font-semibold text-white mb-1">
+                      Specify the Type of Report (Optional)
+                    </Text>
+                  </View>
+                  <TextInput
+                    className="w-full bg-white p-4 rounded-lg mb-4 border border-[#0C3B2D] justify-center text-md text-[#0C3B2D] font-semibold"
+                    placeholder="Please specify..."
+                    placeholderTextColor={"#888"}
+                    value={customType}
+                    onChangeText={setCustomType}
+                  />
+                </>
               )}
-
-              <View style={{ width: "100%", alignItems: "flex-start" }}>
-                <Text className="text-md text-white mb-1">
-                  If in a Building Specify the Floor Number:
+              <View className="w-full flex flex-row">
+                <Text className="text-md font-semibold text-white mb-1">
+                  If in a Building Specify the Floor Number (Optional)
                 </Text>
               </View>
               <TextInput
@@ -271,8 +287,13 @@ export default function PictureForm() {
                 onChangeText={setFloorNumber}
                 keyboardType="numeric"
               />
-              <View style={{ width: "100%", alignItems: "flex-start" }}>
-                <Text className="text-md text-white mb-1">Description:</Text>
+              <View className="w-full flex flex-row">
+                <Text className="text-md font-semibold text-white mb-1">
+                  Description
+                </Text>
+                <Text className="text-md font-semibold text-red-400 ml-1">
+                  *
+                </Text>
               </View>
               <TextInput
                 className="w-full bg-white text-md p-4 rounded-lg items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"

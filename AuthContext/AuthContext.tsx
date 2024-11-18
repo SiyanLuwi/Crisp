@@ -423,7 +423,7 @@ export const AuthProvider = ({ children }: any) => {
 
       return response.data.valid; // Assume the API returns { valid: true/false }
     } catch (error) {
-      console.error("Error verifying password:", error);
+      // console.error("Error verifying password:", error);
       throw new Error("Could not verify current password.");
     }
   };
