@@ -74,7 +74,7 @@ export default function Login() {
         router.push("/(tabs)_employee/home");
       } else {
         // Handle unexpected account types or default case
-        alert("Unexpected account type");
+        setErrors("Unexpected account type");
       }
     } catch (error: any) {
       if (error.message === "Invalid username or password") {
@@ -109,12 +109,25 @@ export default function Login() {
                 Welcome Back!
               </Text>
             </View>
+
+            <View className="w-full flex flex-row">
+              <Text className="text-md font-semibold text-[#0C3B2D] mb-1 ml-12">
+                Enter your email
+              </Text>
+              <Text className="text-md font-semibold text-red-500 ml-1">*</Text>
+            </View>
             <TextInput
               className="w-4/5 bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
               placeholder="Enter your email"
               onChangeText={(text) => setUsername(text.toLowerCase())}
               placeholderTextColor="#888"
             />
+            <View className="w-full flex flex-row">
+              <Text className="text-md font-semibold text-[#0C3B2D] mb-1 ml-12">
+                Enter your password
+              </Text>
+              <Text className="text-md font-semibold text-red-500 ml-1">*</Text>
+            </View>
             <View className="w-4/5 bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
               <TextInput
                 className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"

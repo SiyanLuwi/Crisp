@@ -617,6 +617,17 @@ export default function Home() {
                         ? "been Validated"
                         : "Not yet been Validated"}
                     </Text>
+                    <Text style={{ padding: 1, color: "white" }}>
+                      The report status is{" "}
+                      <Text
+                        style={{
+                          fontWeight: "bold",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {selectedReport.status}
+                      </Text>
+                    </Text>
                   </>
                 )}
               </View>

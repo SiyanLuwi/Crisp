@@ -252,6 +252,14 @@ export default function VerifyPage() {
           <ScrollView className="w-full h-full flex">
             <View className="flex flex-col w-full h-full items-center ">
               <View className="justify-center w-full items-center px-10 mt-6">
+                <View className="w-full flex flex-row">
+                  <Text className="text-md font-semibold text-white mb-1">
+                    Enter your Last Name
+                  </Text>
+                  <Text className="text-md font-semibold text-red-500 ml-1">
+                    *
+                  </Text>
+                </View>
                 <TextInput
                   className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                   placeholderTextColor="#888"
@@ -259,6 +267,14 @@ export default function VerifyPage() {
                   value={lastName}
                   onChangeText={(text) => setLastName(validateName(text))}
                 />
+                <View className="w-full flex flex-row">
+                  <Text className="text-md font-semibold text-white mb-1">
+                    Enter your First Name
+                  </Text>
+                  <Text className="text-md font-semibold text-red-500 ml-1">
+                    *
+                  </Text>
+                </View>
                 <TextInput
                   className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                   placeholderTextColor="#888"
@@ -266,6 +282,14 @@ export default function VerifyPage() {
                   value={firstName}
                   onChangeText={(text) => setFirstName(validateName(text))}
                 />
+                <View className="w-full flex flex-row">
+                  <Text className="text-md font-semibold text-white mb-1">
+                    Enter your Middle Name
+                  </Text>
+                  <Text className="text-md font-semibold text-red-500 ml-1">
+                    *
+                  </Text>
+                </View>
                 <TextInput
                   className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                   placeholderTextColor="#888"
@@ -273,6 +297,14 @@ export default function VerifyPage() {
                   value={middleName}
                   onChangeText={(text) => setMiddleName(validateName(text))}
                 />
+                <View className="w-full flex flex-row">
+                  <Text className="text-md font-semibold text-white mb-1">
+                    Enter your Address
+                  </Text>
+                  <Text className="text-md font-semibold text-red-500 ml-1">
+                    *
+                  </Text>
+                </View>
                 <TextInput
                   className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                   placeholderTextColor="#888"
@@ -280,6 +312,14 @@ export default function VerifyPage() {
                   value={address}
                   onChangeText={setAddress}
                 />
+                <View className="w-full flex flex-row">
+                  <Text className="text-md font-semibold text-white mb-1">
+                    Enter your Birthday
+                  </Text>
+                  <Text className="text-md font-semibold text-red-500 ml-1">
+                    *
+                  </Text>
+                </View>
                 <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
                   {/* Birthday Button */}
                   <TextInput
@@ -301,6 +341,14 @@ export default function VerifyPage() {
                     />
                   )}
                 </View>
+                <View className="w-full flex flex-row">
+                  <Text className="text-md font-semibold text-white mb-1">
+                    Enter your ID Number
+                  </Text>
+                  <Text className="text-md font-semibold text-red-500 ml-1">
+                    *
+                  </Text>
+                </View>
                 <TextInput
                   className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                   placeholderTextColor="#888"
@@ -310,6 +358,15 @@ export default function VerifyPage() {
                   keyboardType="numeric"
                 />
                 {/* ID Photo Upload Button */}
+
+                <View className="w-full flex flex-row">
+                  <Text className="text-md font-semibold text-white mb-1">
+                    Choose a Photo
+                  </Text>
+                  <Text className="text-md font-semibold text-red-500 ml-1">
+                    *
+                  </Text>
+                </View>
                 <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
                   <TextInput
                     className="w-3/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
@@ -335,6 +392,14 @@ export default function VerifyPage() {
                   </TouchableOpacity>
                 </View>
 
+                <View className="w-full flex flex-row">
+                  <Text className="text-md font-semibold text-white mb-1">
+                    Take a selfie with ID
+                  </Text>
+                  <Text className="text-md font-semibold text-red-500 ml-1">
+                    *
+                  </Text>
+                </View>
                 {/* Selfie with ID Button */}
                 <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
                   <TextInput
@@ -361,6 +426,14 @@ export default function VerifyPage() {
                   </TouchableOpacity>
                 </View>
 
+                <View className="w-full flex flex-row">
+                  <Text className="text-md font-semibold text-white mb-1">
+                    Take a Picture of ID
+                  </Text>
+                  <Text className="text-md font-semibold text-red-500 ml-1">
+                    *
+                  </Text>
+                </View>
                 {/* Take Picture of ID Button */}
                 <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
                   <TextInput
