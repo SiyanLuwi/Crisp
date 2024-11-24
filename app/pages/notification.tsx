@@ -21,12 +21,21 @@ import { app } from "@/firebase/firebaseConfig";
 import { useAuth } from "@/AuthContext/AuthContext"; // Import your Auth context to get USER_ID
 import { useNavigation } from "@react-navigation/native"; // Import useNavigation for navigation
 import { router } from "expo-router";
+import { scheduleNotification } from "../utils/notifications";
 
 const db = getFirestore(app);
 
 const bgImage = require("@/assets/images/bgImage.png");
+interface Notification {
+  id: string;
+  title: string;
+  description: string;
+  screen: string;  // Add other fields you expect to use
+  createdAt: { seconds: number };
+}
 
 const NotificationItem: React.FC<{
+  id: string,
   content: string;
   type: string;
   time: string;
@@ -74,12 +83,33 @@ export default function NotificationForm() {
       const q = query(notificationsRef, where("userId", "==", USER_ID));
 
       const unsubscribe = onSnapshot(q, async (snapshot) => {
-        const fetchedNotifications = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        // Extract data with necessary fields
+        const fetchedNotifications: Notification[] = snapshot.docs.map((doc) => {
+          const data = doc.data();
+
+          // Make sure that necessary fields exist in the document
+          const notification: Notification = {
+            id: doc.id,
+            title: data.title || "",  // Provide default empty string if field is missing
+            description: data.description || "",  // Default empty string
+            screen: data.screen || "",  // Default empty string
+            createdAt: data.createdAt || { seconds: 0 },  // Default timestamp if missing
+          };
+
+          return notification;
+        });
+
+        // Set notifications to the state
         setNotifications(fetchedNotifications);
+
+        // If there are any fetched notifications, schedule them
         if (fetchedNotifications.length > 0) {
+          // Schedule notifications based on the fetched data
+          for (const notification of fetchedNotifications) {
+            const { title, description, createdAt, screen } = notification;
+            const delaySeconds = Math.max(0, Math.floor((new Date(createdAt.seconds * 1000).getTime() - Date.now()) / 1000));
+            await scheduleNotification(title, description, delaySeconds, screen);
+          }
           await SecureStore.setItemAsync('notificationsFetched', 'true');
         } else {
           await SecureStore.setItemAsync('notificationsFetched', 'false');
@@ -91,6 +121,7 @@ export default function NotificationForm() {
 
     fetchNotifications();
   }, [USER_ID]);
+
   return (
     <ImageBackground
       source={bgImage}
@@ -108,6 +139,7 @@ export default function NotificationForm() {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <NotificationItem
+              id={item.id}
               content={item.description}
               type={item.title}
               time={new Date(item.createdAt.seconds * 1000).toLocaleString()}

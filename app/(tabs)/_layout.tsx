@@ -8,8 +8,6 @@ import TabBar from "@/components/navigation/TabBar";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAuth } from "@/AuthContext/AuthContext";
-const queryClient = new QueryClient();
-
 const ScreenTabs = () => {
   const colorScheme = useColorScheme();
   const { getUserInfo } = useAuth();
@@ -155,13 +153,33 @@ const ScreenTabs = () => {
           ),
         }}
       />
+     <Tabs.Screen
+        name="screens/ContactScreen"
+        options={{
+          title: "Call",
+          tabBarIcon: ({ color, focused }) => (
+            <View style={{ alignItems: "center" }}>
+              <TabBarIcon
+                name={focused ? "person" : "person-outline"}
+                color={color}
+                size={RFPercentage(3)}
+              />
+              <Text
+                style={{ color, fontWeight: focused ? "600" : "400" }}
+                className="mt-2 text-xs"
+              >
+                Call
+              </Text>
+            </View>
+          ),
+        }}
+      />
+
     </Tabs>
   );
 };
 export default function NavLayout() {
   return (
-    <QueryClientProvider client={queryClient}>
       <ScreenTabs />
-    </QueryClientProvider>
   );
 }

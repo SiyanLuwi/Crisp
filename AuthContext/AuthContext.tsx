@@ -1,13 +1,22 @@
 import axios from "axios";
 import React, { useState, createContext, useEffect, useContext } from "react";
 import * as SecureStore from "expo-secure-store";
-import { router } from "expo-router";
+import { useRouter } from "expo-router";
 import api from "@/app/api/axios";
 import * as FileSystem from "expo-file-system";
+import { app } from '@/firebase/firebaseConfig';
+import { getFirestore } from 'firebase/firestore';
+const db = getFirestore(app);
+
+
 interface AuthProps {
   onRefresh?: (refreshToken: string) => Promise<any>;
   USER_ID?: string;
+  peerConnection?: any;
+  setPeerConnection?: any;
+  incomingCall?: any;
   hasNewNotification?: boolean;
+  setIncomingCall?:  any;
   authState?: { token: string | null; authenticated: boolean | null };
   onRegister?: (
     username: string,
@@ -55,7 +64,15 @@ interface AuthProps {
     idPicture: string
   ) => Promise<void>;
 }
+interface CallerInfo{
+  callId:string;
+  callerId: string;
+  callerName: string;
+  receiverId: string;
+  callStatus: string;
+}
 import * as Network from "expo-network";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 const TOKEN_KEY = "my-jwt";
 const REFRESH_KEY = "my-jwt-refresh";
 const EXPIRATION = "accessTokenExpiration";
@@ -75,7 +92,52 @@ export const AuthProvider = ({ children }: any) => {
     token: null,
     authenticated: null,
   });
+  const [incomingCall, setIncomingCall] = useState<CallerInfo | any>(null); // Store incoming call details
   const [USER_ID, SET_USER_ID] = useState("");
+  const [peerConnection, setPeerConnection] = useState(null);
+
+  const router = useRouter()
+  
+  useEffect(() => {
+    console.log("getting incoming call...")
+    const q = query(collection(db, 'calls'), where('receiver_id', '==', USER_ID));
+    console.log("Receiver ID: ", USER_ID)
+    
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      if (!snapshot.empty) {
+
+        const callData = snapshot.docs[0].data();
+        setIncomingCall(callData);
+  
+        if (callData.callStatus == 'waiting') {
+          receiveIncomingCall(callData)
+          router.push('/(tabs)/screens/IncomingCallScreen');
+        }
+        if (callData.callStatus === 'ended') {
+          setIncomingCall(null);
+          router.push('/(tabs)/screens/ContactScreen');
+        }
+      } else {
+        if (incomingCall && incomingCall.callStatus !== 'answered' && incomingCall.callStatus !== 'declined') {
+          setIncomingCall(null);
+        }
+      }
+    });
+  
+    return () => unsubscribe();
+  }, [USER_ID]); 
+
+ 
+  const receiveIncomingCall = (callData: any) => {
+    setIncomingCall(callData); // Ensure callData contains the expected structure
+  };
+
+  const clearIncomingCall = () => {
+    setIncomingCall(null);
+  };
+  
+
+
   useEffect(() => {
     const loadToken = async () => {
       const token = await SecureStore.getItemAsync(TOKEN_KEY);
@@ -250,6 +312,7 @@ export const AuthProvider = ({ children }: any) => {
     await SecureStore.deleteItemAsync(EXPIRATION);
     await SecureStore.deleteItemAsync('user_id');
     await SecureStore.deleteItemAsync('is_email_verified');
+    await SecureStore.deleteItemAsync('incomingCallData');
     setAuthState({
       token: null,
       authenticated: null,
@@ -362,6 +425,8 @@ export const AuthProvider = ({ children }: any) => {
       return null;
     }
   };
+
+  
 
   const updateProfile = async (
     username: string,
@@ -575,6 +640,10 @@ export const AuthProvider = ({ children }: any) => {
     onRefresh: refreshAccessToken,
     getAddressFromCoordinates,
     hasNewNotification,
+    incomingCall,
+    setIncomingCall,
+    peerConnection,
+    setPeerConnection
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
