@@ -8,8 +8,6 @@ import TabBar from "@/components/navigation/TabBar";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAuth } from "@/AuthContext/AuthContext";
-const queryClient = new QueryClient();
-
 const ScreenTabs = () => {
   const colorScheme = useColorScheme();
   const { getUserInfo } = useAuth();
@@ -160,8 +158,6 @@ const ScreenTabs = () => {
 };
 export default function NavLayout() {
   return (
-    <QueryClientProvider client={queryClient}>
       <ScreenTabs />
-    </QueryClientProvider>
   );
 }

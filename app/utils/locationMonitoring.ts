@@ -18,8 +18,6 @@ interface LocationTaskData {
 
 export const startLocationUpdates = async () => {
   await requestPermissions();
-
-  // Start location updates in the background
   await Location.startLocationUpdatesAsync('LOCATION_TASK', {
     accuracy: Location .Accuracy.High,
     distanceInterval: 1, // meters
@@ -31,16 +29,21 @@ export const startLocationUpdates = async () => {
 const requestPermissions = async (): Promise<void> => {
   const { status: foregroundStatus } = await Location.requestForegroundPermissionsAsync();
   if (foregroundStatus !== 'granted') {
-    console.log('Permission to access location was denied');
-    return; // Exit if permission is not granted
+    console.log('Foreground location permission was denied');
+    return;
   }
 
+  // Request background permission
   const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
   if (backgroundStatus !== 'granted') {
     console.log('Background location permission was denied');
-    return; // Exit if permission is not granted
+    return;
   }
+
+  console.log('All location permissions granted');
 };
+
+
 
 const checkForNearbyReports = async (userLocation: any, reports: Report[], userId: number) => {
   const notifiedThisCheck = new Set<string>(); // To track newly notified reports in this check
