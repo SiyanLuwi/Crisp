@@ -40,6 +40,8 @@ function App() {
   const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [showCreditScore, setShowCreditScore] = useState(false);
+  const [showViolation, setShowViolation] = useState(false);
 
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
@@ -48,6 +50,7 @@ function App() {
   const [isVerified, setIsVerified] = useState(false);
   const [coordinates, setCoordinates] = useState("");
   const [showMapPicker, setShowMapPicker] = useState(false);
+  const [errors, setErrors] = useState("");
 
   useEffect(() => {
     const loadUserInfo = async () => {
@@ -125,6 +128,9 @@ function App() {
   const toggleEdit = () => {
     if (isEditing) {
       setShowSaveConfirmation(true); // Show confirmation when trying to save
+    } else {
+      // Store the current values before entering edit mode
+      setPrevValues({ name, address, email, contact });
     }
     setIsEditing(!isEditing);
   };
@@ -136,6 +142,21 @@ function App() {
   };
 
   const confirmSave = async () => {
+    // Validation check: ensure name, address, contact, and coordinates are not empty
+    if (
+      !name.trim() ||
+      !address.trim() ||
+      !contact.trim() ||
+      !coordinates.trim()
+    ) {
+      setErrors("Please fill in all required fields.");
+      setShowSaveConfirmation(false);
+      setIsEditing(true); // Exit edit mode
+      return;
+    }
+
+    // Clear any existing errors
+    setErrors("");
     if (updateProfile) {
       // Ensure updateProfile is defined
       try {
@@ -162,12 +183,12 @@ function App() {
 
   const cancelSave = () => {
     // Revert to previous values
-    setName(name);
-    setAddress(address);
-    setEmail(email);
-    setContact(contact);
+    setName(prevValues.name);
+    setAddress(prevValues.address);
+    setContact(prevValues.contact);
     setShowSaveConfirmation(false);
-    setIsEditing(false); // Exit edit mode
+    setErrors("");
+    setIsEditing(false);
   };
 
   const handleLocationSelect = async (location: {
@@ -247,6 +268,12 @@ function App() {
       return null;
     }
   };
+  const handleShowCreditScore = () => {
+    setShowCreditScore((prevState) => !prevState); // Toggle between true and false
+  };
+  const handleShowViolation = () => {
+    setShowViolation((prevState) => !prevState); // Toggle between true and false
+  };
 
   return (
     <ImageBackground
@@ -277,10 +304,10 @@ function App() {
                       selectedImage ||
                       "https://static.vecteezy.com/system/resources/thumbnails/020/911/740/small_2x/user-profile-icon-profile-avatar-user-icon-male-icon-face-icon-profile-icon-free-png.png",
                   }}
-                  className="w-48 h-48 rounded-full border-4 border-white mb-8 mt-8 bg-white"
+                  className="w-48 h-48 rounded-full border-4 border-white mb-5 mt-8 bg-white"
                 />
               </TouchableOpacity>
-              <View
+              <TouchableOpacity
                 className="absolute top-10 right-0 bg-white w-12 h-12 rounded-full border border-white items-center justify-center"
                 style={{
                   transform: [
@@ -288,10 +315,47 @@ function App() {
                     { translateY: RFPercentage(-0.3) },
                   ],
                 }}
+                onPress={handleShowCreditScore}
               >
                 <Text>100</Text>
-              </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="absolute top-10 right-0 bg-white w-12 h-12 rounded-full border border-white items-center justify-center"
+                style={{
+                  transform: [
+                    { translateX: RFPercentage(5.3) },
+                    { translateY: RFPercentage(15) },
+                  ],
+                }}
+                onPress={handleShowViolation}
+              >
+                <Text>0</Text>
+              </TouchableOpacity>
             </View>
+            {showCreditScore && (
+              <View
+                className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-[#0C3B2D]/50 px-4 py-2 my-5 rounded-lg"
+                style={{
+                  zIndex: 10,
+                }}
+              >
+                <Text className="text-white font-semibold text-md">
+                  Your Credit Score
+                </Text>
+              </View>
+            )}
+            {showViolation && (
+              <View
+                className="absolute top-52 left-1/2 transform -translate-x-1/2 bg-[#0C3B2D]/50 px-4 py-2 my-5 rounded-lg"
+                style={{
+                  zIndex: 10,
+                }}
+              >
+                <Text className="text-white font-semibold text-md">
+                  Number of Violation
+                </Text>
+              </View>
+            )}
             <View className="justify-center w-full items-center px-12 mt-6">
               <View style={{ width: "100%", alignItems: "flex-start" }}>
                 <Text className="text-md text-white mb-1">Name:</Text>
@@ -383,6 +447,12 @@ function App() {
                   </Text>
                 )}
               </View>
+
+              {errors && (
+                <Text className="text-md text-red-400 font-semibold flex text-left w-full mt-2">
+                  {errors}
+                </Text>
+              )}
               <TouchableOpacity
                 className="mt-12 w-full bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center border-2 border-[#8BC34A]"
                 onPress={toggleEdit}
