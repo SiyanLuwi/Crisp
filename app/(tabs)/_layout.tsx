@@ -153,28 +153,6 @@ const ScreenTabs = () => {
           ),
         }}
       />
-     <Tabs.Screen
-        name="screens/ContactScreen"
-        options={{
-          title: "Call",
-          tabBarIcon: ({ color, focused }) => (
-            <View style={{ alignItems: "center" }}>
-              <TabBarIcon
-                name={focused ? "person" : "person-outline"}
-                color={color}
-                size={RFPercentage(3)}
-              />
-              <Text
-                style={{ color, fontWeight: focused ? "600" : "400" }}
-                className="mt-2 text-xs"
-              >
-                Call
-              </Text>
-            </View>
-          ),
-        }}
-      />
-
     </Tabs>
   );
 };

@@ -98,34 +98,34 @@ export const AuthProvider = ({ children }: any) => {
 
   const router = useRouter()
   
-  useEffect(() => {
-    console.log("getting incoming call...")
-    const q = query(collection(db, 'calls'), where('receiver_id', '==', USER_ID));
-    console.log("Receiver ID: ", USER_ID)
+  // useEffect(() => {
+  //   console.log("getting incoming call...")
+  //   const q = query(collection(db, 'calls'), where('receiver_id', '==', USER_ID));
+  //   console.log("Receiver ID: ", USER_ID)
     
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      if (!snapshot.empty) {
+  //   const unsubscribe = onSnapshot(q, async (snapshot) => {
+  //     if (!snapshot.empty) {
 
-        const callData = snapshot.docs[0].data();
-        setIncomingCall(callData);
+  //       const callData = snapshot.docs[0].data();
+  //       setIncomingCall(callData);
   
-        if (callData.callStatus == 'waiting') {
-          receiveIncomingCall(callData)
-          router.push('/(tabs)/screens/IncomingCallScreen');
-        }
-        if (callData.callStatus === 'ended') {
-          setIncomingCall(null);
-          router.push('/(tabs)/screens/ContactScreen');
-        }
-      } else {
-        if (incomingCall && incomingCall.callStatus !== 'answered' && incomingCall.callStatus !== 'declined') {
-          setIncomingCall(null);
-        }
-      }
-    });
+  //       if (callData.callStatus == 'waiting') {
+  //         receiveIncomingCall(callData)
+  //         router.push('/(tabs)/screens/IncomingCallScreen');
+  //       }
+  //       if (callData.callStatus === 'ended') {
+  //         setIncomingCall(null);
+  //         router.push('/(tabs)/screens/ContactScreen');
+  //       }
+  //     } else {
+  //       if (incomingCall && incomingCall.callStatus !== 'answered' && incomingCall.callStatus !== 'declined') {
+  //         setIncomingCall(null);
+  //       }
+  //     }
+  //   });
   
-    return () => unsubscribe();
-  }, [USER_ID]); 
+  //   return () => unsubscribe();
+  // }, [USER_ID]); 
 
  
   const receiveIncomingCall = (callData: any) => {
@@ -272,11 +272,11 @@ export const AuthProvider = ({ children }: any) => {
         [TOKEN_KEY]: data.access,
         [REFRESH_KEY]: data.refresh,
         [ROLE]: data.account_type,
-        [EXPIRATION]: expirationTime.toString(),
-        user_id: data.user_id.toString(),
+        [EXPIRATION]: expirationTime,
+        user_id: data.user_id,
         username: data.username,
         email: data.email,
-        address: data.address,
+        address: data.address || '',
         contact_number: data.contact_number,
         account_type: data.account_type,
         is_email_verified: data.is_email_verified,
@@ -284,11 +284,20 @@ export const AuthProvider = ({ children }: any) => {
       };
 
       await Promise.all(
-        Object.entries(storageItems).map(([key, value]) =>
-          SecureStore.setItemAsync(key, value.toString())
-        )
+        Object.entries(storageItems).map(async ([key, value]) => {
+          if (value !== null && value !== undefined) {
+            try {
+              await SecureStore.setItemAsync(key, value.toString());
+            } catch (err) {
+              console.error(`Failed to save key ${key} to SecureStore:`, err);
+            }
+          } else {
+            console.warn(`Skipping key ${key} due to null or undefined value`);
+          }
+        })
       );
-
+      
+      
       return data;
     } catch (error: any) {
       // console.error("Login error occurred:", error);

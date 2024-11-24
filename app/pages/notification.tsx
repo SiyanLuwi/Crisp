@@ -102,7 +102,6 @@ export default function NotificationForm() {
         // Set notifications to the state
         setNotifications(fetchedNotifications);
 
-        // If there are any fetched notifications, schedule them
         if (fetchedNotifications.length > 0) {
           // Schedule notifications based on the fetched data
           for (const notification of fetchedNotifications) {

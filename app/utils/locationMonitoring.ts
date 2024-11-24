@@ -33,13 +33,16 @@ const requestPermissions = async (): Promise<void> => {
     return;
   }
 
-  // Request background permission (Android only)
+  // Request background permission
   const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
   if (backgroundStatus !== 'granted') {
     console.log('Background location permission was denied');
     return;
   }
+
+  console.log('All location permissions granted');
 };
+
 
 
 const checkForNearbyReports = async (userLocation: any, reports: Report[], userId: number) => {
