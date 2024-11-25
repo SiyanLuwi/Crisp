@@ -17,12 +17,12 @@
       "supportsTablet": true
     },
     "android": {
-      "googleServicesFile": "./google-services.json",
       "config": {
         "googleMaps": {
           "apiKey": "AIzaSyCMpmuYP2YMLY1rra3l4HuXLfHA42hi8N8"
         }
       },
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/android-icon-square.png",
         "backgroundColor": "#ffffff"

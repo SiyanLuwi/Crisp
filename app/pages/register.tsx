@@ -68,30 +68,27 @@ export default function Register() {
     try {
       const response = await fetch(url, {
         headers: {
-          "User-Agent": "CRISP/1.0.9 crisp.uccbscs@gmail.com", // Replace with your app name and contact email
+          "User-Agent": "CRISP/1.0.9 crisp.uccbscs@gmail.com", 
         },
       });
-
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Error fetching address:", errorText);
         return null;
       }
-
       const data = await response.json();
 
       if (data && data.address) {
         const { road, suburb, city, region, country, postal_code } =
           data.address;
 
-        // Combine the parts into a complete address
         const addressParts = [
-          road, // Street name
-          suburb, // Suburb
-          city, // City
-          region, // Region or State
-          country, // Country
-          postal_code, // Postal Code (if available)
+          road, 
+          suburb,
+          city, 
+          region, 
+          country,
+          postal_code,
         ].filter(Boolean);
 
         const address = addressParts.join(", "); // Join the non-empty parts
@@ -202,13 +199,6 @@ export default function Register() {
       if (res.status !== 200 && res.status !== 201) {
         throw new Error("Register Error!");
       }
-
-      scheduleNotification(
-        "Welcome to CRISP!",
-        "Welcome to the community! Start exploring the app now.",
-        1,
-        ""
-      );
       router.push("/pages/verifyEmail");
     } catch (error: any) {
       alert(error?.message || "An error occurred during registration.");

@@ -1,73 +1,57 @@
 import * as Location from 'expo-location';
 import { scheduleNotification } from './notifications';
-import { Report } from './reports';
+import { Report } from './reports'; 
 import { haversineDistance } from './haversieDistace'; 
 import { app } from '@/firebase/firebaseConfig'; 
-import { collection, addDoc, getFirestore } from 'firebase/firestore'; 
-import * as SecureStore from 'expo-secure-store';
-
-
+import { collection, addDoc, query, where, getDocs, getFirestore } from 'firebase/firestore'; 
+import { useAuth } from '@/AuthContext/AuthContext';
+import * as SecureStore from 'expo-secure-store'
 let watchSubscription: Location.LocationSubscription | null = null; 
+
 const db = getFirestore(app);
-const notifiedReports = new Set<string>(); // To track notified reports
-
-interface LocationTaskData {
-  locations: Location.LocationObject[];
-}
-
 
 export const startLocationUpdates = async () => {
+  // Request permissions before starting location updates
   await requestPermissions();
-  await Location.startLocationUpdatesAsync('LOCATION_TASK', {
-    accuracy: Location .Accuracy.High,
-    distanceInterval: 1, // meters
-    timeInterval: 3000, // milliseconds
-    showsBackgroundLocationIndicator: true, // iOS only
-  });
+
+  // Start watching the user's location
+  watchSubscription = await Location.watchPositionAsync(
+    { 
+      accuracy: Location.Accuracy.High, 
+      distanceInterval: 1, 
+      timeInterval: 3000 
+    },
+    async (location) => {
+      const reports = await Report.fetchAllReports(); // Fetch all reports using the new method
+      await checkForNearbyReports(location.coords, reports);
+    }
+  );
 };
 
-const requestPermissions = async (): Promise<void> => {
-  const { status: foregroundStatus } = await Location.requestForegroundPermissionsAsync();
-  if (foregroundStatus !== 'granted') {
-    console.log('Foreground location permission was denied');
-    return;
+const requestPermissions = async () => {
+  const { status } = await Location.requestForegroundPermissionsAsync();
+  if (status !== 'granted') {
+    console.log('Permission to access location was denied');
   }
-
-  // Request background permission
-  const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
-  if (backgroundStatus !== 'granted') {
-    console.log('Background location permission was denied');
-    return;
-  }
-
-  console.log('All location permissions granted');
 };
 
-
-
-const checkForNearbyReports = async (userLocation: any, reports: Report[], userId: number) => {
-  const notifiedThisCheck = new Set<string>(); // To track newly notified reports in this check
-
+const checkForNearbyReports = async (userLocation: any, reports: Report[]) => {
   for (const report of reports) {
     const distance = haversineDistance(userLocation, report);
-    if (distance <= 200) {
-      // Check if the report belongs to the user
-      if (report.user_id !== userId && !notifiedReports.has(report.id)) {
-        notifiedThisCheck.add(report.id);
+    if (distance <= 200) { // Adjust the distance as needed
+      const alreadyNotified = await checkIfNotified(report.id);
+      if (!alreadyNotified) { // Check if the report has already notified
         await scheduleAndStoreNotification(report, distance);
       }
-    } else {
-      // If the user is outside the 200m radius, remove from notifiedReports
-      notifiedReports.delete(report.id);
     }
   }
+};
 
-  // Update the notifiedReports set with newly notified reports
-  notifiedReports.forEach(id => {
-    if (!notifiedThisCheck.has(id)) {
-      notifiedReports.delete(id);
-    }
-  });
+const checkIfNotified = async (reportId: string) => {
+  const notificationsRef = collection(db, 'notifications'); // Reference to your notifications collection
+  const q = query(notificationsRef, where('reportId', '==', reportId));
+  const querySnapshot = await getDocs(q);
+  return !querySnapshot.empty; // Return true if there are existing notifications for this report
 };
 
 const scheduleAndStoreNotification = async (report: Report, distance: number) => {
@@ -75,27 +59,29 @@ const scheduleAndStoreNotification = async (report: Report, distance: number) =>
   const description = `A new report has been filed with a distance of ${Math.round(distance)}m: ${report.type_of_report}`;
   const screen = "/(tabs)/home";
 
-  await scheduleNotification(title, description, 1, screen);
+  // Schedule the notification
+  scheduleNotification(title, description, 1, screen);
 
-  const user_id = await SecureStore.getItemAsync('user_id');
+  const user_id = await SecureStore.getItemAsync('user_id'); // Get USER_ID from the context
   if (!user_id) {
     console.error("USER_ID is missing!");
     return;
   }
 
+  // Store the notification in Firebase
   await addDoc(collection(db, 'notifications'), {
     reportId: report.id,
     userId: user_id,
     title: title,
     description: description,
     screen: screen,
-    createdAt: new Date()
+    createdAt: new Date() // Store the timestamp
   });
 };
 
 export const stopLocationUpdates = async () => {
   if (watchSubscription) {
-    await watchSubscription.remove();
-    watchSubscription = null;
+    await watchSubscription.remove(); // Stop the location updates
+    watchSubscription = null; // Clear the watch subscription after stopping
   }
 };
