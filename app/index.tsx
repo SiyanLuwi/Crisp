@@ -59,6 +59,7 @@ export default function Index() {
     const accessToken = await SecureStore.getItemAsync(TOKEN_KEY);
     const refreshToken = await SecureStore.getItemAsync(REFRESH_KEY);
     const expiration = await SecureStore.getItemAsync(EXPIRATION);
+    const account_type = await SecureStore.getItemAsync(ACCOUNT_TYPE);
 
     const currentTime = Date.now();
     if (!accessToken || !refreshToken) {
@@ -180,9 +181,6 @@ export default function Index() {
         alert("Failed to get push token for push notification!");
         return;
       }
-      // Learn more about projectId:
-      // https://docs.expo.dev/push-notifications/push-notifications-setup/#configure-projectid
-      // EAS projectId is used here.
       try {
         const projectId =
           Constants?.expoConfig?.extra?.eas?.projectId ??

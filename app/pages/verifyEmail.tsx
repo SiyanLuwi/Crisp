@@ -13,7 +13,7 @@ import { router } from "expo-router";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import { useAuth } from "@/AuthContext/AuthContext";
 import * as SecureStore from "expo-secure-store";
-import api from "../api/axios";
+import api from "@/app/api/axios";
 import { scheduleNotification } from "../utils/notifications";
 import LoadingButton from "@/components/loadingButton";
 
@@ -55,9 +55,7 @@ export default function VerifyEmail() {
         setOtpError(true);
         setLoading(false);
         setTimeout(() => setOtpError(false), 3500);
-      } else {
-        router.push("/pages/login");
-      }
+      } 
     } catch (error) {
       setOtpError(true);
       setTimeout(() => setOtpError(false), 3000);

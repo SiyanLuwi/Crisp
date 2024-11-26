@@ -73,6 +73,7 @@ interface CallerInfo{
 }
 import * as Network from "expo-network";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { scheduleNotification } from "@/app/utils/notifications";
 const TOKEN_KEY = "my-jwt";
 const REFRESH_KEY = "my-jwt-refresh";
 const EXPIRATION = "accessTokenExpiration";
@@ -281,6 +282,8 @@ export const AuthProvider = ({ children }: any) => {
         account_type: data.account_type,
         is_email_verified: data.is_email_verified,
         is_verified: data.is_verified,
+        score: data.score,
+        violation: data.violation,
       };
 
       await Promise.all(
@@ -315,13 +318,26 @@ export const AuthProvider = ({ children }: any) => {
   };
 
   const logout = async () => {
-    axios.defaults.headers.common["Authorization"] = "";
-    await SecureStore.deleteItemAsync(TOKEN_KEY);
-    await SecureStore.deleteItemAsync(REFRESH_KEY);
-    await SecureStore.deleteItemAsync(EXPIRATION);
-    await SecureStore.deleteItemAsync('user_id');
-    await SecureStore.deleteItemAsync('is_email_verified');
-    await SecureStore.deleteItemAsync('incomingCallData');
+    const storageItems = [
+        TOKEN_KEY,
+        REFRESH_KEY,
+        ROLE,
+        EXPIRATION,
+        "user_id",
+        "username",
+        'email',
+        'address',
+        'contact_number',
+        'account_type',
+        'is_email_verified',
+        'is_verified',
+      ]
+
+      await Promise.all(
+        storageItems.map( async (key) => {
+          await SecureStore.deleteItemAsync(key)
+        })
+      );
     setAuthState({
       token: null,
       authenticated: null,
@@ -337,6 +353,12 @@ export const AuthProvider = ({ children }: any) => {
         otp,
       });
       if (res.status === 200 || res.status === 201) {
+        await scheduleNotification(
+          "Registration Successfully!!",
+          "Welcome to the community! Start exploring the app now. Please kindly login your details.",
+          1,
+          ""
+        );
         router.push("/pages/login");
         return;
       }

@@ -24,7 +24,7 @@ import CancelModal from "@/components/cancelModal";
 import { router } from "expo-router";
 const bgImage = require("@/assets/images/bgImage.png");
 import { useAuth } from "@/AuthContext/AuthContext";
-
+import * as SecureStore from 'expo-secure-store'
 const { width, height } = Dimensions.get("window");
 
 export default function Profile() {
@@ -42,12 +42,14 @@ function App() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showCreditScore, setShowCreditScore] = useState(false);
   const [showViolation, setShowViolation] = useState(false);
+  const [violation, setViolation] = useState(0);
 
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [email, setEmail] = useState("");
   const [contact, setContact] = useState("");
   const [isVerified, setIsVerified] = useState(false);
+  const [score, setScore] = useState(0)
   const [coordinates, setCoordinates] = useState("");
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [errors, setErrors] = useState("");
@@ -62,6 +64,10 @@ function App() {
       setEmail(userInfo?.email || "");
       setContact(userInfo?.contact_number || "");
       setIsVerified(userInfo?.is_verified || "");
+      const score = await SecureStore.getItemAsync('score')
+      const violation = await SecureStore.getItemAsync('violation')
+      setScore(userInfo?.score || score || 0);
+      setViolation(userInfo?.violation || violation || 0);
     };
 
     loadUserInfo();
@@ -317,7 +323,7 @@ function App() {
                 }}
                 onPress={handleShowCreditScore}
               >
-                <Text>100</Text>
+                <Text>{score}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 className="absolute top-10 right-0 bg-white w-12 h-12 rounded-full border border-white items-center justify-center"
@@ -329,7 +335,7 @@ function App() {
                 }}
                 onPress={handleShowViolation}
               >
-                <Text>0</Text>
+                <Text>{score}</Text>
               </TouchableOpacity>
             </View>
             {showCreditScore && (
