@@ -71,12 +71,12 @@ const MapPicker: React.FC<MapPickerProps> = ({ onLocationSelect, onClose }) => {
 
   return (
     <TouchableWithoutFeedback onPress={onClose}>
-      <View style={styles.container}>
+      <View className="w-full h-full justify-center items-center bg-black/50">
         <TouchableWithoutFeedback>
-          <View style={styles.mapContainer}>
+          <View className="w-[95%] h-[80%] bg-white rounded-lg overflow-hidden">
             {initialRegion && (
               <MapView
-                style={styles.map}
+                style={{ width: "100%", height: "90%" }}
                 onPress={handlePress}
                 initialRegion={initialRegion}
               >
@@ -85,7 +85,7 @@ const MapPicker: React.FC<MapPickerProps> = ({ onLocationSelect, onClose }) => {
             )}
             <Button title="Select Location" onPress={handleConfirm} />
             {selectedLocation && (
-              <Text style={styles.coordinates}>
+              <Text className="p-1">
                 Selected: {selectedLocation.latitude},{" "}
                 {selectedLocation.longitude}
               </Text>

@@ -57,7 +57,7 @@ export default function Login() {
       const is_email_verified =
         await SecureStore.getItemAsync(IS_EMAIL_VERIFIED);
       const account_type = await SecureStore.getItemAsync(ACCOUNT_TYPE);
-      
+
       if (!result) {
         throw new Error("Error While Logging in!");
       }

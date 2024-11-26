@@ -70,7 +70,7 @@ export default function PictureForm() {
       const [latitude, longitude] = coordinates.split(",");
 
       let is_emergency =
-        isEmergency?.toLocaleLowerCase() === "Emergency"
+        isEmergency?.toLocaleLowerCase() === "yes"
           ? "emergency"
           : "not emergency";
 
