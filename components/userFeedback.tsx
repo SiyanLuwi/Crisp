@@ -12,7 +12,13 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Camera } from "expo-camera";
-import { getFirestore, doc, setDoc, updateDoc } from "firebase/firestore";
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+} from "firebase/firestore";
 import { app } from "@/firebase/firebaseConfig";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import uuid from "react-native-uuid";
@@ -65,7 +71,6 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
       const localDate = new Date();
       const localOffset = localDate.getTimezoneOffset() * 60000;
       const localTimeAdjusted = new Date(localDate.getTime() - localOffset);
-
       const localDateISOString = localTimeAdjusted.toISOString().slice(0, -1);
 
       const feedbackData = {
@@ -77,16 +82,39 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
       // Store feedback data in Firestore
       await setDoc(feedbackRef, feedbackData);
 
-      // Update the report with an `update_date` and `status`
+      // Get the report creation time (this should already be stored when the report is first created)
       const reportRef = doc(
         db,
         `reports/${category.toLowerCase()}/reports/${reportId}`
       );
 
-      // Assuming status should be updated to 'pending_review' or a similar status
+      // Fetch the existing report data to get the created_at timestamp
+      const reportSnapshot = await getDoc(reportRef);
+      if (!reportSnapshot.exists()) {
+        throw new Error("Report does not exist");
+      }
+
+      const reportData = reportSnapshot.data();
+      const createdAt = new Date(reportData.report_date); // Report creation timestamp
+
+      // Calculate the time difference between the current time and the report creation time
+      const validationTime = new Date(localDateISOString);
+      const timeDiffInMilliseconds =
+        validationTime.getTime() - createdAt.getTime();
+      const timeDiffInMinutes = timeDiffInMilliseconds / (1000 * 60);
+      const hours = Math.floor(timeDiffInMinutes / 60);
+      const minutes = Math.floor(timeDiffInMinutes % 60);
+
+      // Format the elapsed time as "hours:minutes"
+      const formattedTime = `${hours}:${minutes.toString().padStart(2, "0")}`;
+
+      console.log(`Report status changed to "done" after ${formattedTime}.`);
+
+      // Update the report with the new status and elapsed time
       const updatedReportData = {
         update_date: localDateISOString, // Use the same timestamp for the update date
-        status: "done", // Adjust status as needed (e.g., 'pending_review', 'under_review', etc.)
+        status: "done", // Adjust status as needed
+        report_closed_time: formattedTime, // Store the formatted elapsed time
       };
 
       // Update the report data

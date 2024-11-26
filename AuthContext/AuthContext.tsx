@@ -4,10 +4,9 @@ import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
 import api from "@/app/api/axios";
 import * as FileSystem from "expo-file-system";
-import { app } from '@/firebase/firebaseConfig';
-import { getFirestore } from 'firebase/firestore';
+import { app } from "@/firebase/firebaseConfig";
+import { getFirestore } from "firebase/firestore";
 const db = getFirestore(app);
-
 
 interface AuthProps {
   onRefresh?: (refreshToken: string) => Promise<any>;
@@ -16,7 +15,7 @@ interface AuthProps {
   setPeerConnection?: any;
   incomingCall?: any;
   hasNewNotification?: boolean;
-  setIncomingCall?:  any;
+  setIncomingCall?: any;
   authState?: { token: string | null; authenticated: boolean | null };
   onRegister?: (
     username: string,
@@ -64,8 +63,8 @@ interface AuthProps {
     idPicture: string
   ) => Promise<void>;
 }
-interface CallerInfo{
-  callId:string;
+interface CallerInfo {
+  callId: string;
   callerId: string;
   callerName: string;
   receiverId: string;
@@ -97,19 +96,19 @@ export const AuthProvider = ({ children }: any) => {
   const [USER_ID, SET_USER_ID] = useState("");
   const [peerConnection, setPeerConnection] = useState(null);
 
-  const router = useRouter()
-  
+  const router = useRouter();
+
   // useEffect(() => {
   //   console.log("getting incoming call...")
   //   const q = query(collection(db, 'calls'), where('receiver_id', '==', USER_ID));
   //   console.log("Receiver ID: ", USER_ID)
-    
+
   //   const unsubscribe = onSnapshot(q, async (snapshot) => {
   //     if (!snapshot.empty) {
 
   //       const callData = snapshot.docs[0].data();
   //       setIncomingCall(callData);
-  
+
   //       if (callData.callStatus == 'waiting') {
   //         receiveIncomingCall(callData)
   //         router.push('/(tabs)/screens/IncomingCallScreen');
@@ -124,11 +123,10 @@ export const AuthProvider = ({ children }: any) => {
   //       }
   //     }
   //   });
-  
-  //   return () => unsubscribe();
-  // }, [USER_ID]); 
 
- 
+  //   return () => unsubscribe();
+  // }, [USER_ID]);
+
   const receiveIncomingCall = (callData: any) => {
     setIncomingCall(callData); // Ensure callData contains the expected structure
   };
@@ -136,8 +134,6 @@ export const AuthProvider = ({ children }: any) => {
   const clearIncomingCall = () => {
     setIncomingCall(null);
   };
-  
-
 
   useEffect(() => {
     const loadToken = async () => {
@@ -161,29 +157,34 @@ export const AuthProvider = ({ children }: any) => {
     loadToken();
   }, []);
 
-  const getAddressFromCoordinates = async (latitude:number, longitude:number) => {
+  const getAddressFromCoordinates = async (
+    latitude: number,
+    longitude: number
+  ) => {
     const url = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`;
-  
+
     try {
       const response = await fetch(url, {
         headers: {
-          'User-Agent': 'CRISP/1.0.9 crisp.uccbscs@gmail.com' // Replace with your app name and contact email
-        }
+          "User-Agent": "CRISP/1.0.9 crisp.uccbscs@gmail.com", // Replace with your app name and contact email
+        },
       });
-  
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Error fetching address:", errorText);
         return null;
       }
-  
+
       const data = await response.json();
-  
+
       if (data && data.address) {
-        console.log(data)
+        console.log(data);
         const { residential, town, state, country } = data.address;
-        const addressParts = [residential, town, state, country].filter(Boolean);
-        const address = addressParts.join(', '); // Join non-empty parts
+        const addressParts = [residential, town, state, country].filter(
+          Boolean
+        );
+        const address = addressParts.join(", "); // Join non-empty parts
         return addressParts || "Address not found";
       } else {
         console.error("Nominatim API error:", data);
@@ -277,7 +278,7 @@ export const AuthProvider = ({ children }: any) => {
         user_id: data.user_id,
         username: data.username,
         email: data.email,
-        address: data.address || '',
+        address: data.address || "",
         contact_number: data.contact_number,
         account_type: data.account_type,
         is_email_verified: data.is_email_verified,
@@ -299,8 +300,7 @@ export const AuthProvider = ({ children }: any) => {
           }
         })
       );
-      
-      
+
       return data;
     } catch (error: any) {
       // console.error("Login error occurred:", error);
@@ -319,25 +319,25 @@ export const AuthProvider = ({ children }: any) => {
 
   const logout = async () => {
     const storageItems = [
-        TOKEN_KEY,
-        REFRESH_KEY,
-        ROLE,
-        EXPIRATION,
-        "user_id",
-        "username",
-        'email',
-        'address',
-        'contact_number',
-        'account_type',
-        'is_email_verified',
-        'is_verified',
-      ]
+      TOKEN_KEY,
+      REFRESH_KEY,
+      ROLE,
+      EXPIRATION,
+      "user_id",
+      "username",
+      "email",
+      "address",
+      "contact_number",
+      "account_type",
+      "is_email_verified",
+      "is_verified",
+    ];
 
-      await Promise.all(
-        storageItems.map( async (key) => {
-          await SecureStore.deleteItemAsync(key)
-        })
-      );
+    await Promise.all(
+      storageItems.map(async (key) => {
+        await SecureStore.deleteItemAsync(key);
+      })
+    );
     setAuthState({
       token: null,
       authenticated: null,
@@ -443,6 +443,7 @@ export const AuthProvider = ({ children }: any) => {
       const address = await SecureStore.getItemAsync("address");
       const contact_number = await SecureStore.getItemAsync("contact_number");
       const is_verified = await SecureStore.getItemAsync("is_verified");
+      console.log("is_verified: ", is_verified);
 
       return {
         username,
@@ -456,8 +457,6 @@ export const AuthProvider = ({ children }: any) => {
       return null;
     }
   };
-
-  
 
   const updateProfile = async (
     username: string,
@@ -674,7 +673,7 @@ export const AuthProvider = ({ children }: any) => {
     incomingCall,
     setIncomingCall,
     peerConnection,
-    setPeerConnection
+    setPeerConnection,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

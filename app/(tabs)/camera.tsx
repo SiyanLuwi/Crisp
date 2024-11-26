@@ -242,6 +242,7 @@ export default function CameraComp() {
           ? "Yes"
           : "No",
       };
+      console.log("Classification:", classification);
 
       return classification;
     } catch (error: any) {

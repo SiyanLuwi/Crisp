@@ -17,7 +17,7 @@ import ReportValidationModal from "@/components/reportValidation";
 import ReportLocationModal from "@/components/reportLocationModal";
 import ImageModal from "@/components/imageModal";
 const bgImage = require("@/assets/images/bgImage.png");
-import * as SecureStore from 'expo-secure-store'
+import * as SecureStore from "expo-secure-store";
 import { router } from "expo-router";
 import {
   getFirestore,
@@ -87,6 +87,7 @@ export default function ReportPage() {
         ? getUserInfo()
         : Promise.resolve({}));
       setIsVerified(userInfo?.is_verified || "");
+      // console.log("isVerified?:", isVerified);
     };
 
     loadUserInfo();
@@ -111,7 +112,7 @@ export default function ReportPage() {
       console.error("Error fetching all votes:", error);
     }
   }
-
+  // console.log("isVerified:", isVerified);
   const fetchAllDocuments = async (userId: string, votes: any[]) => {
     const categories = [
       "fires",
@@ -228,17 +229,16 @@ export default function ReportPage() {
   };
 
   useEffect(() => {
-   
     const fetchData = async () => {
       if (!USER_ID) {
         throw new Error("Cannot fetch USER_ID!");
       }
-      const notif = await SecureStore.getItemAsync('notificationsFetched');
+      const notif = await SecureStore.getItemAsync("notificationsFetched");
       if (notif !== null) {
         const isTrue = JSON.parse(notif);
         setHasNewNotification(isTrue);
       } else {
-        setHasNewNotification(false); 
+        setHasNewNotification(false);
       }
       const votes = await fetchAllVotes();
       if (!votes) {
@@ -400,16 +400,60 @@ export default function ReportPage() {
           `reports/${category.toLowerCase()}/reports/${reportId}`
         );
 
-        await setDoc(
-          reportRef,
-          {
-            is_validated: true,
-            update_date: localDateISOString,
-          },
-          { merge: true }
-        );
-        console.log("Report validated and updated successfully!", reportId);
-        setIsSuccess(true); // Optionally set success state
+        // Get the 'created_at' field from the report to calculate the time taken
+        const reportSnapshot = await getDoc(reportRef);
+
+        // Check if the document exists and contains data
+        if (reportSnapshot.exists()) {
+          const reportData = reportSnapshot.data();
+
+          // Ensure 'reportData' is not undefined and has the necessary field
+          if (reportData && reportData.report_date) {
+            const createdAt = new Date(reportData.report_date);
+
+            // Calculate the time taken to validate the report
+            // Calculate the time taken to validate the report
+            const validationTime = new Date(localDateISOString);
+
+            // Ensure that both dates are valid Date objects
+            if (createdAt instanceof Date && validationTime instanceof Date) {
+              const timeDiffInMilliseconds =
+                validationTime.getTime() - createdAt.getTime();
+              const timeDiffInMinutes = timeDiffInMilliseconds / (1000 * 60);
+
+              // Calculate the hours and minutes
+              const hours = Math.floor(timeDiffInMinutes / 60);
+              const minutes = Math.floor(timeDiffInMinutes % 60);
+
+              // Format time as hours:minutes (e.g., "2:51")
+              const formattedTime = `${hours}:${minutes.toString().padStart(2, "0")}`;
+
+              console.log(`Report validation took ${formattedTime}.`);
+
+              // Update the report with validation status
+              await setDoc(
+                reportRef,
+                {
+                  is_validated: true,
+                  update_date: localDateISOString,
+                  validation_time: formattedTime, // Store the formatted time in Firestore
+                },
+                { merge: true }
+              );
+              console.log(
+                "Report validated and updated successfully!",
+                reportId
+              );
+              setIsSuccess(true); // Optionally set success state
+            } else {
+              console.error("Invalid date objects for validation calculation.");
+            }
+          } else {
+            console.error("Missing or invalid 'report_date' in report data.");
+          }
+        } else {
+          console.error("Report document does not exist.");
+        }
       } else {
         console.log(
           "Validation count not met. Current count:",
@@ -650,6 +694,12 @@ export default function ReportPage() {
                         );
                         setIsSuccess(false);
                         setIsModalVisible(true);
+                      } else if (!isVerified) {
+                        setModalMessage(
+                          "You are not verified. Please verify your account before downvoting the report."
+                        );
+                        setIsSuccess(false);
+                        setIsModalVisible(true);
                       } else {
                         setSelectedReport(item); // Ensure the selected report is set
                         setReportModalVisible(true); // Then open the report modal
@@ -659,11 +709,7 @@ export default function ReportPage() {
                     <MaterialCommunityIcons
                       name="format-align-justify"
                       size={width * 0.06}
-                      color={
-                        isVerified && item.user_id.toString() !== USER_ID
-                          ? "#0C3B2D"
-                          : "#A0A0A0"
-                      }
+                      color={isVerified ? "#0C3B2D" : "#A0A0A0"}
                     />
                   </TouchableOpacity>
                 </View>

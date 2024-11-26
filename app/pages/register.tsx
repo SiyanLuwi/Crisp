@@ -14,6 +14,7 @@ import {
   Keyboard,
   ImageBackground,
 } from "react-native";
+import { Checkbox } from "expo-checkbox";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { RFPercentage } from "react-native-responsive-fontsize";
@@ -21,6 +22,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import MapPicker from "@/components/mapPicker";
 import { useAuth } from "@/AuthContext/AuthContext";
 import LoadingButton from "@/components/loadingButton";
+import TermsCondition from "@/components/termsCondition";
 const bgImage = require("@/assets/images/landing_page.png");
 const { width, height } = Dimensions.get("window");
 import { scheduleNotification } from "../utils/notifications";
@@ -39,6 +41,12 @@ export default function Register() {
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [loading, setLoading] = useState(false);
   const { onRegister } = useAuth();
+  const [isChecked, setIsChecked] = useState(false);
+  const [fullImageModalVisible, setFullImageModalVisible] = useState(false);
+
+  const handleCheckboxChange = () => {
+    setIsChecked(!isChecked);
+  };
 
   const handlePasswordChange = (text: string) => {
     if (text.length <= 16) {
@@ -68,7 +76,7 @@ export default function Register() {
     try {
       const response = await fetch(url, {
         headers: {
-          "User-Agent": "CRISP/1.0.9 crisp.uccbscs@gmail.com", 
+          "User-Agent": "CRISP/1.0.9 crisp.uccbscs@gmail.com",
         },
       });
       if (!response.ok) {
@@ -83,10 +91,10 @@ export default function Register() {
           data.address;
 
         const addressParts = [
-          road, 
+          road,
           suburb,
-          city, 
-          region, 
+          city,
+          region,
           country,
           postal_code,
         ].filter(Boolean);
@@ -137,9 +145,20 @@ export default function Register() {
     // Reset errors
     setErrors("");
 
+    if (!isChecked) {
+      setErrors("You must agree to the terms and conditions first.");
+      setTimeout(() => {
+        setErrors("");
+      }, 2000);
+      return; // Stop execution if the checkbox is not checked
+    }
+
     // Validate email format
     if (!isValidEmail(email)) {
       setErrors("Please enter a valid email address.");
+      setTimeout(() => {
+        setErrors("");
+      }, 2000);
       return; // Stop execution if email is invalid
     }
 
@@ -214,208 +233,226 @@ export default function Register() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
       >
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
-          keyboardShouldPersistTaps="handled"
-        >
-          <ImageBackground source={bgImage} style={{ flex: 1 }}>
-            <View className="w-full h-full relative items-center justify-center">
-              <View className="w-full h-auto bg-[#F0F4C3] flex flex-col rounded-t-3xl justify-center items-center bottom-0 absolute">
-                {/* <View className="w-full h-auto bg-white flex flex-col rounded-t-3xl justify-center items-center bottom-0 absolute border-2 border-[#0C3B2D]"> */}
-                <View className="w-full flex justify-start items-start">
-                  <Text className="text-3xl font-extrabold text-[#0C3B2D] my-10 ml-10">
-                    Create an Account
-                  </Text>
-                </View>
-                <View className="w-full flex flex-row">
-                  <Text className="text-md font-semibold text-[#0C3B2D] mb-1 ml-12">
-                    Enter your name
-                  </Text>
-                  <Text className="text-md font-semibold text-red-500 ml-1">
-                    *
-                  </Text>
-                </View>
+        <ImageBackground source={bgImage} style={{ flex: 1 }}>
+          <View className="w-full h-full relative items-center justify-center">
+            <View className="w-full h-auto bg-[#F0F4C3] flex flex-col rounded-t-3xl justify-center items-center bottom-0 absolute">
+              {/* <View className="w-full h-auto bg-white flex flex-col rounded-t-3xl justify-center items-center bottom-0 absolute border-2 border-[#0C3B2D]"> */}
+              <View className="w-full flex justify-start items-start">
+                <Text className="text-3xl font-extrabold text-[#0C3B2D] my-10 ml-10">
+                  Create an Account
+                </Text>
+              </View>
+              <View className="w-full flex flex-row">
+                <Text className="text-md font-semibold text-[#0C3B2D] mb-1 ml-12">
+                  Enter your name
+                </Text>
+                <Text className="text-md font-semibold text-red-500 ml-1">
+                  *
+                </Text>
+              </View>
+              <TextInput
+                className="w-4/5 bg-white text-md p-4 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                placeholder="Enter your name"
+                placeholderTextColor="#888"
+                onChangeText={(text) => setUsername(text.toLowerCase())}
+              />
+              <View className="w-full flex flex-row">
+                <Text className="text-md font-semibold text-[#0C3B2D] mb-1 ml-12">
+                  Enter your address
+                </Text>
+                <Text className="text-md font-semibold text-red-500 ml-1">
+                  *
+                </Text>
+              </View>
+              <View className="w-4/5 bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
                 <TextInput
-                  className="w-4/5 bg-white text-md p-4 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
-                  placeholder="Enter your name"
+                  className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
+                  placeholder="Enter your address"
                   placeholderTextColor="#888"
-                  onChangeText={(text) => setUsername(text.toLowerCase())}
-                />
-                <View className="w-full flex flex-row">
-                  <Text className="text-md font-semibold text-[#0C3B2D] mb-1 ml-12">
-                    Enter your address
-                  </Text>
-                  <Text className="text-md font-semibold text-red-500 ml-1">
-                    *
-                  </Text>
-                </View>
-                <View className="w-4/5 bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
-                  <TextInput
-                    className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
-                    placeholder="Enter your address"
-                    placeholderTextColor="#888"
-                    value={address}
-                    editable={false} // Make it non-editable
-                    onChangeText={setAddress}
-                  />
-                  <TouchableOpacity
-                    onPress={() => setShowMapPicker(true)}
-                    className="text-lg p-3 items-center justify-center"
-                  >
-                    <MaterialCommunityIcons
-                      name="map-marker"
-                      size={24}
-                      color="#0C3B2D"
-                    />
-                  </TouchableOpacity>
-                </View>
-                <View className="w-full flex flex-row">
-                  <Text className="text-md font-semibold text-[#0C3B2D] mb-1 ml-12">
-                    Enter your email
-                  </Text>
-                  <Text className="text-md font-semibold text-red-500 ml-1">
-                    *
-                  </Text>
-                </View>
-                <TextInput
-                  className="w-4/5 bg-white text-md p-4 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
-                  placeholder="Enter your email"
-                  placeholderTextColor="#888"
-                  onChangeText={setEmail}
-                />
-                <View className="w-full flex flex-row">
-                  <Text className="text-md font-semibold text-[#0C3B2D] mb-1 ml-12">
-                    Enter your 11 digits mobile number
-                  </Text>
-                  <Text className="text-md font-semibold text-red-500 ml-1">
-                    *
-                  </Text>
-                </View>
-                <TextInput
-                  className="w-4/5 bg-white text-md p-4 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
-                  placeholder="Enter your mobile number"
-                  placeholderTextColor="#888"
-                  keyboardType="numeric"
-                  maxLength={11}
-                  onChangeText={setContactNumber}
-                />
-                <View className="w-full flex flex-row">
-                  <Text className="text-md font-semibold text-[#0C3B2D] mb-1 ml-12">
-                    Enter your password
-                  </Text>
-                  <Text className="text-md font-semibold text-red-500 ml-1">
-                    *
-                  </Text>
-                </View>
-                <View className="w-4/5 bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
-                  <TextInput
-                    className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
-                    placeholder="Enter your password"
-                    placeholderTextColor="#888"
-                    secureTextEntry={!passwordVisible}
-                    maxLength={16}
-                    onChangeText={handlePasswordChange}
-                  />
-                  <TouchableOpacity
-                    className="text-lg p-3 items-center justify-center"
-                    onPress={() => setPasswordVisible(!passwordVisible)}
-                  >
-                    <MaterialCommunityIcons
-                      name={passwordVisible ? "eye-off" : "eye"}
-                      size={24}
-                      color="#0C3B2D"
-                    />
-                  </TouchableOpacity>
-                </View>
-                <View className="w-full flex flex-row">
-                  <Text className="text-md font-semibold text-[#0C3B2D] mb-1 ml-12">
-                    Confirm your password
-                  </Text>
-                  <Text className="text-md font-semibold text-red-500 ml-1">
-                    *
-                  </Text>
-                </View>
-                <View className="w-4/5 bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
-                  <TextInput
-                    className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
-                    placeholder="Confirm your password"
-                    placeholderTextColor="#888"
-                    secureTextEntry={!confirmPasswordVisible}
-                    maxLength={16}
-                    onChangeText={handleConfirmPasswordChange}
-                  />
-                  <TouchableOpacity
-                    className="text-lg p-3 items-center justify-center"
-                    onPress={() =>
-                      setConfirmPasswordVisible(!confirmPasswordVisible)
-                    }
-                  >
-                    <MaterialCommunityIcons
-                      name={confirmPasswordVisible ? "eye-off" : "eye"}
-                      size={24}
-                      color="#0C3B2D"
-                    />
-                  </TouchableOpacity>
-                </View>
-                {password.length > 0 && password.length < 6 && (
-                  <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
-                    Password must be at least 6 characters long.
-                  </Text>
-                )}
-                {password.length > 0 && !/[A-Z]/.test(password) && (
-                  <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
-                    Password must contain at least one uppercase letter.
-                  </Text>
-                )}
-                {password.length > 0 && !/\d/.test(password) && (
-                  <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
-                    Password must contain at least one number.
-                  </Text>
-                )}
-                {password.length > 0 &&
-                  !/[!@#$%^&*(),.?":{}|<>]/.test(password) && (
-                    <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
-                      Password must contain at least one special character.
-                    </Text>
-                  )}
-                {password_confirm.length > 0 &&
-                  password_confirm !== password && (
-                    <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
-                      Passwords do not match.
-                    </Text>
-                  )}
-                {errors && (
-                  <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
-                    {errors}
-                  </Text>
-                )}
-                <LoadingButton
-                  style="mt-3 w-full max-w-[80%] bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center"
-                  title="REGISTER"
-                  onPress={handleRegister}
-                  loading={loading}
+                  value={address}
+                  editable={false} // Make it non-editable
+                  onChangeText={setAddress}
                 />
                 <TouchableOpacity
-                  className="w-full flex items-center justify-center flex-row mt-6"
-                  onPress={() => router.navigate(`/pages/login`)}
+                  onPress={() => setShowMapPicker(true)}
+                  className="text-lg p-3 items-center justify-center"
                 >
-                  <Text className="text-xl text-[#7e9778] mr-3 mt-1 mb-8 font-semibold flex">
-                    Already an account?
-                  </Text>
-                  <Text className="text-xl text-[#0C3B2D] mt-1 mb-8 font-bold flex">
-                    Login
-                  </Text>
+                  <MaterialCommunityIcons
+                    name="map-marker"
+                    size={24}
+                    color="#0C3B2D"
+                  />
                 </TouchableOpacity>
               </View>
-              {showMapPicker && (
-                <MapPicker
-                  onLocationSelect={handleLocationSelect}
-                  onClose={() => setShowMapPicker(false)}
+              <View className="w-full flex flex-row">
+                <Text className="text-md font-semibold text-[#0C3B2D] mb-1 ml-12">
+                  Enter your email
+                </Text>
+                <Text className="text-md font-semibold text-red-500 ml-1">
+                  *
+                </Text>
+              </View>
+              <TextInput
+                className="w-4/5 bg-white text-md p-4 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                placeholder="Enter your email"
+                placeholderTextColor="#888"
+                onChangeText={setEmail}
+              />
+              <View className="w-full flex flex-row">
+                <Text className="text-md font-semibold text-[#0C3B2D] mb-1 ml-12">
+                  Enter your 11 digits mobile number
+                </Text>
+                <Text className="text-md font-semibold text-red-500 ml-1">
+                  *
+                </Text>
+              </View>
+              <TextInput
+                className="w-4/5 bg-white text-md p-4 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                placeholder="Enter your mobile number"
+                placeholderTextColor="#888"
+                keyboardType="numeric"
+                maxLength={11}
+                onChangeText={setContactNumber}
+              />
+              <View className="w-full flex flex-row">
+                <Text className="text-md font-semibold text-[#0C3B2D] mb-1 ml-12">
+                  Enter your password
+                </Text>
+                <Text className="text-md font-semibold text-red-500 ml-1">
+                  *
+                </Text>
+              </View>
+              <View className="w-4/5 bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
+                <TextInput
+                  className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
+                  placeholder="Enter your password"
+                  placeholderTextColor="#888"
+                  secureTextEntry={!passwordVisible}
+                  maxLength={16}
+                  onChangeText={handlePasswordChange}
                 />
+                <TouchableOpacity
+                  className="text-lg p-3 items-center justify-center"
+                  onPress={() => setPasswordVisible(!passwordVisible)}
+                >
+                  <MaterialCommunityIcons
+                    name={passwordVisible ? "eye-off" : "eye"}
+                    size={24}
+                    color="#0C3B2D"
+                  />
+                </TouchableOpacity>
+              </View>
+              <View className="w-full flex flex-row">
+                <Text className="text-md font-semibold text-[#0C3B2D] mb-1 ml-12">
+                  Confirm your password
+                </Text>
+                <Text className="text-md font-semibold text-red-500 ml-1">
+                  *
+                </Text>
+              </View>
+              <View className="w-4/5 bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
+                <TextInput
+                  className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
+                  placeholder="Confirm your password"
+                  placeholderTextColor="#888"
+                  secureTextEntry={!confirmPasswordVisible}
+                  maxLength={16}
+                  onChangeText={handleConfirmPasswordChange}
+                />
+                <TouchableOpacity
+                  className="text-lg p-3 items-center justify-center"
+                  onPress={() =>
+                    setConfirmPasswordVisible(!confirmPasswordVisible)
+                  }
+                >
+                  <MaterialCommunityIcons
+                    name={confirmPasswordVisible ? "eye-off" : "eye"}
+                    size={24}
+                    color="#0C3B2D"
+                  />
+                </TouchableOpacity>
+              </View>
+              <View className={"flex-row items-center my-2"}>
+                <Checkbox
+                  value={isChecked}
+                  onValueChange={handleCheckboxChange}
+                  className="mr-2"
+                  color={isChecked ? "#0C3B2D" : "gray"}
+                />
+                <Text className={"text-sm"}>
+                  I agree to the{" "}
+                  <TouchableOpacity
+                    onPress={() => {
+                      setFullImageModalVisible(true);
+                    }}
+                  >
+                    <Text className={"text-[#0C3B2D] font-bold mt-1"}>
+                      Terms and Conditions
+                    </Text>
+                  </TouchableOpacity>
+                </Text>
+              </View>
+              {password.length > 0 && password.length < 6 && (
+                <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
+                  Password must be at least 6 characters long.
+                </Text>
               )}
+              {password.length > 0 && !/[A-Z]/.test(password) && (
+                <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
+                  Password must contain at least one uppercase letter.
+                </Text>
+              )}
+              {password.length > 0 && !/\d/.test(password) && (
+                <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
+                  Password must contain at least one number.
+                </Text>
+              )}
+              {password.length > 0 &&
+                !/[!@#$%^&*(),.?":{}|<>]/.test(password) && (
+                  <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
+                    Password must contain at least one special character.
+                  </Text>
+                )}
+              {password_confirm.length > 0 && password_confirm !== password && (
+                <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
+                  Passwords do not match.
+                </Text>
+              )}
+              {errors && (
+                <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
+                  {errors}
+                </Text>
+              )}
+              <LoadingButton
+                style="mt-3 w-full max-w-[80%] bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center"
+                title="REGISTER"
+                onPress={handleRegister}
+                loading={loading}
+              />
+              <TouchableOpacity
+                className="w-full flex items-center justify-center flex-row mt-6"
+                onPress={() => router.navigate(`/pages/login`)}
+              >
+                <Text className="text-xl text-[#7e9778] mr-3 mt-1 mb-8 font-semibold flex">
+                  Already an account?
+                </Text>
+                <Text className="text-xl text-[#0C3B2D] mt-1 mb-8 font-bold flex">
+                  Login
+                </Text>
+              </TouchableOpacity>
             </View>
-          </ImageBackground>
-        </ScrollView>
+            {showMapPicker && (
+              <MapPicker
+                onLocationSelect={handleLocationSelect}
+                onClose={() => setShowMapPicker(false)}
+              />
+            )}
+            <TermsCondition
+              fullImageModalVisible={fullImageModalVisible}
+              setFullImageModalVisible={setFullImageModalVisible}
+            />
+          </View>
+        </ImageBackground>
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
   );

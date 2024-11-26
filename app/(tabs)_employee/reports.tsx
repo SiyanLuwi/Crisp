@@ -16,6 +16,7 @@ import MapView, { Marker, Region } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import FeedbackModal from "@/components/feedback";
+import ReportValidationModal from "@/components/reportValidation";
 const bgImage = require("@/assets/images/bgImage.png");
 import { useAuth } from "@/AuthContext/AuthContext";
 import { router } from "expo-router";
@@ -46,6 +47,8 @@ interface Report {
   image_path: string;
   report_date: string;
   location: string;
+  status: string;
+  is_validated: boolean;
 }
 
 export default function Reports() {
@@ -65,6 +68,9 @@ export default function Reports() {
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [reports, setReports] = useState<Report[]>([]);
   const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [feedbackStatus, setFeedbackStatus] = useState<{
@@ -99,6 +105,8 @@ export default function Reports() {
               image_path: data.image_path || "", // Default to empty string if missing
               report_date: data.report_date || "", // Default to empty string if missing
               location: data.location || "", // Default to empty string if missing
+              status: data.status || "", // Default to empty string if missing
+              is_validated: data.is_validated || false, // Default to false if missing
             };
           });
 
@@ -218,79 +226,143 @@ export default function Reports() {
     const feedbackExists = feedbackStatus[item.id] || false;
 
     return (
-      <View className="bg-white w-auto rounded-[20px] mx-3 p-4 my-2 mb-4">
-        <View className="flex flex-row w-full items-center">
-          <MaterialCommunityIcons
-            name="account-circle"
-            size={RFPercentage(5)}
-            style={{ padding: 5, color: "#0C3B2D" }}
-          />
-          <View className="flex flex-col items-start">
-            <Text className="pl-3 text-xl font-bold">{item.username}</Text>
-            <Text className="pl-3 text-md font-bold text-slate-500">
-              {formattedDate} {"\n"}
-              <Text className="text-md font-normal text-slate-500">
-                {formattedTime}
+      <View className="w-full px-3">
+        <View className="bg-white w-full rounded-[20px] border-2 border-[#0C3B2D] p-4 my-2 mb-4">
+          <View className="flex flex-row w-full items-center">
+            <MaterialCommunityIcons
+              name="account-circle"
+              size={RFPercentage(5)}
+              style={{ padding: 5, color: "#0C3B2D" }}
+            />
+            <View className="flex flex-row w-full justify-between items-start">
+              <View className="flex flex-col items-start ">
+                <Text className="pl-3 text-xl font-bold">
+                  {item.username.length > 18
+                    ? item.username.slice(0, 18) + "..."
+                    : item.username}
+                </Text>
+
+                <Text className="pl-3 text-md font-bold text-slate-500">
+                  {formattedDate} {"\n"}
+                  <Text className="text-md font-normal text-slate-500">
+                    {formattedTime}
+                  </Text>
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  setModalMessage(
+                    `The Report is: ${item.is_validated ? "VALIDATED" : "NOT VALIDATED"}`
+                  );
+                  setIsSuccess(false);
+                  setIsModalVisible(true);
+                }}
+              >
+                <View
+                  className={`w-8 h-8 border rounded-full mt-2 ${
+                    item.is_validated === null ||
+                    item.is_validated === undefined
+                      ? "bg-gray-400" // Default gray if no status
+                      : item.is_validated
+                        ? "bg-green-500" // Amber for pending
+                        : "bg-red-500" // Red for invalid or failed
+                  }`}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setModalMessage(
+                    `Status of the Report is: ${item.status.toUpperCase()}`
+                  );
+                  setIsSuccess(false);
+                  setIsModalVisible(true);
+                }}
+              >
+                <View
+                  className={`w-8 h-8 border rounded-full mt-2 mr-16 ${
+                    item.status === "Pending"
+                      ? "bg-yellow-400" // Amber for pending
+                      : item.status === "ongoing"
+                        ? "bg-blue-500" // Blue for ongoing
+                        : item.status === "reviewing"
+                          ? "bg-orange-500" // Orange for pending review
+                          : item.status === "done"
+                            ? "bg-green-500" // Green for done
+                            : "bg-gray-400" // Default gray if no status
+                  }`}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+          <TouchableOpacity
+            onPress={() => {
+              setSelectedReport(item);
+              setModalVisible(true);
+            }}
+            className="w-full flex flex-row mt-2"
+          >
+            <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
+              Location:
+              <Text className="text-lg font-normal text-black ml-2">
+                {" " + item.location}
+              </Text>
+            </Text>
+          </TouchableOpacity>
+          <View className="w-full flex flex-row">
+            <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
+              Type of Report:
+              <Text className="text-lg font-normal text-black ml-2">
+                {" " + item.type_of_report}
               </Text>
             </Text>
           </View>
-        </View>
-        <TouchableOpacity
-          onPress={() => {
-            setSelectedReport(item);
-            setModalVisible(true);
-          }}
-          className="w-full flex flex-row mt-2"
-        >
-          <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
-            Location:
-            <Text className="text-lg font-normal text-black ml-2">
-              {" " + item.location}
+          <View className="w-full flex flex-row">
+            <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
+              Description:
+              <Text className="text-lg font-normal text-black ml-2">
+                {" " + item.report_description}
+              </Text>
             </Text>
-          </Text>
-        </TouchableOpacity>
-        <View className="w-full flex flex-row">
-          <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
-            Type of Report:
-            <Text className="text-lg font-normal text-black ml-2">
-              {" " + item.type_of_report}
-            </Text>
-          </Text>
-        </View>
-        <View className="w-full flex flex-row">
-          <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
-            Description:
-            <Text className="text-lg font-normal text-black ml-2">
-              {" " + item.report_description}
-            </Text>
-          </Text>
-        </View>
-        {item.image_path ? (
-          <TouchableOpacity
-            onPress={() => {
-              setSelectedImage(item.image_path);
-              setFullImageModalVisible(true);
-            }}
-          >
-            <Image
-              source={{ uri: item.image_path }}
-              className="w-full h-72 rounded-lg my-1 border-2 border-[#0C3B2D]"
-            />
-          </TouchableOpacity>
-        ) : null}
-        <View className="flex flex-row justify-end w-full mt-3">
-          <TouchableOpacity
-            className={`bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center ${
-              feedbackExists ? "opacity-50" : ""
-            }`}
-            onPress={() => {
-              setFeedbackModalVisible(true);
-              setSelectedReport(item);
-            }}
-            disabled={feedbackExists}
-          >
-            <Text className="text-md font-extrabold text-white px-5">Done</Text>
-          </TouchableOpacity>
+          </View>
+          {item.image_path ? (
+            <TouchableOpacity
+              onPress={() => {
+                setSelectedImage(item.image_path);
+                setFullImageModalVisible(true);
+              }}
+            >
+              <Image
+                source={{ uri: item.image_path }}
+                className="w-full h-72 rounded-lg my-1 border-2 border-[#0C3B2D]"
+              />
+            </TouchableOpacity>
+          ) : null}
+          <View className="flex flex-row justify-end w-full mt-3">
+            <TouchableOpacity
+              className={`bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center ${
+                feedbackExists ? "opacity-50" : ""
+              }`}
+              onPress={() => {
+                if (feedbackExists) {
+                  // If feedback exists, show the modal message
+                  setModalMessage(
+                    `The Report is already marked as ${item.status.toUpperCase()}`
+                  );
+                  setIsSuccess(false);
+                  setIsModalVisible(true);
+                } else {
+                  // If feedback doesn't exist, show the feedback modal
+                  setFeedbackModalVisible(true);
+                  setSelectedReport(item);
+                }
+              }}
+              // disabled={feedbackExists}
+            >
+              <Text className="text-md font-extrabold text-white px-5">
+                Done
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     );
@@ -302,8 +374,8 @@ export default function Reports() {
       className="flex-1 justify-center items-center"
       resizeMode="cover"
     >
-      <SafeAreaView className="flex-1">
-        <View className="flex flex-row h-auto w-full items-center justify-between px-6">
+      <SafeAreaView className="flex-1 w-full">
+        <View className="flex flex-row h-auto w-full items-center justify-between px-8">
           <Text className="font-bold text-4xl text-white mt-3 mb-2">
             Reports
           </Text>
@@ -431,6 +503,14 @@ export default function Reports() {
           reportId={selectedReport?.id || ""} // Pass the selected report ID
           category={selectedReport?.category || ""} // Pass the report category
           userId={USER_ID || ""} // Pass the USER_ID (this should be the actual user's ID)
+        />
+
+        <ReportValidationModal
+          visible={isModalVisible}
+          onClose={() => setIsModalVisible(false)}
+          onConfirmValidation={() => setIsModalVisible(false)}
+          isSuccess={isSuccess}
+          modalMessage={modalMessage}
         />
       </SafeAreaView>
     </ImageBackground>
