@@ -49,6 +49,7 @@ interface Report {
   location: string;
   status: string;
   is_validated: boolean;
+  assigned_to_id: number;
 }
 
 export default function Reports() {
@@ -87,39 +88,57 @@ export default function Reports() {
       "others",
       "road incidents",
     ];
-
+  
+    // Fetch the supervisor_id asynchronously
+    const supervisor_id = await SecureStore.getItemAsync("supervisor_id");
+    if (!supervisor_id) {
+      console.error("Supervisor ID not found!");
+      return;
+    }
+  
     const unsubscribeFunctions = categories.map((category) => {
       return onSnapshot(
         collection(db, `reports/${category}/reports`),
         (snapshot) => {
-          const reports: Report[] = snapshot.docs.map((doc) => {
-            const data = doc.data() as Omit<Report, "id">; // Omit the id when fetching data
-            return {
-              id: doc.id, // Include the document ID this is an UUID
-              username: data.username || "", // Default to empty string if missing
-              type_of_report: data.type_of_report || "",
-              report_description: data.report_description || "",
-              longitude: data.longitude || 0, // Default to 0 if missing
-              latitude: data.latitude || 0, // Default to 0 if missing
-              category: category, // Set the category based on the current loop
-              image_path: data.image_path || "", // Default to empty string if missing
-              report_date: data.report_date || "", // Default to empty string if missing
-              location: data.location || "", // Default to empty string if missing
-              status: data.status || "", // Default to empty string if missing
-              is_validated: data.is_validated || false, // Default to false if missing
-            };
-          });
-
+          const reports: Report[] = snapshot.docs
+            .map((doc) => {
+              const data = doc.data() as Omit<Report, "id">; // Omit the id when fetching data
+  
+              // Filter out reports that don't match the supervisor_id
+              if (data.assigned_to_id !== parseInt(supervisor_id)) {
+                return null; // Mark as null for filtering later
+              }
+  
+              return {
+                id: doc.id, // Include the document ID (UUID)
+                username: data.username || "", // Default to empty string if missing
+                type_of_report: data.type_of_report || "",
+                report_description: data.report_description || "",
+                longitude: data.longitude || 0, // Default to 0 if missing
+                latitude: data.latitude || 0, // Default to 0 if missing
+                category: category, // Set the category based on the current loop
+                image_path: data.image_path || "", // Default to empty string if missing
+                report_date: data.report_date || "", // Default to empty string if missing
+                location: data.location || "", // Default to empty string if missing
+                status: data.status || "", // Default to empty string if missing
+                is_validated: data.is_validated || false, // Default to false if missing
+              };
+            })
+            .filter((report) => report !== null) as Report[]; // Remove null values
+  
+          // Sort reports by report_date in descending order
           const sortedReports = reports.sort((a, b) => {
             const dateA = new Date(a.report_date).getTime();
             const dateB = new Date(b.report_date).getTime();
             return dateB - dateA;
           });
+  
+          // Update the state with new sorted reports
           setReports((prevReports) => {
             const existingReports = prevReports.filter(
               (report) => report.category !== category
             );
-            return [...existingReports, ...sortedReports]; // Replace old reports of this category and add the sorted new ones
+            return [...existingReports, ...sortedReports]; // Replace old reports of this category
           });
         },
         (error) => {
@@ -127,10 +146,13 @@ export default function Reports() {
         }
       );
     });
+  
+    // Return a cleanup function to unsubscribe from snapshots
     return () => {
       unsubscribeFunctions.forEach((unsubscribe) => unsubscribe());
     };
   };
+  
 
   useEffect(() => {
     const fetchData = async () => {
