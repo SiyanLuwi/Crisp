@@ -270,7 +270,8 @@ export const AuthProvider = ({ children }: any) => {
       const expirationTime = Date.now() + 60 * 60 * 1000;
       axios.defaults.headers.common["Authorization"] = `Bearer ${data.access}`;
 
-      const storageItems = {
+      
+      const storageItems: any = {
         [TOKEN_KEY]: data.access,
         [REFRESH_KEY]: data.refresh,
         [ROLE]: data.account_type,
@@ -286,6 +287,10 @@ export const AuthProvider = ({ children }: any) => {
         score: data.score,
         violation: data.violation,
       };
+      if(data.account_type === 'worker'){
+        console.log("SUpervisor id: ", data.supervisor)
+          storageItems.supervisor_id = data.supervisor
+      }
 
       await Promise.all(
         Object.entries(storageItems).map(async ([key, value]) => {
@@ -331,6 +336,7 @@ export const AuthProvider = ({ children }: any) => {
       "account_type",
       "is_email_verified",
       "is_verified",
+      "supervisor_id",
     ];
 
     await Promise.all(
