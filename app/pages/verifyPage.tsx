@@ -211,6 +211,7 @@ export default function VerifyPage() {
 
   // Call loadStoredImages on component mount or when needed
   useEffect(() => {
+    console.log(showDatePicker)
     loadStoredImages();
   }, []);
 
@@ -320,17 +321,17 @@ export default function VerifyPage() {
                     *
                   </Text>
                 </View>
-                <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
+                <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]" >
                   {/* Birthday Button */}
+                  <TouchableOpacity onPress={() => setShowDatePicker(true)}>
                   <TextInput
-                    onPress={() => setShowDatePicker(true)}
                     className="w-3/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
                     placeholderTextColor="#888"
                     placeholder="Select Birthday"
                     value={birthday}
                     editable={false}
                   />
-
+            </TouchableOpacity>
                   {/* DateTimePicker */}
                   {showDatePicker && (
                     <DateTimePicker

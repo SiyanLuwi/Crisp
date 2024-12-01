@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import api from "@/app/api/axios";
 import * as FileSystem from "expo-file-system";
 import { app } from "@/firebase/firebaseConfig";
-import { getFirestore } from "firebase/firestore";
+import { addDoc, doc, getFirestore, setDoc } from "firebase/firestore";
 const db = getFirestore(app);
 
 interface AuthProps {
@@ -606,6 +606,14 @@ export const AuthProvider = ({ children }: any) => {
       });
       if (res.status === 201 || res.status === 200) {
         // alert("Verification request has been sent!");
+        const notifCollectionRef = collection(db, 'notifications');
+        await addDoc(notifCollectionRef, {
+            title: "Verification Request Submitted",
+            description: "A citizen has submitted verification information for review. Please take action.",
+            for_superadmin: true,
+            createdAt: new Date(),
+            user_id: USER_ID
+        });
         router.push("/(tabs)/profile");
       }
     } catch (error: any) {
