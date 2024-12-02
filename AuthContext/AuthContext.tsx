@@ -73,6 +73,7 @@ interface CallerInfo {
 import * as Network from "expo-network";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { scheduleNotification } from "@/app/utils/notifications";
+import { Alert } from "react-native";
 const TOKEN_KEY = "my-jwt";
 const REFRESH_KEY = "my-jwt-refresh";
 const EXPIRATION = "accessTokenExpiration";
@@ -382,7 +383,6 @@ export const AuthProvider = ({ children }: any) => {
       }
     }
   };
-
   const createReport = async (
     type_of_report: string,
     report_description: string,
@@ -393,29 +393,20 @@ export const AuthProvider = ({ children }: any) => {
     custom_type: string,
     floor_number: string
   ) => {
-    console.log(
-      type_of_report,
-      report_description,
-      longitude,
-      latitude,
-      is_emergency,
-      image_path,
-      custom_type,
-      floor_number
-    );
     const formData = new FormData();
     formData.append("type_of_report", type_of_report);
     formData.append("report_description", report_description);
     formData.append("longitude", longitude);
     formData.append("latitude", latitude);
     formData.append("is_emergency", is_emergency);
-
+  
     const imageBase64 = await FileSystem.readAsStringAsync(image_path, {
       encoding: FileSystem.EncodingType.Base64,
     });
     formData.append("image_path", `data:image/jpeg;base64,${imageBase64}`);
     formData.append("custom_type", custom_type);
     formData.append("floor_number", floor_number);
+  
     try {
       const res = await api.post("api/create-report/", formData, {
         headers: {
@@ -423,24 +414,74 @@ export const AuthProvider = ({ children }: any) => {
           Authorization: `Bearer ${authState.token}`,
         },
       });
+  
       if (res.status === 201 || res.status === 200) {
-        return res;
+        return res; // Report created successfully
       }
     } catch (error: any) {
+      // General error handling
       console.error("Error details:", error); // Log the complete error object
       if (error.response) {
-        console.error("Error response data:", error.response.data); // Log the response data if available
-        console.error("Error response status:", error.response.status); // Log the status code
-        throw new Error(
-          `An unexpected error occurred: ${
-            error.response.data.message || error.message
-          }`
-        );
+        const errorData = error.response.data;
+        console.error("Error response data:", errorData);
+        console.error("Error response status:", error.response.status);
+  
+        // If duplicate report exists
+        if (errorData.detail && errorData.detail === "A similar report already exists.") {
+          return handleDuplicateReport(errorData.existing_report, formData);
+        }
+  
+        // Display a user-friendly error message
+        alert(errorData.detail || "An error occurred. Please try again.");
       } else {
-        throw new Error(`An unexpected error occurred: ${error.message}`);
+        // Network or unexpected error
+        alert("An unexpected error occurred. Please check your network connection.");
       }
     }
   };
+  
+  // Handle duplicate report scenario
+  const handleDuplicateReport = async (existingReport: any, formData: FormData) => {
+    const { location, type_of_report, report_description, report_date } = existingReport;
+    return new Promise((resolve, reject) => {
+      Alert.alert(
+        "Duplicate Report Detected",
+        `A similar report already exists at ${location}. Type: ${type_of_report}, Description: ${report_description}, Reported on: ${report_date}. Do you want to submit this report anyway?`,
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+            onPress: () => reject(new Error("Report submission canceled.")),
+          },
+          {
+            text: "Submit Anyway",
+            onPress: async () => {
+              try {
+                // Retry with a `force_submit` flag
+                formData.append("force_submit", "true");
+                const retryRes = await api.post("api/create-report/", formData, {
+                  headers: {
+                    "Content-Type": "multipart/form-data",
+                    Authorization: `Bearer ${authState.token}`,
+                  },
+                });
+                resolve(retryRes); // Successfully submitted
+              } catch (retryError: any) {
+                console.error("Error on forced submission:", retryError);
+                reject(new Error(`An error occurred during forced submission: ${retryError.message}`));
+              }
+            },
+          },
+        ]
+      );
+    });
+  };
+  
+ 
+  
+  
+  
+
 
   const getUserInfo = async () => {
     try {

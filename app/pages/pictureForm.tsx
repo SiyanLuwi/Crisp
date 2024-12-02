@@ -63,53 +63,18 @@ export default function PictureForm() {
   const report = async () => {
     try {
       setLoading(true);
-      if (!location) {
-        throw new Error("Location is missing");
-      }
-
-      const [latitude, longitude] = coordinates.split(",");
-
-      let is_emergency =
-        isEmergency?.toLocaleLowerCase() === "yes"
-          ? "emergency"
-          : "not emergency";
-
-      // Check if all required fields are filled
-      if (
-        !selectedItem ||
-        !description ||
-        !longitude ||
-        !latitude ||
-        !is_emergency ||
-        !location
-      ) {
-        let missingFields = [];
-        if (!selectedItem) missingFields.push("Report type");
-        if (!description) missingFields.push("Description");
-        if (!longitude || !latitude) missingFields.push("Location coordinates");
-        if (!is_emergency) missingFields.push("Emergency status");
-        if (!location) missingFields.push("Location");
-        // If "Others" is selected, ensure that customType is provided
-        if (selectedItem === "Others" && !customType) {
-          missingFields.push("Custom type");
-        }
-
-        setMissingFieldsMessage(
-          `Please fill in the following fields: ${missingFields.join(", ")}`
-        );
+      
+      // Validate required fields
+      if (!location || !coordinates || !selectedItem || !description || !imageUri) {
+        setMissingFieldsMessage("Please fill in all required fields.");
         setMissingFieldsModalVisible(true);
         return;
       }
-
-      if (!createReport) {
-        throw new Error("createReport function is not defined");
-      }
-
-      if (!imageUri) {
-        throw new Error("Image Uri is not valid! or Null");
-      }
-
-      const res = await Report.addReports(
+  
+      const [latitude, longitude] = coordinates.split(",");
+      const is_emergency = isEmergency?.toLowerCase() === "yes" ? "emergency" : "not emergency";
+  
+      const res = await createReport(
         selectedItem,
         description,
         longitude,
@@ -117,14 +82,15 @@ export default function PictureForm() {
         is_emergency,
         imageUri,
         customType,
-        floorNumber,
-        location
+        floorNumber
       );
+  
       const user_id = await SecureStore.getItemAsync("user_id");
       if (!user_id) {
         console.error("USER_ID is missing!");
         return;
       }
+  
       if (res) {
         setLoading(false);
         scheduleNotification(
@@ -138,16 +104,22 @@ export default function PictureForm() {
           title: "Your Report Has Been Submitted!",
           description: `Thank you for caring! Your report about the ${selectedItem} has been submitted.`,
           screen: "/(tabs)/manage",
-          createdAt: new Date(), // Store the timestamp
+          createdAt: new Date(),
         });
         setReportResult(res);
         handleReportSuccess();
       }
     } catch (error: any) {
       setLoading(false);
-      console.error("Error creating report:", error.message || error);
+  
+      let errorMessage = error.message || "An unexpected error occurred. Please try again.";
+      console.error("Error creating report:", errorMessage);
+  
+      // Display the error message to the user
+      alert(errorMessage);
     }
   };
+  
 
   const handleReportSuccess = () => {
     setLoading(false);
