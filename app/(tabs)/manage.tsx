@@ -64,7 +64,7 @@ export default function ManageReports() {
   const categories = [
     "all",
     "fires",
-    "street light",
+    "street lights",
     "potholes",
     "floods",
     "road accident",
@@ -94,7 +94,7 @@ export default function ManageReports() {
   const fetchAllDocuments = async (userId: string, votes: any[]) => {
     const categories = [
       "fires",
-      "street light",
+      "street lights",
       "potholes",
       "floods",
       "others",
@@ -312,9 +312,8 @@ export default function ManageReports() {
       }
       const reportData = reportSnap.data();
 
-      // Delete all documents in the sub-collections: validation, votes, reasons, and feedback
-      await api.delete(`api/reports/${reportId}/delete/`);
-
+      
+      await api.post(`api/${reportId}/delete/`);
       await deleteCollectionDocuments(
         reportId,
         selectedReport.type_of_report.toLowerCase()

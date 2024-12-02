@@ -236,9 +236,6 @@ export default function Reports() {
       }
     };
 
-    if (reports.length > 0) {
-      checkFeedbackForReports();
-    }
   }, [reports, USER_ID]);
 
   const renderItem = ({ item }: { item: Report }) => {

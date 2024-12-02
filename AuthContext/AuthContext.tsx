@@ -36,7 +36,8 @@ interface AuthProps {
     is_emergency: string,
     image_path: string,
     custom_type: string,
-    floor_number: string
+    floor_number: string,
+    location: string,
   ) => Promise<any>;
   onLogout?: () => Promise<any>;
   getUserInfo?: () => Promise<any>;
@@ -391,7 +392,8 @@ export const AuthProvider = ({ children }: any) => {
     is_emergency: string,
     image_path: string,
     custom_type: string,
-    floor_number: string
+    floor_number: string,
+    location: string
   ) => {
     const formData = new FormData();
     formData.append("type_of_report", type_of_report);
@@ -400,12 +402,14 @@ export const AuthProvider = ({ children }: any) => {
     formData.append("latitude", latitude);
     formData.append("is_emergency", is_emergency);
   
+    // Convert image to base64
     const imageBase64 = await FileSystem.readAsStringAsync(image_path, {
       encoding: FileSystem.EncodingType.Base64,
     });
     formData.append("image_path", `data:image/jpeg;base64,${imageBase64}`);
     formData.append("custom_type", custom_type);
     formData.append("floor_number", floor_number);
+    formData.append("location", location);
   
     try {
       const res = await api.post("api/create-report/", formData, {
@@ -415,69 +419,19 @@ export const AuthProvider = ({ children }: any) => {
         },
       });
   
+      // Check for success status codes
       if (res.status === 201 || res.status === 200) {
         return res; // Report created successfully
       }
+  
+      throw new Error("Failed to create report.");
     } catch (error: any) {
-      // General error handling
-      console.error("Error details:", error); // Log the complete error object
-      if (error.response) {
-        const errorData = error.response.data;
-        console.error("Error response data:", errorData);
-        console.error("Error response status:", error.response.status);
-  
-        // If duplicate report exists
-        if (errorData.detail && errorData.detail === "A similar report already exists.") {
-          return handleDuplicateReport(errorData.existing_report, formData);
-        }
-  
-        // Display a user-friendly error message
-        alert(errorData.detail || "An error occurred. Please try again.");
-      } else {
-        // Network or unexpected error
-        alert("An unexpected error occurred. Please check your network connection.");
-      }
+      console.error("Error details:", error);
+      throw error
     }
   };
   
-  // Handle duplicate report scenario
-  const handleDuplicateReport = async (existingReport: any, formData: FormData) => {
-    const { location, type_of_report, report_description, report_date } = existingReport;
-    return new Promise((resolve, reject) => {
-      Alert.alert(
-        "Duplicate Report Detected",
-        `A similar report already exists at ${location}. Type: ${type_of_report}, Description: ${report_description}, Reported on: ${report_date}. Do you want to submit this report anyway?`,
-        [
-          {
-            text: "Cancel",
-            style: "cancel",
-            onPress: () => reject(new Error("Report submission canceled.")),
-          },
-          {
-            text: "Submit Anyway",
-            onPress: async () => {
-              try {
-                // Retry with a `force_submit` flag
-                formData.append("force_submit", "true");
-                const retryRes = await api.post("api/create-report/", formData, {
-                  headers: {
-                    "Content-Type": "multipart/form-data",
-                    Authorization: `Bearer ${authState.token}`,
-                  },
-                });
-                resolve(retryRes); // Successfully submitted
-              } catch (retryError: any) {
-                console.error("Error on forced submission:", retryError);
-                reject(new Error(`An error occurred during forced submission: ${retryError.message}`));
-              }
-            },
-          },
-        ]
-      );
-    });
-  };
-  
- 
+
   
   
   

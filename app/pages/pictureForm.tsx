@@ -12,6 +12,7 @@ import {
   Modal,
   TouchableWithoutFeedback,
   ImageBackground,
+  Alert,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import { Dimensions } from "react-native";
@@ -32,6 +33,7 @@ import { scheduleNotification } from "../utils/notifications";
 import { Report } from "../utils/reports";
 import { addDoc, collection, getFirestore } from "firebase/firestore";
 import { app } from "@/firebase/firebaseConfig";
+import api from "../api/axios";
 const { width, height } = Dimensions.get("window");
 const db = getFirestore(app);
 
@@ -60,10 +62,11 @@ export default function PictureForm() {
   const [missingFieldsMessage, setMissingFieldsMessage] = useState("");
   const { createReport } = useAuth();
 
+
   const report = async () => {
     try {
       setLoading(true);
-      
+  
       // Validate required fields
       if (!location || !coordinates || !selectedItem || !description || !imageUri) {
         setMissingFieldsMessage("Please fill in all required fields.");
@@ -73,60 +76,131 @@ export default function PictureForm() {
   
       const [latitude, longitude] = coordinates.split(",");
       const is_emergency = isEmergency?.toLowerCase() === "yes" ? "emergency" : "not emergency";
-  
-      const res = await createReport(
-        selectedItem,
-        description,
-        longitude,
-        latitude,
-        is_emergency,
-        imageUri,
-        customType,
-        floorNumber
-      );
-  
       const user_id = await SecureStore.getItemAsync("user_id");
       if (!user_id) {
         console.error("USER_ID is missing!");
         return;
       }
   
-      if (res) {
-        setLoading(false);
-        scheduleNotification(
-          "Your Report Has Been Submitted!",
-          `Thank you for caring! Your report about the ${selectedItem} has been submitted.`,
-          1,
-          "/(tabs)/manage"
-        );
-        await addDoc(collection(db, "notifications"), {
-          userId: user_id,
-          title: "Your Report Has Been Submitted!",
-          description: `Thank you for caring! Your report about the ${selectedItem} has been submitted.`,
-          screen: "/(tabs)/manage",
-          createdAt: new Date(),
-        });
-        setReportResult(res);
-        handleReportSuccess();
+      if (createReport) {
+        try {
+          const res = await createReport(
+            selectedItem,
+            description,
+            longitude,
+            latitude,
+            is_emergency,
+            imageUri,
+            customType,
+            floorNumber,
+            location
+          );
+  
+          if (res) {
+            handleReportSuccess(user_id, selectedItem)
+          }
+        } catch (error: any) {
+          if (error?.response?.data?.detail === "You've already reported this incident.") {
+            setLoading(false)
+            const existingReport = error?.response?.data?.existing_report;
+            Alert.alert("Duplicate Report Detected", `A similar report already exists at ${location}. Type: ${existingReport.type_of_report}, Description: ${existingReport.report_description}, Reported on: ${existingReport.report_date}.`)
+          } else if(error?.response?.data?.detail === "A similar report already exists."){
+              const existingReport = error?.response?.data?.existing_report;
+              const formData = new FormData();
+              formData.append("type_of_report", selectedItem);
+              formData.append("report_description", description);
+              formData.append("longitude", longitude);
+              formData.append("latitude", latitude);
+              formData.append("is_emergency", is_emergency);
+              formData.append("image_path", imageUri);
+              formData.append("custom_type", customType);
+              formData.append("floor_number", floorNumber);
+              formData.append("location", location);
+              await handleDuplicateReport(existingReport, formData);
+          }
+          else {
+            
+            setLoading(false);
+            const errorMessage = error?.message || "An unexpected error occurred. Please try again.";
+            console.error("Error creating report:", errorMessage);
+            alert(errorMessage);
+          }
+        }
+      } else {
+        console.error("createReport function is not defined");
       }
+  
     } catch (error: any) {
       setLoading(false);
-  
-      let errorMessage = error.message || "An unexpected error occurred. Please try again.";
+      const errorMessage = error.message || "An unexpected error occurred. Please try again.";
       console.error("Error creating report:", errorMessage);
-  
-      // Display the error message to the user
       alert(errorMessage);
     }
   };
   
-
-  const handleReportSuccess = () => {
-    setLoading(false);
+  
+  const handleReportSuccess = async (user_id: string, selectedItem: string) => {
+    scheduleNotification(
+      "Your Report Has Been Submitted!",
+      `Thank you for caring! Your report about the ${selectedItem} has been submitted.`,
+      1,
+      "/(tabs)/manage"
+    );
+  
+    await addDoc(collection(db, "notifications"), {
+      userId: user_id,
+      title: "Your Report Has Been Submitted!",
+      description: `Thank you for caring! Your report about the ${selectedItem} has been submitted.`,
+      screen: "/(tabs)/manage",
+      createdAt: new Date(),
+    });
+    setLoading(false)
     setSuccessModalVisible(true);
-    router.push("/(tabs)/reports");
-    console.log("Report created successfully:", reportResult);
+    
   };
+  
+  const handleDuplicateReport = async (existingReport: any, formData: any) => {
+    const { location, type_of_report, report_description, report_date } = existingReport;
+    return new Promise((resolve, reject) => {
+        Alert.alert(
+            "Duplicate Report Detected",
+            `A similar report already exists at ${location}. Type: ${type_of_report}, Description: ${report_description}, Reported on: ${report_date}. Do you want to submit this report anyway?`,
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel",
+                    onPress: () => reject(new Error("Report submission canceled.")),
+                },
+                {
+                    text: "Submit Anyway",
+                    onPress: async () => {
+                        formData.append("force_submit", "true");
+                        try {
+                            const retryRes = await api.post("api/create-report/", formData, {
+                              headers: {
+                                "Content-Type": "multipart/form-data",                               
+                              },
+                            });
+                            const user_id = await SecureStore.getItemAsync("user_id");
+                            if (!user_id) {
+                              console.error("USER_ID is missing!");
+                              return;
+                            }
+                            if(!selectedItem){
+                              console.error("USER_ID is missing!");
+                              return;
+                            }
+                            handleReportSuccess(user_id, selectedItem)
+                            resolve(retryRes); 
+                        } catch (retryError: any) {
+                            reject(new Error(`An error occurred during forced submission: ${retryError.message}`));
+                        }
+                    },
+                },
+            ]
+        );
+    });
+};
 
   const fetchData = async () => {
     try {
@@ -317,7 +391,10 @@ export default function PictureForm() {
                     <View className="flex flex-row justify-end mt-3 w-full ">
                       <TouchableOpacity
                         className="bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center"
-                        onPress={() => setSuccessModalVisible(false)} // Close the modal here
+                        onPress={() => {
+                          setSuccessModalVisible(false)
+                          router.push('/(tabs)/reports')
+                        }} // Close the modal here
                       >
                         <Text className="text-md font-semibold text-white px-4">
                           Close
