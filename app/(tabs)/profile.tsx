@@ -25,6 +25,10 @@ import { router } from "expo-router";
 const bgImage = require("@/assets/images/bgImage.png");
 import { useAuth } from "@/AuthContext/AuthContext";
 import * as SecureStore from 'expo-secure-store'
+import { collection, doc, getDocs, getFirestore, query, where } from "firebase/firestore";
+import { app } from "@/firebase/firebaseConfig";
+const db = getFirestore(app)
+
 const { width, height } = Dimensions.get("window");
 
 export default function Profile() {
@@ -49,6 +53,7 @@ function App() {
   const [email, setEmail] = useState("");
   const [contact, setContact] = useState("");
   const [isVerified, setIsVerified] = useState(false);
+  const [isPending, setIsPending] = useState(false);
   const [score, setScore] = useState(0)
   const [coordinates, setCoordinates] = useState("");
   const [showMapPicker, setShowMapPicker] = useState(false);
@@ -281,6 +286,34 @@ function App() {
     setShowViolation((prevState) => !prevState); // Toggle between true and false
   };
 
+  useEffect(() => {
+    
+    const checkUserVerificationStatus  = async () => {
+      const userId = await SecureStore.getItemAsync('user_id');
+      if (!userId) return;
+      const userIdString = userId.toString();
+      const verifyAccountRef = collection(db, 'verifyAccount');
+      const q = query(verifyAccountRef, where('user', '==', parseInt(userIdString)));
+      console.log(userId)
+      try {
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          const data = querySnapshot.docs[0].data();
+          if(!data.is_account_verified){
+              setIsPending(true)
+          }
+          console.log('Verification info exists:', querySnapshot.docs[0].data());
+        } else {
+
+          console.log('No verification info found for this user');
+        }
+      } catch (error) {
+        console.error('Error fetching verification info:', error);
+      }
+    }
+    checkUserVerificationStatus()
+  },[])
+
   return (
     <ImageBackground
       source={bgImage}
@@ -435,9 +468,13 @@ function App() {
               <View className="w-full flex flex-row justify-between items-center bg-white mx-3 mb-4 rounded-lg">
                 {!isVerified ? (
                   <>
+                    {isPending ? 
                     <Text className="text-md p-4 font-bold text-[#0C3B2D]">
-                      Not Yet Verified
-                    </Text>
+                    Verification is in Process..
+                  </Text> : 
+                  <Text className="text-md p-4 font-bold text-[#0C3B2D]">
+                  Not Yet Verified
+                </Text>}
                     <TouchableOpacity
                       className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg"
                       onPress={() => router.push("/pages/verifyPage")}

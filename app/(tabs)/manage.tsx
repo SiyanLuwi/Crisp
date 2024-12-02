@@ -34,6 +34,7 @@ import {
 } from "firebase/firestore";
 import * as SecureStore from "expo-secure-store";
 import { Report, Reports } from "../utils/reports";
+import api from "../api/axios";
 
 const db = getFirestore(app);
 const { height, width } = Dimensions.get("window");
@@ -63,7 +64,7 @@ export default function ManageReports() {
   const categories = [
     "all",
     "fires",
-    "street light",
+    "street lights",
     "potholes",
     "floods",
     "road accident",
@@ -93,7 +94,7 @@ export default function ManageReports() {
   const fetchAllDocuments = async (userId: string, votes: any[]) => {
     const categories = [
       "fires",
-      "street light",
+      "street lights",
       "potholes",
       "floods",
       "others",
@@ -311,7 +312,8 @@ export default function ManageReports() {
       }
       const reportData = reportSnap.data();
 
-      // Delete all documents in the sub-collections: validation, votes, reasons, and feedback
+      
+      await api.post(`api/${reportId}/delete/`);
       await deleteCollectionDocuments(
         reportId,
         selectedReport.type_of_report.toLowerCase()
