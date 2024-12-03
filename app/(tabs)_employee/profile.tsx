@@ -21,10 +21,12 @@ import LogoutModal from "@/components/logout";
 import ChangePasswordModal from "@/components/changePassword";
 import SaveConfirmationModal from "@/components/saveConfirmModal";
 import CancelModal from "@/components/cancelModal";
+import TermsCondition from "@/components/termsCondition";
 import { router } from "expo-router";
 const bgImage = require("@/assets/images/bgImage.png");
 import { useAuth } from "@/AuthContext/AuthContext";
-
+import * as SecureStore from "expo-secure-store";
+import { getAddressFromCoordinates } from "../utils/convertCoordinatesToAddress";
 const { width, height } = Dimensions.get("window");
 
 export default function Profile() {
@@ -32,7 +34,7 @@ export default function Profile() {
 }
 
 function App() {
-  const { getUserInfo, updateProfile } = useAuth();
+  const { getUserInfo, updateProfile, isPending } = useAuth();
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [changePasswordModalVisible, setChangePasswordModalVisible] =
     useState(false);
@@ -40,21 +42,27 @@ function App() {
   const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [email, setEmail] = useState("");
   const [contact, setContact] = useState("");
   const [isVerified, setIsVerified] = useState(false);
   const [showMapPicker, setShowMapPicker] = useState(false);
+  const [fullImageModalVisible, setFullImageModalVisible] = useState(false);
 
   useEffect(() => {
     const loadUserInfo = async () => {
       const userInfo = await (getUserInfo
         ? getUserInfo()
         : Promise.resolve({}));
+      const station_address = await SecureStore.getItemAsync("station_address");
+      const [latStr, longStr] =
+        station_address?.split(",") || "Address cannot fetch at the moment.";
+      const lat = parseInt(latStr);
+      const long = parseInt(longStr);
+      // const address_name = await getAddressFromCoordinates(lat, long);
       setName(userInfo?.username || "");
-      setAddress(userInfo?.address || "");
+      setAddress(station_address || "");
       setEmail(userInfo?.email || "");
       setContact(userInfo?.contact_number || "");
       setIsVerified(userInfo?.is_verified || "");
@@ -136,9 +144,15 @@ function App() {
 
   const confirmSave = async () => {
     if (updateProfile) {
-      // Ensure updateProfile is defined
+      const station_address =
+        (await SecureStore.getItemAsync("station_address")) || "";
       try {
-        const updatedUser = await updateProfile(name, address, contact);
+        const updatedUser = await updateProfile(
+          name,
+          address,
+          contact,
+          station_address
+        );
         // console.log("Profile updated successfully:", updatedUser);
         setPrevValues({ name, address, email, contact }); // Update previous values
         setShowSaveConfirmation(false);
@@ -217,7 +231,9 @@ function App() {
                 placeholder="Name"
               />
               <View style={{ width: "100%", alignItems: "flex-start" }}>
-                <Text className="text-md text-white mb-1">Address:</Text>
+                <Text className="text-md text-white mb-1">
+                  Station Address:
+                </Text>
               </View>
               <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
                 <TextInput
@@ -276,17 +292,35 @@ function App() {
               <View className="w-full flex flex-row justify-between items-center bg-white mx-3 mb-4 rounded-lg">
                 {!isVerified ? (
                   <>
-                    <Text className="text-md p-4 font-bold text-[#0C3B2D]">
-                      Not Yet Verified
-                    </Text>
-                    <TouchableOpacity
-                      className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg"
-                      onPress={() => router.push("/pages/verifyPage")}
-                    >
-                      <Text className="text-white text-md font-normal">
-                        Verify
+                    {isPending ? (
+                      <Text className="text-md p-4 font-bold text-[#0C3B2D]">
+                        Verification is in Process..
                       </Text>
-                    </TouchableOpacity>
+                    ) : (
+                      <Text className="text-md p-4 font-bold text-[#0C3B2D]">
+                        Not Yet Verified
+                      </Text>
+                    )}
+                    {isPending ? (
+                      <TouchableOpacity
+                        className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg"
+                        onPress={() => router.push("/pages/verifyPage")}
+                        disabled
+                      >
+                        <Text className="text-white text-md font-normal">
+                          Verify
+                        </Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <TouchableOpacity
+                        className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg"
+                        onPress={() => router.push("/pages/verifyPage")}
+                      >
+                        <Text className="text-white text-md font-normal">
+                          Verify
+                        </Text>
+                      </TouchableOpacity>
+                    )}
                   </>
                 ) : (
                   <Text className="text-md p-4 font-bold text-[#0C3B2D]">
@@ -324,6 +358,20 @@ function App() {
                 </TouchableOpacity>
               )}
             </View>
+            <View className={"flex-col items-center mt-5"}>
+              <TouchableOpacity
+                onPress={() => {
+                  setFullImageModalVisible(true);
+                }}
+              >
+                <Text className={"text-white text-md font-bold mt-1"}>
+                  Terms and Conditions
+                </Text>
+              </TouchableOpacity>
+              <Text className={"text-slate-400 text-sm font-semibold mt-2"}>
+                Version 1.6.5
+              </Text>
+            </View>
           </View>
 
           {/* Logout Confirmation Modal */}
@@ -352,6 +400,10 @@ function App() {
             visible={cancelModalVisible}
             onConfirm={confirmCancel}
             onCancel={() => setCancelModalVisible(false)}
+          />
+          <TermsCondition
+            fullImageModalVisible={fullImageModalVisible}
+            setFullImageModalVisible={setFullImageModalVisible}
           />
 
           <View className="flex flex-row items-center">

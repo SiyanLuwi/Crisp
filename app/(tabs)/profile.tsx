@@ -21,6 +21,7 @@ import LogoutModal from "@/components/logout";
 import ChangePasswordModal from "@/components/changePassword";
 import SaveConfirmationModal from "@/components/saveConfirmModal";
 import CancelModal from "@/components/cancelModal";
+import TermsCondition from "@/components/termsCondition";
 import { router } from "expo-router";
 const bgImage = require("@/assets/images/bgImage.png");
 import { useAuth } from "@/AuthContext/AuthContext";
@@ -43,7 +44,7 @@ export default function Profile() {
 }
 
 function App() {
-  const { getUserInfo, updateProfile } = useAuth();
+  const { getUserInfo, updateProfile, isPending } = useAuth();
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [changePasswordModalVisible, setChangePasswordModalVisible] =
     useState(false);
@@ -51,16 +52,14 @@ function App() {
   const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [showCreditScore, setShowCreditScore] = useState(false);
-  const [showViolation, setShowViolation] = useState(false);
   const [violation, setViolation] = useState(0);
+  const [fullImageModalVisible, setFullImageModalVisible] = useState(false);
 
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [email, setEmail] = useState("");
   const [contact, setContact] = useState("");
   const [isVerified, setIsVerified] = useState(false);
-  const [isPending, setIsPending] = useState(false);
   const [score, setScore] = useState(0);
   const [coordinates, setCoordinates] = useState("");
   const [showMapPicker, setShowMapPicker] = useState(false);
@@ -281,44 +280,6 @@ function App() {
       return null;
     }
   };
-  const handleShowCreditScore = () => {
-    setShowCreditScore((prevState) => !prevState); // Toggle between true and false
-  };
-  const handleShowViolation = () => {
-    setShowViolation((prevState) => !prevState); // Toggle between true and false
-  };
-
-  useEffect(() => {
-    const checkUserVerificationStatus = async () => {
-      const userId = await SecureStore.getItemAsync("user_id");
-      if (!userId) return;
-      const userIdString = userId.toString();
-      const verifyAccountRef = collection(db, "verifyAccount");
-      const q = query(
-        verifyAccountRef,
-        where("user", "==", parseInt(userIdString))
-      );
-      // console.log(userId);
-      try {
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-          const data = querySnapshot.docs[0].data();
-          if (!data.is_account_verified) {
-            setIsPending(true);
-          }
-          // console.log(
-          //   "Verification info exists:",
-          //   querySnapshot.docs[0].data()
-          // );
-        } else {
-          console.log("No verification info found for this user");
-        }
-      } catch (error) {
-        console.error("Error fetching verification info:", error);
-      }
-    };
-    checkUserVerificationStatus();
-  }, []);
 
   return (
     <ImageBackground
@@ -352,56 +313,38 @@ function App() {
                   className="w-48 h-48 rounded-full border-4 border-white mb-5 mt-8 bg-white"
                 />
               </TouchableOpacity>
-              <TouchableOpacity
-                className="absolute top-10 right-0 bg-white w-12 h-12 rounded-full border border-white items-center justify-center"
-                style={{
-                  transform: [
-                    { translateX: RFPercentage(5.3) },
-                    { translateY: RFPercentage(-0.3) },
-                  ],
-                }}
-                onPress={handleShowCreditScore}
-              >
-                <Text>{score}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="absolute top-10 right-0 bg-white w-12 h-12 rounded-full border border-white items-center justify-center"
-                style={{
-                  transform: [
-                    { translateX: RFPercentage(5.3) },
-                    { translateY: RFPercentage(15) },
-                  ],
-                }}
-                onPress={handleShowViolation}
-              >
-                <Text>{violation}</Text>
-              </TouchableOpacity>
             </View>
-            {showCreditScore && (
-              <View
-                className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-[#0C3B2D]/50 px-4 py-2 my-5 rounded-lg"
-                style={{
-                  zIndex: 10,
-                }}
-              >
-                <Text className="text-white font-semibold text-md">
-                  Your Credit Score
-                </Text>
-              </View>
-            )}
-            {showViolation && (
-              <View
-                className="absolute top-52 left-1/2 transform -translate-x-1/2 bg-[#0C3B2D]/50 px-4 py-2 my-5 rounded-lg"
-                style={{
-                  zIndex: 10,
-                }}
-              >
-                <Text className="text-white font-semibold text-md">
-                  Number of Violation
-                </Text>
-              </View>
-            )}
             <View className="justify-center w-full items-center px-12 mt-6">
+              <View className="w-full flex flex-row">
+                <View className="w-1/2 flex flex-col pr-1">
+                  <View style={{ width: "100%", alignItems: "flex-start" }}>
+                    <Text className="text-md text-white mb-1">
+                      Credibility Score:
+                    </Text>
+                  </View>
+                  <TextInput
+                    className={`w-full text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D] ${
+                      isEditing ? "bg-slate-300" : "bg-white"
+                    }`}
+                    value={score.toString()}
+                    editable={false}
+                  />
+                </View>
+                <View className="w-1/2 flex flex-col pl-1">
+                  <View style={{ width: "100%", alignItems: "flex-start" }}>
+                    <Text className="text-md text-white mb-1">
+                      Number of Violation:
+                    </Text>
+                  </View>
+                  <TextInput
+                    className={`w-full text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D] ${
+                      isEditing ? "bg-slate-300" : "bg-white"
+                    }`}
+                    value={violation.toString()}
+                    editable={false}
+                  />
+                </View>
+              </View>
               <View style={{ width: "100%", alignItems: "flex-start" }}>
                 <Text className="text-md text-white mb-1">Name:</Text>
               </View>
@@ -473,7 +416,11 @@ function App() {
                   Is User Verfied:
                 </Text>
               </View>
-              <View className="w-full flex flex-row justify-between items-center bg-white mx-3 mb-4 rounded-lg">
+              <View
+                className={`w-full flex flex-row justify-between items-center bg-white mx-3 mb-4 rounded-lg ${
+                  isEditing ? "bg-slate-300" : "bg-white"
+                }`}
+              >
                 {!isVerified ? (
                   <>
                     {isPending ? (
@@ -481,18 +428,20 @@ function App() {
                         Verification is in Process..
                       </Text>
                     ) : (
-                      <Text className="text-md p-4 font-bold text-[#0C3B2D]">
-                        Not Yet Verified
-                      </Text>
+                      <>
+                        <Text className="text-md p-4 font-bold text-[#0C3B2D]">
+                          Not Yet Verified
+                        </Text>
+                        <TouchableOpacity
+                          className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg"
+                          onPress={() => router.push("/pages/verifyPage")}
+                        >
+                          <Text className="text-white text-md font-normal">
+                            Verify
+                          </Text>
+                        </TouchableOpacity>
+                      </>
                     )}
-                    <TouchableOpacity
-                      className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg"
-                      onPress={() => router.push("/pages/verifyPage")}
-                    >
-                      <Text className="text-white text-md font-normal">
-                        Verify
-                      </Text>
-                    </TouchableOpacity>
                   </>
                 ) : (
                   <Text className="text-md p-4 font-bold text-[#0C3B2D]">
@@ -500,7 +449,6 @@ function App() {
                   </Text>
                 )}
               </View>
-
               {errors && (
                 <Text className="text-md text-red-400 font-semibold flex text-left w-full mt-2">
                   {errors}
@@ -524,7 +472,6 @@ function App() {
                   </Text>
                 </TouchableOpacity>
               )}
-
               {!isEditing && (
                 <TouchableOpacity
                   className="mt-3 w-full bg-[#8BC34A] rounded-xl p-2 shadow-lg justify-center items-center"
@@ -535,6 +482,21 @@ function App() {
                   </Text>
                 </TouchableOpacity>
               )}
+            </View>
+
+            <View className={"flex-col items-center mt-5"}>
+              <TouchableOpacity
+                onPress={() => {
+                  setFullImageModalVisible(true);
+                }}
+              >
+                <Text className={"text-white text-md font-bold mt-1"}>
+                  Terms and Conditions
+                </Text>
+              </TouchableOpacity>
+              <Text className={"text-slate-400 text-sm font-semibold mt-2"}>
+                Version 1.6.5
+              </Text>
             </View>
           </View>
 
@@ -564,6 +526,10 @@ function App() {
             visible={cancelModalVisible}
             onConfirm={confirmCancel}
             onCancel={() => setCancelModalVisible(false)}
+          />
+          <TermsCondition
+            fullImageModalVisible={fullImageModalVisible}
+            setFullImageModalVisible={setFullImageModalVisible}
           />
 
           <View className="flex flex-row items-center">
