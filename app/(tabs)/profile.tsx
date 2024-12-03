@@ -36,7 +36,7 @@ export default function Profile() {
 }
 
 function App() {
-  const { getUserInfo, updateProfile } = useAuth();
+  const { getUserInfo, updateProfile, isPending } = useAuth();
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [changePasswordModalVisible, setChangePasswordModalVisible] =
     useState(false);
@@ -53,7 +53,6 @@ function App() {
   const [email, setEmail] = useState("");
   const [contact, setContact] = useState("");
   const [isVerified, setIsVerified] = useState(false);
-  const [isPending, setIsPending] = useState(false);
   const [score, setScore] = useState(0)
   const [coordinates, setCoordinates] = useState("");
   const [showMapPicker, setShowMapPicker] = useState(false);
@@ -286,33 +285,7 @@ function App() {
     setShowViolation((prevState) => !prevState); // Toggle between true and false
   };
 
-  useEffect(() => {
-    
-    const checkUserVerificationStatus  = async () => {
-      const userId = await SecureStore.getItemAsync('user_id');
-      if (!userId) return;
-      const userIdString = userId.toString();
-      const verifyAccountRef = collection(db, 'verifyAccount');
-      const q = query(verifyAccountRef, where('user', '==', parseInt(userIdString)));
-      console.log(userId)
-      try {
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-          const data = querySnapshot.docs[0].data();
-          if(!data.is_account_verified){
-              setIsPending(true)
-          }
-          console.log('Verification info exists:', querySnapshot.docs[0].data());
-        } else {
 
-          console.log('No verification info found for this user');
-        }
-      } catch (error) {
-        console.error('Error fetching verification info:', error);
-      }
-    }
-    checkUserVerificationStatus()
-  },[])
 
   return (
     <ImageBackground
