@@ -138,7 +138,7 @@ export default function Reports() {
             const existingReports = prevReports.filter(
               (report) => report.category !== category
             );
-            return [...existingReports, ...sortedReports]; // Replace old reports of this category
+            return [...existingReports, ...sortedReports]; 
           });
         },
         (error) => {
@@ -147,7 +147,6 @@ export default function Reports() {
       );
     });
   
-    // Return a cleanup function to unsubscribe from snapshots
     return () => {
       unsubscribeFunctions.forEach((unsubscribe) => unsubscribe());
     };
