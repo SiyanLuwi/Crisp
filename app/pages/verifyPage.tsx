@@ -11,7 +11,7 @@ import {
   ScrollView,
   ImageBackground,
   TouchableWithoutFeedback,
-  Event
+  Event,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { RFPercentage } from "react-native-responsive-fontsize";
@@ -43,7 +43,7 @@ export default function VerifyPage() {
   const [fullImageModalVisible, setFullImageModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const { verifyAccount } = useAuth();
 
@@ -72,7 +72,7 @@ export default function VerifyPage() {
       idPicture,
     });
     try {
-      setLoading(true)
+      setLoading(true);
       const emptyFields = [];
 
       if (!firstName) emptyFields.push("First Name");
@@ -123,22 +123,21 @@ export default function VerifyPage() {
         idPicture || "" // Use fallback
       );
       if (!res) {
-          throw new Error("Cannot verify your account at the moment.")
+        throw new Error("Cannot verify your account at the moment.");
       }
-          console.log("Account verified successfully.");
-          setModalVisible(true);    
-          setFirstName("");
-          setMiddleName("");
-          setLastName("");
-          setAddress("");
-          setBirthday("");
-          setIdNumber("");
-          setSelfie("");
-          setPhoto("");
-          setIdPicture("");
-          setLoading(false)
-          router.back();
-
+      console.log("Account verified successfully.");
+      setModalVisible(true);
+      setFirstName("");
+      setMiddleName("");
+      setLastName("");
+      setAddress("");
+      setBirthday("");
+      setIdNumber("");
+      setSelfie(null);
+      setPhoto(null);
+      setIdPicture(null);
+      setLoading(false);
+      router.back();
     } catch (error: any) {
       console.error("Verification error:", error);
       if (error.response) {
@@ -212,7 +211,7 @@ export default function VerifyPage() {
 
   // Call loadStoredImages on component mount or when needed
   useEffect(() => {
-    console.log(showDatePicker)
+    console.log(showDatePicker);
     loadStoredImages();
   }, []);
 
@@ -322,17 +321,17 @@ export default function VerifyPage() {
                     *
                   </Text>
                 </View>
-                <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]" >
+                <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
                   {/* Birthday Button */}
                   <TouchableOpacity onPress={() => setShowDatePicker(true)}>
-                  <TextInput
-                    className="w-3/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
-                    placeholderTextColor="#888"
-                    placeholder="Select Birthday"
-                    value={birthday}
-                    editable={false}
-                  />
-            </TouchableOpacity>
+                    <TextInput
+                      className="w-3/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
+                      placeholderTextColor="#888"
+                      placeholder="Select Birthday"
+                      value={birthday}
+                      editable={false}
+                    />
+                  </TouchableOpacity>
                   {/* DateTimePicker */}
                   {showDatePicker && (
                     <DateTimePicker
@@ -461,8 +460,15 @@ export default function VerifyPage() {
                     </Text>
                   </TouchableOpacity>
                 </View>
-                    <LoadingButton title={"Verify"} onPress={handleVerify} loading={loading} style={"mt-12 w-full bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center border-2 border-[#8BC34A]"}/>
-       
+                <LoadingButton
+                  title={"Verify"}
+                  onPress={handleVerify}
+                  loading={loading}
+                  style={
+                    "mt-12 w-full bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center border-2 border-[#8BC34A]"
+                  }
+                />
+
                 <TouchableOpacity
                   className="mt-3 w-full bg-[#8BC34A] rounded-xl p-2 mb-6  shadow-lg justify-center items-center"
                   onPress={() => setCancelModalVisible(true)}
