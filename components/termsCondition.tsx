@@ -24,6 +24,13 @@ const TermsCondition: React.FC<TermsConditionProps> = ({
     setModalVisible(!modalVisible);
   };
 
+  // Get the current date and format it (e.g., "October 10, 2024")
+  const currentDate = new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
   return (
     <View className="flex-1 justify-center items-center">
       {/* Modal for displaying Terms and Conditions */}
@@ -41,7 +48,7 @@ const TermsCondition: React.FC<TermsConditionProps> = ({
                 CRISP Terms and Conditions
               </Text>
               <Text className="text-sm italic text-center mb-6">
-                Effective Date: [Insert Date]
+                Effective Date: {currentDate}
               </Text>
 
               <Text className="text-base text-justify">

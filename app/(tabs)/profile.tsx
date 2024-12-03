@@ -24,10 +24,17 @@ import CancelModal from "@/components/cancelModal";
 import { router } from "expo-router";
 const bgImage = require("@/assets/images/bgImage.png");
 import { useAuth } from "@/AuthContext/AuthContext";
-import * as SecureStore from 'expo-secure-store'
-import { collection, doc, getDocs, getFirestore, query, where } from "firebase/firestore";
+import * as SecureStore from "expo-secure-store";
+import {
+  collection,
+  doc,
+  getDocs,
+  getFirestore,
+  query,
+  where,
+} from "firebase/firestore";
 import { app } from "@/firebase/firebaseConfig";
-const db = getFirestore(app)
+const db = getFirestore(app);
 
 const { width, height } = Dimensions.get("window");
 
@@ -54,7 +61,7 @@ function App() {
   const [contact, setContact] = useState("");
   const [isVerified, setIsVerified] = useState(false);
   const [isPending, setIsPending] = useState(false);
-  const [score, setScore] = useState(0)
+  const [score, setScore] = useState(0);
   const [coordinates, setCoordinates] = useState("");
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [errors, setErrors] = useState("");
@@ -69,8 +76,8 @@ function App() {
       setEmail(userInfo?.email || "");
       setContact(userInfo?.contact_number || "");
       setIsVerified(userInfo?.is_verified || "");
-      const score = await SecureStore.getItemAsync('score')
-      const violation = await SecureStore.getItemAsync('violation')
+      const score = await SecureStore.getItemAsync("score");
+      const violation = await SecureStore.getItemAsync("violation");
       setScore(userInfo?.score || score || 0);
       setViolation(userInfo?.violation || violation || 0);
     };
@@ -154,12 +161,7 @@ function App() {
 
   const confirmSave = async () => {
     // Validation check: ensure name, address, contact, and coordinates are not empty
-    if (
-      !name.trim() ||
-      !address.trim() ||
-      !contact.trim() ||
-      !coordinates.trim()
-    ) {
+    if (!name.trim() || !address.trim() || !contact.trim()) {
       setErrors("Please fill in all required fields.");
       setShowSaveConfirmation(false);
       setIsEditing(true); // Exit edit mode
@@ -268,7 +270,7 @@ function App() {
 
         // Join all parts into a single string
         const address = addressParts.join(", ") || "Address not found";
-        console.log("Fetched address:", address);
+        // console.log("Fetched address:", address);
         return address;
       } else {
         console.error("Nominatim API error:", data);
@@ -287,32 +289,36 @@ function App() {
   };
 
   useEffect(() => {
-    
-    const checkUserVerificationStatus  = async () => {
-      const userId = await SecureStore.getItemAsync('user_id');
+    const checkUserVerificationStatus = async () => {
+      const userId = await SecureStore.getItemAsync("user_id");
       if (!userId) return;
       const userIdString = userId.toString();
-      const verifyAccountRef = collection(db, 'verifyAccount');
-      const q = query(verifyAccountRef, where('user', '==', parseInt(userIdString)));
-      console.log(userId)
+      const verifyAccountRef = collection(db, "verifyAccount");
+      const q = query(
+        verifyAccountRef,
+        where("user", "==", parseInt(userIdString))
+      );
+      // console.log(userId);
       try {
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
           const data = querySnapshot.docs[0].data();
-          if(!data.is_account_verified){
-              setIsPending(true)
+          if (!data.is_account_verified) {
+            setIsPending(true);
           }
-          console.log('Verification info exists:', querySnapshot.docs[0].data());
+          // console.log(
+          //   "Verification info exists:",
+          //   querySnapshot.docs[0].data()
+          // );
         } else {
-
-          console.log('No verification info found for this user');
+          console.log("No verification info found for this user");
         }
       } catch (error) {
-        console.error('Error fetching verification info:', error);
+        console.error("Error fetching verification info:", error);
       }
-    }
-    checkUserVerificationStatus()
-  },[])
+    };
+    checkUserVerificationStatus();
+  }, []);
 
   return (
     <ImageBackground
@@ -368,7 +374,7 @@ function App() {
                 }}
                 onPress={handleShowViolation}
               >
-                <Text>{score}</Text>
+                <Text>{violation}</Text>
               </TouchableOpacity>
             </View>
             {showCreditScore && (
@@ -441,7 +447,9 @@ function App() {
                 <Text className="text-md text-white mb-1">Email Address:</Text>
               </View>
               <TextInput
-                className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                className={`w-full text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D] ${
+                  isEditing ? "bg-slate-300" : "bg-white"
+                }`}
                 value={email}
                 editable={false}
                 onChangeText={setEmail}
@@ -468,13 +476,15 @@ function App() {
               <View className="w-full flex flex-row justify-between items-center bg-white mx-3 mb-4 rounded-lg">
                 {!isVerified ? (
                   <>
-                    {isPending ? 
-                    <Text className="text-md p-4 font-bold text-[#0C3B2D]">
-                    Verification is in Process..
-                  </Text> : 
-                  <Text className="text-md p-4 font-bold text-[#0C3B2D]">
-                  Not Yet Verified
-                </Text>}
+                    {isPending ? (
+                      <Text className="text-md p-4 font-bold text-[#0C3B2D]">
+                        Verification is in Process..
+                      </Text>
+                    ) : (
+                      <Text className="text-md p-4 font-bold text-[#0C3B2D]">
+                        Not Yet Verified
+                      </Text>
+                    )}
                     <TouchableOpacity
                       className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg"
                       onPress={() => router.push("/pages/verifyPage")}

@@ -37,7 +37,7 @@ interface AuthProps {
     image_path: string,
     custom_type: string,
     floor_number: string,
-    location: string,
+    location: string
   ) => Promise<any>;
   onLogout?: () => Promise<any>;
   getUserInfo?: () => Promise<any>;
@@ -272,7 +272,6 @@ export const AuthProvider = ({ children }: any) => {
       const expirationTime = Date.now() + 60 * 60 * 1000;
       axios.defaults.headers.common["Authorization"] = `Bearer ${data.access}`;
 
-      
       const storageItems: any = {
         [TOKEN_KEY]: data.access,
         [REFRESH_KEY]: data.refresh,
@@ -289,9 +288,9 @@ export const AuthProvider = ({ children }: any) => {
         score: data.score,
         violation: data.violation,
       };
-      if(data.account_type === 'worker'){
-        console.log("SUpervisor id: ", data.supervisor)
-          storageItems.supervisor_id = data.supervisor
+      if (data.account_type === "worker") {
+        console.log("SUpervisor id: ", data.supervisor);
+        storageItems.supervisor_id = data.supervisor;
       }
 
       await Promise.all(
@@ -401,7 +400,7 @@ export const AuthProvider = ({ children }: any) => {
     formData.append("longitude", longitude);
     formData.append("latitude", latitude);
     formData.append("is_emergency", is_emergency);
-  
+
     // Convert image to base64
     const imageBase64 = await FileSystem.readAsStringAsync(image_path, {
       encoding: FileSystem.EncodingType.Base64,
@@ -410,7 +409,7 @@ export const AuthProvider = ({ children }: any) => {
     formData.append("custom_type", custom_type);
     formData.append("floor_number", floor_number);
     formData.append("location", location);
-  
+
     try {
       const res = await api.post("api/create-report/", formData, {
         headers: {
@@ -418,24 +417,18 @@ export const AuthProvider = ({ children }: any) => {
           Authorization: `Bearer ${authState.token}`,
         },
       });
-  
+
       // Check for success status codes
       if (res.status === 201 || res.status === 200) {
         return res; // Report created successfully
       }
-  
+
       throw new Error("Failed to create report.");
     } catch (error: any) {
       console.error("Error details:", error);
-      throw error
+      throw error;
     }
   };
-  
-
-  
-  
-  
-
 
   const getUserInfo = async () => {
     try {
@@ -444,7 +437,7 @@ export const AuthProvider = ({ children }: any) => {
       const address = await SecureStore.getItemAsync("address");
       const contact_number = await SecureStore.getItemAsync("contact_number");
       const is_verified = await SecureStore.getItemAsync("is_verified");
-      console.log("is_verified: ", is_verified);
+      // console.log("is_verified: ", is_verified);
 
       return {
         username,
@@ -601,13 +594,14 @@ export const AuthProvider = ({ children }: any) => {
       });
       if (res.status === 201 || res.status === 200) {
         // alert("Verification request has been sent!");
-        const notifCollectionRef = collection(db, 'notifications');
+        const notifCollectionRef = collection(db, "notifications");
         await addDoc(notifCollectionRef, {
-            title: "Verification Request Submitted",
-            description: "A citizen has submitted verification information for review. Please take action.",
-            for_superadmin: true,
-            createdAt: new Date(),
-            user_id: USER_ID
+          title: "Verification Request Submitted",
+          description:
+            "A citizen has submitted verification information for review. Please take action.",
+          for_superadmin: true,
+          createdAt: new Date(),
+          user_id: USER_ID,
         });
         router.push("/(tabs)/profile");
       }
