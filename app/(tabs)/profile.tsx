@@ -21,13 +21,21 @@ import LogoutModal from "@/components/logout";
 import ChangePasswordModal from "@/components/changePassword";
 import SaveConfirmationModal from "@/components/saveConfirmModal";
 import CancelModal from "@/components/cancelModal";
+import TermsCondition from "@/components/termsCondition";
 import { router } from "expo-router";
 const bgImage = require("@/assets/images/bgImage.png");
 import { useAuth } from "@/AuthContext/AuthContext";
-import * as SecureStore from 'expo-secure-store'
-import { collection, doc, getDocs, getFirestore, query, where } from "firebase/firestore";
+import * as SecureStore from "expo-secure-store";
+import {
+  collection,
+  doc,
+  getDocs,
+  getFirestore,
+  query,
+  where,
+} from "firebase/firestore";
 import { app } from "@/firebase/firebaseConfig";
-const db = getFirestore(app)
+const db = getFirestore(app);
 
 const { width, height } = Dimensions.get("window");
 
@@ -44,16 +52,15 @@ function App() {
   const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [showCreditScore, setShowCreditScore] = useState(false);
-  const [showViolation, setShowViolation] = useState(false);
   const [violation, setViolation] = useState(0);
+  const [fullImageModalVisible, setFullImageModalVisible] = useState(false);
 
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [email, setEmail] = useState("");
   const [contact, setContact] = useState("");
   const [isVerified, setIsVerified] = useState(false);
-  const [score, setScore] = useState(0)
+  const [score, setScore] = useState(0);
   const [coordinates, setCoordinates] = useState("");
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [errors, setErrors] = useState("");
@@ -68,8 +75,8 @@ function App() {
       setEmail(userInfo?.email || "");
       setContact(userInfo?.contact_number || "");
       setIsVerified(userInfo?.is_verified || "");
-      const score = await SecureStore.getItemAsync('score')
-      const violation = await SecureStore.getItemAsync('violation')
+      const score = await SecureStore.getItemAsync("score");
+      const violation = await SecureStore.getItemAsync("violation");
       setScore(userInfo?.score || score || 0);
       setViolation(userInfo?.violation || violation || 0);
     };
@@ -153,12 +160,7 @@ function App() {
 
   const confirmSave = async () => {
     // Validation check: ensure name, address, contact, and coordinates are not empty
-    if (
-      !name.trim() ||
-      !address.trim() ||
-      !contact.trim() ||
-      !coordinates.trim()
-    ) {
+    if (!name.trim() || !address.trim() || !contact.trim()) {
       setErrors("Please fill in all required fields.");
       setShowSaveConfirmation(false);
       setIsEditing(true); // Exit edit mode
@@ -267,7 +269,7 @@ function App() {
 
         // Join all parts into a single string
         const address = addressParts.join(", ") || "Address not found";
-        console.log("Fetched address:", address);
+        // console.log("Fetched address:", address);
         return address;
       } else {
         console.error("Nominatim API error:", data);
@@ -278,14 +280,6 @@ function App() {
       return null;
     }
   };
-  const handleShowCreditScore = () => {
-    setShowCreditScore((prevState) => !prevState); // Toggle between true and false
-  };
-  const handleShowViolation = () => {
-    setShowViolation((prevState) => !prevState); // Toggle between true and false
-  };
-
-
 
   return (
     <ImageBackground
@@ -319,56 +313,38 @@ function App() {
                   className="w-48 h-48 rounded-full border-4 border-white mb-5 mt-8 bg-white"
                 />
               </TouchableOpacity>
-              <TouchableOpacity
-                className="absolute top-10 right-0 bg-white w-12 h-12 rounded-full border border-white items-center justify-center"
-                style={{
-                  transform: [
-                    { translateX: RFPercentage(5.3) },
-                    { translateY: RFPercentage(-0.3) },
-                  ],
-                }}
-                onPress={handleShowCreditScore}
-              >
-                <Text>{score}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="absolute top-10 right-0 bg-white w-12 h-12 rounded-full border border-white items-center justify-center"
-                style={{
-                  transform: [
-                    { translateX: RFPercentage(5.3) },
-                    { translateY: RFPercentage(15) },
-                  ],
-                }}
-                onPress={handleShowViolation}
-              >
-                <Text>{score}</Text>
-              </TouchableOpacity>
             </View>
-            {showCreditScore && (
-              <View
-                className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-[#0C3B2D]/50 px-4 py-2 my-5 rounded-lg"
-                style={{
-                  zIndex: 10,
-                }}
-              >
-                <Text className="text-white font-semibold text-md">
-                  Your Credit Score
-                </Text>
-              </View>
-            )}
-            {showViolation && (
-              <View
-                className="absolute top-52 left-1/2 transform -translate-x-1/2 bg-[#0C3B2D]/50 px-4 py-2 my-5 rounded-lg"
-                style={{
-                  zIndex: 10,
-                }}
-              >
-                <Text className="text-white font-semibold text-md">
-                  Number of Violation
-                </Text>
-              </View>
-            )}
             <View className="justify-center w-full items-center px-12 mt-6">
+              <View className="w-full flex flex-row">
+                <View className="w-1/2 flex flex-col pr-1">
+                  <View style={{ width: "100%", alignItems: "flex-start" }}>
+                    <Text className="text-md text-white mb-1">
+                      Credibility Score:
+                    </Text>
+                  </View>
+                  <TextInput
+                    className={`w-full text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D] ${
+                      isEditing ? "bg-slate-300" : "bg-white"
+                    }`}
+                    value={score.toString()}
+                    editable={false}
+                  />
+                </View>
+                <View className="w-1/2 flex flex-col pl-1">
+                  <View style={{ width: "100%", alignItems: "flex-start" }}>
+                    <Text className="text-md text-white mb-1">
+                      Number of Violation:
+                    </Text>
+                  </View>
+                  <TextInput
+                    className={`w-full text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D] ${
+                      isEditing ? "bg-slate-300" : "bg-white"
+                    }`}
+                    value={violation.toString()}
+                    editable={false}
+                  />
+                </View>
+              </View>
               <View style={{ width: "100%", alignItems: "flex-start" }}>
                 <Text className="text-md text-white mb-1">Name:</Text>
               </View>
@@ -414,7 +390,9 @@ function App() {
                 <Text className="text-md text-white mb-1">Email Address:</Text>
               </View>
               <TextInput
-                className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                className={`w-full text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D] ${
+                  isEditing ? "bg-slate-300" : "bg-white"
+                }`}
                 value={email}
                 editable={false}
                 onChangeText={setEmail}
@@ -438,24 +416,32 @@ function App() {
                   Is User Verfied:
                 </Text>
               </View>
-              <View className="w-full flex flex-row justify-between items-center bg-white mx-3 mb-4 rounded-lg">
+              <View
+                className={`w-full flex flex-row justify-between items-center bg-white mx-3 mb-4 rounded-lg ${
+                  isEditing ? "bg-slate-300" : "bg-white"
+                }`}
+              >
                 {!isVerified ? (
                   <>
-                    {isPending ? 
-                    <Text className="text-md p-4 font-bold text-[#0C3B2D]">
-                    Verification is in Process..
-                  </Text> : 
-                  <Text className="text-md p-4 font-bold text-[#0C3B2D]">
-                  Not Yet Verified
-                </Text>}
-                    <TouchableOpacity
-                      className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg"
-                      onPress={() => router.push("/pages/verifyPage")}
-                    >
-                      <Text className="text-white text-md font-normal">
-                        Verify
+                    {isPending ? (
+                      <Text className="text-md p-4 font-bold text-[#0C3B2D]">
+                        Verification is in Process..
                       </Text>
-                    </TouchableOpacity>
+                    ) : (
+                      <>
+                        <Text className="text-md p-4 font-bold text-[#0C3B2D]">
+                          Not Yet Verified
+                        </Text>
+                        <TouchableOpacity
+                          className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg"
+                          onPress={() => router.push("/pages/verifyPage")}
+                        >
+                          <Text className="text-white text-md font-normal">
+                            Verify
+                          </Text>
+                        </TouchableOpacity>
+                      </>
+                    )}
                   </>
                 ) : (
                   <Text className="text-md p-4 font-bold text-[#0C3B2D]">
@@ -463,7 +449,6 @@ function App() {
                   </Text>
                 )}
               </View>
-
               {errors && (
                 <Text className="text-md text-red-400 font-semibold flex text-left w-full mt-2">
                   {errors}
@@ -487,7 +472,6 @@ function App() {
                   </Text>
                 </TouchableOpacity>
               )}
-
               {!isEditing && (
                 <TouchableOpacity
                   className="mt-3 w-full bg-[#8BC34A] rounded-xl p-2 shadow-lg justify-center items-center"
@@ -498,6 +482,21 @@ function App() {
                   </Text>
                 </TouchableOpacity>
               )}
+            </View>
+
+            <View className={"flex-col items-center mt-5"}>
+              <TouchableOpacity
+                onPress={() => {
+                  setFullImageModalVisible(true);
+                }}
+              >
+                <Text className={"text-white text-md font-bold mt-1"}>
+                  Terms and Conditions
+                </Text>
+              </TouchableOpacity>
+              <Text className={"text-slate-400 text-sm font-semibold mt-2"}>
+                Version 1.6.5
+              </Text>
             </View>
           </View>
 
@@ -527,6 +526,10 @@ function App() {
             visible={cancelModalVisible}
             onConfirm={confirmCancel}
             onCancel={() => setCancelModalVisible(false)}
+          />
+          <TermsCondition
+            fullImageModalVisible={fullImageModalVisible}
+            setFullImageModalVisible={setFullImageModalVisible}
           />
 
           <View className="flex flex-row items-center">

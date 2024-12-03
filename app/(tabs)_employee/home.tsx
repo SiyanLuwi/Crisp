@@ -42,6 +42,7 @@ interface Report {
   custom_type: string;
   floor_number: string;
   is_validated: boolean;
+  assigned_to_id: number;
 }
 interface Location {
   latitude: number;
@@ -95,28 +96,40 @@ export default function Home() {
       "others",
       "road accident",
     ];
+    const supervisor_id = await SecureStore.getItemAsync("supervisor_id");
+    if (!supervisor_id) {
+      console.error("Supervisor ID not found!");
+      return;
+    }
 
     const unsubscribeFunctions = categories.map((category) => {
       return onSnapshot(
         collection(db, `reports/${category}/reports`),
         (snapshot) => {
-          const reports: Report[] = snapshot.docs.map((doc) => {
-            const data = doc.data() as Omit<Report, "id">; // Omit the id when fetching data
-            return {
-              id: doc.id, // Include the document ID this is an UUID
-              username: data.username || "", // Default to empty string if missing
-              type_of_report: data.type_of_report || "",
-              report_description: data.report_description || "",
-              longitude: data.longitude || 0, // Default to 0 if missing
-              latitude: data.latitude || 0, // Default to 0 if missing
-              category: category, // Set the category based on the current loop
-              image_path: data.image_path || "", // Default to empty string if missing
-              report_date: data.report_date || "", // Default to empty string if missing
-              custom_type: data.custom_type || "",
-              floor_number: data.floor_number || "",
-              is_validated: data.is_validated,
-            };
-          });
+          const reports: Report[] = snapshot.docs
+            .map((doc) => {
+              const data = doc.data() as Omit<Report, "id">; // Omit the id when fetching data
+              // Filter out reports that don't match the supervisor_id
+              if (data.assigned_to_id !== parseInt(supervisor_id)) {
+                return null; // Mark as null for filtering later
+              }
+
+              return {
+                id: doc.id, // Include the document ID this is an UUID
+                username: data.username || "", // Default to empty string if missing
+                type_of_report: data.type_of_report || "",
+                report_description: data.report_description || "",
+                longitude: data.longitude || 0, // Default to 0 if missing
+                latitude: data.latitude || 0, // Default to 0 if missing
+                category: category, // Set the category based on the current loop
+                image_path: data.image_path || "", // Default to empty string if missing
+                report_date: data.report_date || "", // Default to empty string if missing
+                custom_type: data.custom_type || "",
+                floor_number: data.floor_number || "",
+                is_validated: data.is_validated,
+              };
+            })
+            .filter((report) => report !== null) as Report[];
 
           const sortedReports = reports.sort((a, b) => {
             const dateA = new Date(a.report_date).getTime();

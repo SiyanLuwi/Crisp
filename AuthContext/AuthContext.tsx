@@ -38,7 +38,7 @@ interface AuthProps {
     image_path: string,
     custom_type: string,
     floor_number: string,
-    location: string,
+    location: string
   ) => Promise<any>;
   onLogout?: () => Promise<any>;
   getUserInfo?: () => Promise<any>;
@@ -98,7 +98,7 @@ export const AuthProvider = ({ children }: any) => {
   const [incomingCall, setIncomingCall] = useState<CallerInfo | any>(null); // Store incoming call details
   const [USER_ID, SET_USER_ID] = useState("");
   const [peerConnection, setPeerConnection] = useState(null);
-  const [isPending, setIsPending] = useState(false)
+  const [isPending, setIsPending] = useState(false);
   const router = useRouter();
 
   // useEffect(() => {
@@ -273,7 +273,6 @@ export const AuthProvider = ({ children }: any) => {
       const expirationTime = Date.now() + 60 * 60 * 1000;
       axios.defaults.headers.common["Authorization"] = `Bearer ${data.access}`;
 
-      
       const storageItems: any = {
         [TOKEN_KEY]: data.access,
         [REFRESH_KEY]: data.refresh,
@@ -290,10 +289,10 @@ export const AuthProvider = ({ children }: any) => {
         score: data.score,
         violation: data.violation,
       };
-      if(data.account_type === 'worker'){
-        console.log("SUpervisor id: ", data.supervisor)
-          storageItems.supervisor_id = data.supervisor
-          storageItems.station_address = data.station_address
+      if (data.account_type === "worker") {
+        console.log("SUpervisor id: ", data.supervisor);
+        storageItems.supervisor_id = data.supervisor;
+        storageItems.station_address = data.station_address;
       }
 
       await Promise.all(
@@ -403,7 +402,7 @@ export const AuthProvider = ({ children }: any) => {
     formData.append("longitude", longitude);
     formData.append("latitude", latitude);
     formData.append("is_emergency", is_emergency);
-  
+
     // Convert image to base64
     const imageBase64 = await FileSystem.readAsStringAsync(image_path, {
       encoding: FileSystem.EncodingType.Base64,
@@ -412,7 +411,7 @@ export const AuthProvider = ({ children }: any) => {
     formData.append("custom_type", custom_type);
     formData.append("floor_number", floor_number);
     formData.append("location", location);
-  
+
     try {
       const res = await api.post("api/create-report/", formData, {
         headers: {
@@ -420,24 +419,18 @@ export const AuthProvider = ({ children }: any) => {
           Authorization: `Bearer ${authState.token}`,
         },
       });
-  
+
       // Check for success status codes
       if (res.status === 201 || res.status === 200) {
         return res; // Report created successfully
       }
-  
+
       throw new Error("Failed to create report.");
     } catch (error: any) {
       console.error("Error details:", error);
-      throw error
+      throw error;
     }
   };
-  
-
-  
-  
-  
-
 
   const getUserInfo = async () => {
     try {
@@ -446,7 +439,7 @@ export const AuthProvider = ({ children }: any) => {
       const address = await SecureStore.getItemAsync("address");
       const contact_number = await SecureStore.getItemAsync("contact_number");
       const is_verified = await SecureStore.getItemAsync("is_verified");
-      console.log("is_verified: ", is_verified);
+      // console.log("is_verified: ", is_verified);
 
       return {
         username,
@@ -603,17 +596,17 @@ export const AuthProvider = ({ children }: any) => {
       });
       if (res.status === 201 || res.status === 200) {
         // alert("Verification request has been sent!");
-        const notifCollectionRef = collection(db, 'notifications');
+        const notifCollectionRef = collection(db, "notifications");
         await addDoc(notifCollectionRef, {
-            title: "Verification Request Submitted",
-            description: "A citizen has submitted verification information for review. Please take action.",
-            for_superadmin: true,
-            createdAt: new Date(),
-            user_id: USER_ID
-        });    
-          
+          title: "Verification Request Submitted",
+          description:
+            "A citizen has submitted verification information for review. Please take action.",
+          for_superadmin: true,
+          createdAt: new Date(),
+          user_id: USER_ID,
+        });
       }
-      return res 
+      return res;
     } catch (error: any) {
       console.error("Verification error:", error);
       if (error.response) {
@@ -666,32 +659,36 @@ export const AuthProvider = ({ children }: any) => {
     }
   };
   useEffect(() => {
-    
-    const checkUserVerificationStatus  = async () => {
-      const userId = await SecureStore.getItemAsync('user_id');
+    const checkUserVerificationStatus = async () => {
+      const userId = await SecureStore.getItemAsync("user_id");
       if (!userId) return;
       const userIdString = userId.toString();
-      const verifyAccountRef = collection(db, 'verifyAccount');
-      const q = query(verifyAccountRef, where('user', '==', parseInt(userIdString)));
-      console.log(userId)
+      const verifyAccountRef = collection(db, "verifyAccount");
+      const q = query(
+        verifyAccountRef,
+        where("user", "==", parseInt(userIdString))
+      );
+      console.log(userId);
       try {
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
           const data = querySnapshot.docs[0].data();
-          if(!data.is_account_verified){
-              setIsPending(true)
+          if (!data.is_account_verified) {
+            setIsPending(true);
           }
-          console.log('Verification info exists:', querySnapshot.docs[0].data());
+          console.log(
+            "Verification info exists:",
+            querySnapshot.docs[0].data()
+          );
         } else {
-
-          console.log('No verification info found for this user');
+          console.log("No verification info found for this user");
         }
       } catch (error) {
-        console.error('Error fetching verification info:', error);
+        console.error("Error fetching verification info:", error);
       }
-    }
-    checkUserVerificationStatus()
-  },[])
+    };
+    checkUserVerificationStatus();
+  }, []);
 
   const value = {
     onRegister: register,
@@ -713,7 +710,7 @@ export const AuthProvider = ({ children }: any) => {
     setIncomingCall,
     peerConnection,
     setPeerConnection,
-    isPending
+    isPending,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

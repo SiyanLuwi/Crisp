@@ -88,14 +88,14 @@ export default function Reports() {
       "others",
       "road incidents",
     ];
-  
+
     // Fetch the supervisor_id asynchronously
     const supervisor_id = await SecureStore.getItemAsync("supervisor_id");
     if (!supervisor_id) {
       console.error("Supervisor ID not found!");
       return;
     }
-  
+
     const unsubscribeFunctions = categories.map((category) => {
       return onSnapshot(
         collection(db, `reports/${category}/reports`),
@@ -103,12 +103,12 @@ export default function Reports() {
           const reports: Report[] = snapshot.docs
             .map((doc) => {
               const data = doc.data() as Omit<Report, "id">; // Omit the id when fetching data
-  
+
               // Filter out reports that don't match the supervisor_id
               if (data.assigned_to_id !== parseInt(supervisor_id)) {
                 return null; // Mark as null for filtering later
               }
-  
+
               return {
                 id: doc.id, // Include the document ID (UUID)
                 username: data.username || "", // Default to empty string if missing
@@ -125,20 +125,20 @@ export default function Reports() {
               };
             })
             .filter((report) => report !== null) as Report[]; // Remove null values
-  
+
           // Sort reports by report_date in descending order
           const sortedReports = reports.sort((a, b) => {
             const dateA = new Date(a.report_date).getTime();
             const dateB = new Date(b.report_date).getTime();
             return dateB - dateA;
           });
-  
+
           // Update the state with new sorted reports
           setReports((prevReports) => {
             const existingReports = prevReports.filter(
               (report) => report.category !== category
             );
-            return [...existingReports, ...sortedReports]; 
+            return [...existingReports, ...sortedReports]; // Replace old reports of this category
           });
         },
         (error) => {
@@ -146,12 +146,12 @@ export default function Reports() {
         }
       );
     });
-  
+
+    // Return a cleanup function to unsubscribe from snapshots
     return () => {
       unsubscribeFunctions.forEach((unsubscribe) => unsubscribe());
     };
   };
-  
 
   useEffect(() => {
     const fetchData = async () => {
@@ -234,7 +234,6 @@ export default function Reports() {
         console.error("Error checking feedback status:", error);
       }
     };
-
   }, [reports, USER_ID]);
 
   const renderItem = ({ item }: { item: Report }) => {
@@ -356,6 +355,15 @@ export default function Reports() {
             </TouchableOpacity>
           ) : null}
           <View className="flex flex-row justify-end w-full mt-3">
+            <TouchableOpacity
+              className={`bg-[#134c3b] p-2 rounded-lg h-auto items-center justify-center mr-3 ${
+                item.status === "reviewing" ? "opacity-50" : ""
+              }`}
+            >
+              <Text className="text-md font-extrabold text-white px-5">
+                Call User
+              </Text>
+            </TouchableOpacity>
             <TouchableOpacity
               className={`bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center ${
                 feedbackExists ? "opacity-50" : ""
