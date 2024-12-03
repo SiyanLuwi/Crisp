@@ -313,7 +313,7 @@ export default function ManageReports() {
       const reportData = reportSnap.data();
 
       
-      await api.post(`api/${reportId}/delete/`);
+      await api.delete(`api/reports/${reportId}/delete/`);
       await deleteCollectionDocuments(
         reportId,
         selectedReport.type_of_report.toLowerCase()

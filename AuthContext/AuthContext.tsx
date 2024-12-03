@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import api from "@/app/api/axios";
 import * as FileSystem from "expo-file-system";
 import { app } from "@/firebase/firebaseConfig";
-import { addDoc, doc, getFirestore, setDoc } from "firebase/firestore";
+import { addDoc, doc, getDocs, getFirestore, setDoc } from "firebase/firestore";
 const db = getFirestore(app);
 
 interface AuthProps {
@@ -15,6 +15,7 @@ interface AuthProps {
   setPeerConnection?: any;
   incomingCall?: any;
   hasNewNotification?: boolean;
+  isPending?: boolean;
   setIncomingCall?: any;
   authState?: { token: string | null; authenticated: boolean | null };
   onRegister?: (
@@ -62,7 +63,7 @@ interface AuthProps {
     selfie: string,
     photo: string,
     idPicture: string
-  ) => Promise<void>;
+  ) => Promise<any>;
 }
 interface CallerInfo {
   callId: string;
@@ -97,7 +98,7 @@ export const AuthProvider = ({ children }: any) => {
   const [incomingCall, setIncomingCall] = useState<CallerInfo | any>(null); // Store incoming call details
   const [USER_ID, SET_USER_ID] = useState("");
   const [peerConnection, setPeerConnection] = useState(null);
-
+  const [isPending, setIsPending] = useState(false)
   const router = useRouter();
 
   // useEffect(() => {
@@ -292,6 +293,7 @@ export const AuthProvider = ({ children }: any) => {
       if(data.account_type === 'worker'){
         console.log("SUpervisor id: ", data.supervisor)
           storageItems.supervisor_id = data.supervisor
+          storageItems.station_address = data.station_address
       }
 
       await Promise.all(
@@ -608,9 +610,10 @@ export const AuthProvider = ({ children }: any) => {
             for_superadmin: true,
             createdAt: new Date(),
             user_id: USER_ID
-        });
-        router.push("/(tabs)/profile");
+        });    
+          
       }
+      return res 
     } catch (error: any) {
       console.error("Verification error:", error);
       if (error.response) {
@@ -662,6 +665,33 @@ export const AuthProvider = ({ children }: any) => {
       return null;
     }
   };
+  useEffect(() => {
+    
+    const checkUserVerificationStatus  = async () => {
+      const userId = await SecureStore.getItemAsync('user_id');
+      if (!userId) return;
+      const userIdString = userId.toString();
+      const verifyAccountRef = collection(db, 'verifyAccount');
+      const q = query(verifyAccountRef, where('user', '==', parseInt(userIdString)));
+      console.log(userId)
+      try {
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          const data = querySnapshot.docs[0].data();
+          if(!data.is_account_verified){
+              setIsPending(true)
+          }
+          console.log('Verification info exists:', querySnapshot.docs[0].data());
+        } else {
+
+          console.log('No verification info found for this user');
+        }
+      } catch (error) {
+        console.error('Error fetching verification info:', error);
+      }
+    }
+    checkUserVerificationStatus()
+  },[])
 
   const value = {
     onRegister: register,
@@ -683,6 +713,7 @@ export const AuthProvider = ({ children }: any) => {
     setIncomingCall,
     peerConnection,
     setPeerConnection,
+    isPending
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
