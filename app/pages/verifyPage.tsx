@@ -325,7 +325,7 @@ export default function VerifyPage() {
                   {/* Birthday Button */}
                   <TouchableOpacity onPress={() => setShowDatePicker(true)}>
                     <TextInput
-                      className="w-3/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
+                      className="w-full text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
                       placeholderTextColor="#888"
                       placeholder="Select Birthday"
                       value={birthday}

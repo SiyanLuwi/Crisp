@@ -58,6 +58,10 @@ export default function RootLayout() {
             name="pages_employee"
             options={{ headerShown: false, animation: "fade" }}
           />
+          <Stack.Screen
+            name="calls"
+            options={{ headerShown: false, animation: "fade" }}
+          />
         </Stack>
       </ThemeProvider>
     </AuthProvider>
