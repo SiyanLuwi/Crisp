@@ -561,7 +561,7 @@ export default function ReportPage() {
                   className={`w-8 h-8 border rounded-full mt-2 mr-16 ${
                     item.status === "Pending"
                       ? "bg-yellow-400" // Amber for pending
-                      : item.status === "ongoing"
+                      : item.status === "Ongoing"
                         ? "bg-blue-500" // Blue for ongoing
                         : item.status === "reviewing"
                           ? "bg-orange-500" // Orange for pending review
