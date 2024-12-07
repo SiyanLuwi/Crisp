@@ -55,7 +55,7 @@ export default function VerifyEmail() {
         setOtpError(true);
         setLoading(false);
         setTimeout(() => setOtpError(false), 3500);
-      } 
+      }
     } catch (error) {
       setOtpError(true);
       setTimeout(() => setOtpError(false), 3000);
