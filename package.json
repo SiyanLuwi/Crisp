@@ -27,6 +27,7 @@
     "expo": "~51.0.39",
     "expo-av": "~14.0.7",
     "expo-camera": "~15.0.16",
+    "expo-checkbox": "~3.0.0",
     "expo-constants": "~16.0.2",
     "expo-dev-client": "~4.0.29",
     "expo-device": "~6.0.2",
@@ -59,8 +60,7 @@
     "react-native-screens": "3.31.1",
     "react-native-uuid": "^2.0.2",
     "react-native-vector-icons": "^10.2.0",
-    "react-native-webrtc": "^124.0.4",
-    "expo-checkbox": "~3.0.0"
+    "react-native-webrtc": "^124.0.4"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
