@@ -303,26 +303,26 @@ export default function Home() {
 
   const getWeatherImage = (code: number) => {
     const weatherConditions: { [key: number]: { image: any } } = {
-      0: { image: require("../../assets/images/weather/Clear-sky.png") },
-      1: { image: require("../../assets/images/weather/Clear-sky.png") },
-      2: { image: require("../../assets/images/weather/partly-cloudy.png") },
-      3: { image: require("../../assets/images/weather/Overcast.png") },
-      45: { image: require("../../assets/images/weather/Fog.png") },
+      0: { image: require("../../assets/images/weather/clear-sky.jpg") },
+      1: { image: require("../../assets/images/weather/clear-sky.jpg") },
+      2: { image: require("../../assets/images/weather/partly-cloudy.jpg") },
+      3: { image: require("../../assets/images/weather/overcast.jpg") },
+      45: { image: require("../../assets/images/weather/fog.jpg") },
       48: {
-        image: require("../../assets/images/weather/Depositing-rime-fog.png"),
+        image: require("../../assets/images/weather/depositing-rime-fog.jpg"),
       },
-      51: { image: require("../../assets/images/weather/Drizzle-Light.png") },
+      51: { image: require("../../assets/images/weather/drizzle-light.jpg") },
       53: {
-        image: require("../../assets/images/weather/Drizzle-Moderate.png"),
+        image: require("../../assets/images/weather/drizzle-moderate.jpg"),
       },
       61: {
-        image: require("../../assets/images/weather/Rain-Slight.png"),
+        image: require("../../assets/images/weather/rain-slight.jpg"),
       },
-      63: { image: require("../../assets/images/weather/Rain-Moderate.png") },
-      65: { image: require("../../assets/images/weather/Rain-Heavy.png") },
-      80: { image: require("../../assets/images/weather/Rain-Slight.png") },
-      81: { image: require("../../assets/images/weather/Rain-Moderate.png") },
-      95: { image: require("../../assets/images/weather/Thunderstorm.png") },
+      63: { image: require("../../assets/images/weather/rain-moderate.jpg") },
+      65: { image: require("../../assets/images/weather/rain-heavy.jpg") },
+      80: { image: require("../../assets/images/weather/rain-slight.jpg") },
+      81: { image: require("../../assets/images/weather/rain-moderate.jpg") },
+      95: { image: require("../../assets/images/weather/thunderstorm.jpg") },
     };
 
     return weatherConditions[code] && weatherConditions[code].image;

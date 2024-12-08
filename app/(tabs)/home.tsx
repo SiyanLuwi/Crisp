@@ -300,60 +300,60 @@ export default function Home() {
   const getWeatherImage = (code: number) => {
     const weatherConditions: { [key: number]: { day: any; night: any } } = {
       0: {
-        day: require("../../assets/images/weather/Clear-sky.png"),
-        night: require("../../assets/images/weather/Clear-sky-Night.png"),
+        day: require("../../assets/images/weather/clear-sky.jpg"),
+        night: require("../../assets/images/weather/clear-sky-night.jpg"),
       },
       1: {
-        day: require("../../assets/images/weather/Clear-sky.png"),
-        night: require("../../assets/images/weather/Clear-sky-Night.png"),
+        day: require("../../assets/images/weather/clear-sky.jpg"),
+        night: require("../../assets/images/weather/clear-sky-night.jpg"),
       },
       2: {
-        day: require("../../assets/images/weather/partly-cloudy.png"),
-        night: require("../../assets/images/weather/partly-cloudy-night.png"),
+        day: require("../../assets/images/weather/partly-cloudy.jpg"),
+        night: require("../../assets/images/weather/partly-cloudy-night.jpg"),
       },
       3: {
-        day: require("../../assets/images/weather/Overcast.png"),
-        night: require("../../assets/images/weather/Overcast-Night.png"),
+        day: require("../../assets/images/weather/overcast.jpg"),
+        night: require("../../assets/images/weather/overcast-night.jpg"),
       },
       45: {
-        day: require("../../assets/images/weather/Fog.png"),
-        night: require("../../assets/images/weather/Fog.png"),
+        day: require("../../assets/images/weather/fog.jpg"),
+        night: require("../../assets/images/weather/fog.jpg"),
       },
       48: {
-        day: require("../../assets/images/weather/Depositing-rime-fog.png"),
-        night: require("../../assets/images/weather/Depositing-rime-fog.png"),
+        day: require("../../assets/images/weather/depositing-rime-fog.jpg"),
+        night: require("../../assets/images/weather/depositing-rime-fog.jpg"),
       },
       51: {
-        day: require("../../assets/images/weather/Drizzle-Light.png"),
-        night: require("../../assets/images/weather/Drizzle-Light.png"),
+        day: require("../../assets/images/weather/drizzle-light.jpg"),
+        night: require("../../assets/images/weather/drizzle-light.jpg"),
       },
       53: {
-        day: require("../../assets/images/weather/Drizzle-Moderate.png"),
-        night: require("../../assets/images/weather/Drizzle-Moderate-Night.png"),
+        day: require("../../assets/images/weather/drizzle-moderate.jpg"),
+        night: require("../../assets/images/weather/drizzle-moderate-night.jpg"),
       },
       61: {
-        day: require("../../assets/images/weather/Rain-Slight.png"),
-        night: require("../../assets/images/weather/Rain-Slight.png"),
+        day: require("../../assets/images/weather/rain-slight.jpg"),
+        night: require("../../assets/images/weather/rain-slight.jpg"),
       },
       63: {
-        day: require("../../assets/images/weather/Rain-Moderate.png"),
-        night: require("../../assets/images/weather/Rain-Moderate.png"),
+        day: require("../../assets/images/weather/rain-moderate.jpg"),
+        night: require("../../assets/images/weather/rain-moderate.jpg"),
       },
       65: {
-        day: require("../../assets/images/weather/Rain-Heavy.png"),
-        night: require("../../assets/images/weather/Rain-Heavy.png"),
+        day: require("../../assets/images/weather/rain-heavy.jpg"),
+        night: require("../../assets/images/weather/rain-heavy.jpg"),
       },
       80: {
-        day: require("../../assets/images/weather/Rain-Slight.png"),
-        night: require("../../assets/images/weather/Rain-Slight.png"),
+        day: require("../../assets/images/weather/rain-slight.jpg"),
+        night: require("../../assets/images/weather/rain-slight.jpg"),
       },
       81: {
-        day: require("../../assets/images/weather/Rain-Moderate.png"),
-        night: require("../../assets/images/weather/Rain-Moderate.png"),
+        day: require("../../assets/images/weather/rain-moderate.jpg"),
+        night: require("../../assets/images/weather/rain-moderate.jpg"),
       },
       95: {
-        day: require("../../assets/images/weather/Thunderstorm.png"),
-        night: require("../../assets/images/weather/Thunderstorm.png"),
+        day: require("../../assets/images/weather/thunderstorm.jpg"),
+        night: require("../../assets/images/weather/thunderstorm.jpg"),
       },
     };
 
