@@ -222,12 +222,12 @@ const startCall = async () => {
         });
     });
 
-    onSnapshot(callRef, (doc) => {
-        const data: any = doc.data();
-        if(!data.answer){
-            router.back()
-        }
-    });
+    // onSnapshot(callRef, (doc) => {
+    //     const data: any = doc.data();
+    //     if(!data.answer){
+            
+    //     }
+    // });
 
     setCacheLocalPC(localPC)
   }
@@ -244,7 +244,7 @@ const startCall = async () => {
       setCacheLocalPC(null);
     }
 
-    router.back(); // Navigate back after ending the call
+    router.push('/(tabs)_employee/home');
     console.log("Call Ended");
   };
 
