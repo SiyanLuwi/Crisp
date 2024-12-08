@@ -36,6 +36,7 @@ import * as SecureStore from "expo-secure-store";
 import { Report, Reports } from "../utils/reports";
 import api from "../api/axios";
 
+
 const db = getFirestore(app);
 const { height, width } = Dimensions.get("window");
 

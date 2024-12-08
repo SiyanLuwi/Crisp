@@ -4,7 +4,7 @@
     "slug": "Crisp",
     "version": "1.0.9",
     "orientation": "portrait",
-    "icon": "./assets/images/androidIcon.png",
+    "icon": "./assets/images/android-icon.png",
     "scheme": "crisp",
     "userInterfaceStyle": "automatic",
     "owner": "thesis-group",
@@ -24,7 +24,7 @@
       },
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/androidIcon.png",
+        "foregroundImage": "./assets/images/android-icon.png",
         "backgroundColor": "#00000000"
       },
       "permissions": [
@@ -57,7 +57,6 @@
     },
     "extra": {
       "API_KEY": "AIzaSyCEKoeUmd_Nps_xNbDdGAYqPLZPibHYppA",
-      "GOOGLE_MAP_API_KEY": "AIzaSyAe1iu4272Y5pQ6ccdJUYEAp6qyTAbM_-0",
       "AUTH_DOMAIN": "crisp-63736.firebaseapp.com",
       "DB_URL": "https://crisp-63736-default-rtdb.asia-southeast1.firebasedatabase.app",
       "PROJECT_ID": "crisp-63736",
