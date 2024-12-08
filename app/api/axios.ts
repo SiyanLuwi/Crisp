@@ -1,8 +1,10 @@
 
 import axios from 'axios'
+import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store'
 
-
+const manifest = Constants.manifest as { extra?: { BACKEND_URL?: string } };
+const BACKEND_URL = manifest.extra?.BACKEND_URL;
 const api = axios.create({
     // paste your backend url here
     // baseURL: 'http://192.168.1.191:8000/'
@@ -11,8 +13,8 @@ const api = axios.create({
     // baseURL: 'http://192.168.1.17:8000/'S  
     //baseURL: 'http://192.168.254.179:8000/'
     // baseURL: 'http://192.168.254.179:8000/'
-    baseURL: 'https://django-firebase-psql-onrender.com/'
     // baseURL: 'http://192.168.100.15:8000/'
+    baseURL: BACKEND_URL
 })
 
 api.interceptors.request.use(
