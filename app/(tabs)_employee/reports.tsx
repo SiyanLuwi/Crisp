@@ -19,7 +19,7 @@ import FeedbackModal from "@/components/feedback";
 import ReportValidationModal from "@/components/reportValidation";
 const bgImage = require("@/assets/images/bgImage.png");
 import { useAuth } from "@/AuthContext/AuthContext";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import {
   getFirestore,
   collection,
@@ -27,17 +27,21 @@ import {
   onSnapshot,
   doc,
   getDoc,
+  setDoc,
+  addDoc,
 } from "firebase/firestore";
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
 import { app } from "@/firebase/firebaseConfig";
 import * as SecureStore from "expo-secure-store";
 import * as Location from "expo-location";
 const { height, width } = Dimensions.get("window");
-
+import uuid from 'react-native-uuid';
+import { useRouter } from 'expo-router';
 const db = getFirestore(app);
 
 interface Report {
   id: string;
+  user_id: number;
   username: string;
   type_of_report: string;
   report_description: string;
@@ -78,7 +82,7 @@ export default function Reports() {
     [key: string]: boolean;
   }>({});
   const { USER_ID } = useAuth();
-
+  const router = useRouter()
   const fetchAllDocuments = async () => {
     const categories = [
       "fires",
@@ -112,6 +116,7 @@ export default function Reports() {
               return {
                 id: doc.id, // Include the document ID (UUID)
                 username: data.username || "", // Default to empty string if missing
+                user_id: data.user_id,
                 type_of_report: data.type_of_report || "",
                 report_description: data.report_description || "",
                 longitude: data.longitude || 0, // Default to 0 if missing
@@ -236,6 +241,32 @@ export default function Reports() {
     };
   }, [reports, USER_ID]);
 
+
+  const handleCall = async (user_id: number) => {
+    try {
+      const callId = uuid.v4();
+      
+      const callRef = doc(db, 'calls', callId);
+      console.log("USER ID: ", user_id)
+      await setDoc(callRef, {
+          callId: callId,
+          caller_id: USER_ID,
+          offer: null,
+          answer: null,
+          callStatus: 'waiting',
+          receiver_id: user_id,
+      });
+      
+      router.push({
+        pathname: '/calls/outgoing',
+        params: { mode: 'caller', callId: callId },
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+
   const renderItem = ({ item }: { item: Report }) => {
     const [datePart, timePart] = item.report_date.split("T");
     const formattedDate = datePart.replace(/-/g, "/");
@@ -359,7 +390,7 @@ export default function Reports() {
               className={`bg-[#134c3b] p-2 rounded-lg h-auto items-center justify-center mr-3 ${
                 item.status === "reviewing" ? "opacity-50" : ""
               }`}
-              onPress={() => router.push("/calls/incoming")}
+              onPress={() => handleCall(item.user_id)}
             >
               <Text className="text-md font-extrabold text-white px-5">
                 Call User
