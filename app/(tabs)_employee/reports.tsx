@@ -239,13 +239,14 @@ export default function Reports() {
         console.error("Error checking feedback status:", error);
       }
     };
+    checkFeedbackForReports()
   }, [reports, USER_ID]);
 
 
-  const handleCall = async (user_id: number) => {
+  const handleCall = async (user_id: number, username: string) => {
     try {
       const callId = uuid.v4();
-      
+      // @ts-ignore
       const callRef = doc(db, 'calls', callId);
       console.log("USER ID: ", user_id)
       await setDoc(callRef, {
@@ -259,7 +260,7 @@ export default function Reports() {
       
       router.push({
         pathname: '/calls/outgoing',
-        params: { mode: 'caller', callId: callId },
+        params: { mode: 'caller', callId: callId, username: username },
       });
     } catch (error) {
       console.error(error);
@@ -390,7 +391,7 @@ export default function Reports() {
               className={`bg-[#134c3b] p-2 rounded-lg h-auto items-center justify-center mr-3 ${
                 item.status === "reviewing" ? "opacity-50" : ""
               }`}
-              onPress={() => handleCall(item.user_id)}
+              onPress={() => handleCall(item.user_id, item.username)}
             >
               <Text className="text-md font-extrabold text-white px-5">
                 Call User
