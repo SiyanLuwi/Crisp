@@ -11,8 +11,8 @@ const api = axios.create({
     // baseURL: 'http://192.168.1.17:8000/'
     //baseURL: 'http://192.168.254.179:8000/'
     // baseURL: 'http://192.168.254.179:8000/'
-    // baseURL: 'http://192.168.1.13:8000/'
-    baseURL: 'http://192.168.100.15:8000/'
+    baseURL: 'http://192.168.1.13:8000/'
+    // baseURL: 'http://192.168.100.15:8000/'
 })
 
 api.interceptors.request.use(
