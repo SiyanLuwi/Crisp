@@ -100,43 +100,59 @@ export const AuthProvider = ({ children }: any) => {
   const [peerConnection, setPeerConnection] = useState(null);
   const [isPending, setIsPending] = useState(false);
   const router = useRouter();
+  
+  useEffect(() => {
+    if (!USER_ID) {
+      console.log("USER_ID is not available yet.");
+      return;
+    }
 
-  // useEffect(() => {
-  //   console.log("getting incoming call...")
-  //   const q = query(collection(db, 'calls'), where('receiver_id', '==', USER_ID));
-  //   console.log("Receiver ID: ", USER_ID)
+    const q = collection(db, 'calls');
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (!snapshot.empty) {
+        // Manually filter the snapshot data based on the receiver_id
+        const callData = snapshot.docs
+          .map(doc => doc.data())
+          .find(call => call.receiver_id == USER_ID);
+        console.log(callData)
+        if (callData) {
+          console.log("Call Data Status: ", callData.callStatus);
 
-  //   const unsubscribe = onSnapshot(q, async (snapshot) => {
-  //     if (!snapshot.empty) {
+          if (callData.callStatus === 'waiting') {
+            console.log("Incoming call is waiting");
+            setIncomingCall(callData);
+            router.push('/calls/incoming');
+          }
 
-  //       const callData = snapshot.docs[0].data();
-  //       setIncomingCall(callData);
+          if (callData.callStatus === 'ended') {
+            console.log("Call ended");
+            setIncomingCall(null);
+            router.back();
+          }
+        }
+      } else {
+        // No incoming call, clear the state
+        if (incomingCall && incomingCall.callStatus !== 'answered' && incomingCall.callStatus !== 'declined') {
+          console.log("No incoming call, clearing state...");
+          setIncomingCall(null);
+        }
+      }
+    });
 
-  //       if (callData.callStatus == 'waiting') {
-  //         receiveIncomingCall(callData)
-  //         router.push('/(tabs)/screens/IncomingCallScreen');
-  //       }
-  //       if (callData.callStatus === 'ended') {
-  //         setIncomingCall(null);
-  //         router.push('/(tabs)/screens/ContactScreen');
-  //       }
-  //     } else {
-  //       if (incomingCall && incomingCall.callStatus !== 'answered' && incomingCall.callStatus !== 'declined') {
-  //         setIncomingCall(null);
-  //       }
-  //     }
-  //   });
+    return () => unsubscribe();
+  }, [USER_ID, router]);
 
-  //   return () => unsubscribe();
-  // }, [USER_ID]);
 
   const receiveIncomingCall = (callData: any) => {
+    console.log("Receiving incoming call...");
     setIncomingCall(callData); // Ensure callData contains the expected structure
   };
 
   const clearIncomingCall = () => {
     setIncomingCall(null);
   };
+
 
   useEffect(() => {
     const loadToken = async () => {

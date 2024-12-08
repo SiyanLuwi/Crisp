@@ -1,25 +1,46 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, Image } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, TouchableOpacity, Image, Alert } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { RFPercentage } from "react-native-responsive-fontsize";
-import { router } from "expo-router";
-
+import { router, useLocalSearchParams, useRouter } from "expo-router";
+import { useAuth } from "@/AuthContext/AuthContext";
+import { doc, getFirestore, updateDoc } from "firebase/firestore";
+import { app } from "@/firebase/firebaseConfig";
+const db = getFirestore(app)
 export default function Incoming() {
-  // Sample data for the caller UI
-  const callerName = "John Doe";
+ const {incomingCall} = useAuth()
+  const [callerName, setClallerName] = useState()
   const callerImage = "https://randomuser.me/api/portraits/men/1.jpg"; // Use a placeholder image
+  const router = useRouter()
 
+  useEffect(() => {
+    if(incomingCall) setClallerName(incomingCall.username)
+  }, [])
   const handleEndCall = () => {
-    // Logic for ending the call
+    
     router.back();
     console.log("Call Ended");
   };
 
-  const handleAnswerCall = () => {
-    // Logic for answering the call
-    router.push("/calls/outgoing");
-    console.log("Call Answered");
+  const handleAnswerCall = async () => {
+    try {
+        if (incomingCall) {
+          console.log("Receiver CALLID: ", incomingCall.callId)
+            await updateDoc(doc(db, 'calls', incomingCall.callId), {callStatus: 'answered', });
+            router.push({
+                pathname: '/calls/outgoing',
+                params: { 
+                    callId: incomingCall.callId, 
+                    callerName: incomingCall.callerName,
+                    mode: 'callee'
+                },
+            });
+        }
+    } catch (error) {
+        console.error('Error answering the call', error);
+        Alert.alert('Error', 'Could not answer the call.');
+    }
   };
 
   return (
