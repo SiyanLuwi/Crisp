@@ -107,14 +107,15 @@ const saveIceCandidate = async (callId: any, iceCandidate: any) => {
 }
 
 const startCall = async () => {
-
+  //@ts-ignore
+  const callRef = doc(db, 'calls', callId);
   if(mode === "caller"){
     const localPC = new RTCPeerConnection(iceServersConfig)
     localStream?.getTracks().forEach((track) =>  {
       localPC.addTrack(track, localStream)
     });
     // @ts-ignore
-    const callRef = doc(db, 'calls', callId);
+   
     const callerCandidatesCollection = collection(callRef, 'callerCandidates')
     const calleeCandidatesCollection = collection(callRef, 'calleeCandidates')
   
@@ -222,12 +223,14 @@ const startCall = async () => {
         });
     });
 
-    // onSnapshot(callRef, (doc) => {
-    //     const data: any = doc.data();
-    //     if(!data.answer){
-            
-    //     }
-    // });
+    onSnapshot(callRef, (doc) => {
+        const data: any = doc.data();
+        if(data.callStatus === "ended"){
+          // cachedLocalPC.close();
+          setCacheLocalPC(null);
+          router.push('/(tabs)/manage')
+        }
+    });
 
     setCacheLocalPC(localPC)
   }
