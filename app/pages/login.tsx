@@ -61,8 +61,12 @@ export default function Login() {
       if (!result) {
         throw new Error("Error While Logging in!");
       }
-      console.log(account_type)
-      if (is_email_verified !== "true" && account_type === 'citizen') {
+      console.log(account_type);
+      if (is_email_verified !== "true" && account_type === "citizen") {
+        router.push("/pages/verifyEmail");
+        return;
+      }
+      if (is_email_verified !== "true" && account_type === "worker") {
         router.push("/pages/verifyEmail");
         return;
       }

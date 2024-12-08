@@ -12,6 +12,7 @@ import {
   Platform,
   ScrollView,
   ImageBackground,
+  RefreshControl,
 } from "react-native";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -64,6 +65,7 @@ function App() {
   const [coordinates, setCoordinates] = useState("");
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [errors, setErrors] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     const loadUserInfo = async () => {
@@ -281,6 +283,23 @@ function App() {
     }
   };
 
+  const onRefresh = async () => {
+    setRefreshing(true);
+
+    const userInfo = await (getUserInfo ? getUserInfo() : Promise.resolve({}));
+    setName(userInfo?.username || "");
+    setAddress(userInfo?.address || "");
+    setEmail(userInfo?.email || "");
+    setContact(userInfo?.contact_number || "");
+    setIsVerified(userInfo?.is_verified || "");
+    const score = await SecureStore.getItemAsync("score");
+    const violation = await SecureStore.getItemAsync("violation");
+    setScore(userInfo?.score || score || 0);
+    setViolation(userInfo?.violation || violation || 0);
+
+    setRefreshing(false);
+  };
+
   return (
     <ImageBackground
       source={bgImage}
@@ -300,7 +319,12 @@ function App() {
             />
           </TouchableOpacity>
         </View>
-        <ScrollView className="w-full h-full flex">
+        <ScrollView
+          className="w-full h-full flex"
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
           <View className="flex flex-col w-full h-full items-center ">
             <View className="relative">
               <TouchableOpacity onPress={isEditing ? pickImage : undefined}>
