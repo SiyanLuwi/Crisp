@@ -5,6 +5,7 @@ import { StatusBar } from "expo-status-bar";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import { router, useLocalSearchParams } from "expo-router";
+import { Audio } from "expo-av"; // Import expo-av
 import uuid from "react-native-uuid";
 import {
   addDoc,
@@ -28,12 +29,25 @@ import {
   RTCView,
 } from "react-native-webrtc";
 
-const configuration = {
+const iceServersConfig = {
   iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun2.l.google.com:19302" },
+    {
+      urls: ["stun:ss-turn2.xirsys.com"],
+    },
+    {
+      username:
+        "3g_qAMgcCEEbTDNAgtWOl3c7xB3NJ8DCD2KiSYzt74bmyGNbCD9HN2DZeW54rvRqAAAAAGdVY41jcmlzcA==",
+      credential: "e2d702da-b544-11ef-a0f7-0242ac140004",
+      urls: [
+        "turn:ss-turn2.xirsys.com:80?transport=udp",
+        "turn:ss-turn2.xirsys.com:3478?transport=udp",
+        "turn:ss-turn2.xirsys.com:80?transport=tcp",
+        "turn:ss-turn2.xirsys.com:3478?transport=tcp",
+        "turns:ss-turn2.xirsys.com:443?transport=tcp",
+        "turns:ss-turn2.xirsys.com:5349?transport=tcp",
+      ],
+    },
   ],
-  iceCandidatePoolSize: 10,
 };
 
 export default function Outgoing() {
@@ -45,10 +59,38 @@ export default function Outgoing() {
   const { callId } = useLocalSearchParams();
   const { USER_ID } = useAuth();
   const { mode } = useLocalSearchParams();
+  const [ringSound, setRingSound] = useState<Audio.Sound | null>(null);
 
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [cachedLocalPC, setCacheLocalPC] = useState<any>(null);
+
+  // Load and play ringing sound
+  const playRingingSound = async () => {
+    const { sound } = await Audio.Sound.createAsync(
+      require("../../assets/ring.mp3") // Replace with your ringtone file path
+    );
+    setRingSound(sound);
+    await sound.setIsLoopingAsync(true); // Loop the sound
+    await sound.playAsync();
+  };
+
+  // Stop ringing sound
+  const stopRingingSound = async () => {
+    if (ringSound) {
+      await ringSound.stopAsync();
+      await ringSound.unloadAsync();
+      setRingSound(null);
+    }
+  };
+
+  useEffect(() => {
+    playRingingSound(); // Play the ringing sound on mount
+
+    return () => {
+      stopRingingSound(); // Stop the ringing sound on unmount
+    };
+  }, []);
 
   useEffect(() => {
     //@ts-ignore
@@ -58,12 +100,16 @@ export default function Outgoing() {
 
       if (data?.callStatus === "ended") {
         console.log("Call has ended");
+        stopRingingSound();
 
         if (cachedLocalPC) {
           cachedLocalPC.close();
           setCacheLocalPC(null);
         }
         router.back();
+      }
+      if (data?.connected) {
+        stopRingingSound(); // Stop ringing when the call connects
       }
     });
 
@@ -110,7 +156,7 @@ export default function Outgoing() {
 
   const startCall = async () => {
     if (mode === "caller") {
-      const localPC = new RTCPeerConnection(configuration);
+      const localPC = new RTCPeerConnection(iceServersConfig);
       localStream?.getTracks().forEach((track) => {
         localPC.addTrack(track, localStream);
       });
@@ -177,7 +223,7 @@ export default function Outgoing() {
         console.log("Document does not exist.");
       }
 
-      const localPC = new RTCPeerConnection(configuration);
+      const localPC = new RTCPeerConnection(iceServersConfig);
       localStream?.getTracks().forEach((track) => {
         localPC.addTrack(track, localStream);
       });
@@ -234,12 +280,12 @@ export default function Outgoing() {
         });
       });
 
-      onSnapshot(callRef, (doc) => {
-        const data: any = doc.data();
-        if (!data.answer) {
-          router.back();
-        }
-      });
+      // onSnapshot(callRef, (doc) => {
+      //     const data: any = doc.data();
+      //     if(!data.answer){
+
+      //     }
+      // });
 
       setCacheLocalPC(localPC);
     }
@@ -255,7 +301,7 @@ export default function Outgoing() {
       setCacheLocalPC(null);
     }
 
-    router.back(); // Navigate back after ending the call
+    router.back();
     console.log("Call Ended");
   };
 
