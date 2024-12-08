@@ -35,8 +35,8 @@ import { app } from "@/firebase/firebaseConfig";
 import * as SecureStore from "expo-secure-store";
 import * as Location from "expo-location";
 const { height, width } = Dimensions.get("window");
-import uuid from 'react-native-uuid';
-import { useRouter } from 'expo-router';
+import uuid from "react-native-uuid";
+import { useRouter } from "expo-router";
 const db = getFirestore(app);
 
 interface Report {
@@ -82,7 +82,7 @@ export default function Reports() {
     [key: string]: boolean;
   }>({});
   const { USER_ID } = useAuth();
-  const router = useRouter()
+  const router = useRouter();
   const fetchAllDocuments = async () => {
     const categories = [
       "fires",
@@ -239,34 +239,32 @@ export default function Reports() {
         console.error("Error checking feedback status:", error);
       }
     };
-    checkFeedbackForReports()
+    checkFeedbackForReports();
   }, [reports, USER_ID]);
-
 
   const handleCall = async (user_id: number, username: string) => {
     try {
       const callId = uuid.v4();
       // @ts-ignore
-      const callRef = doc(db, 'calls', callId);
-      console.log("USER ID: ", user_id)
+      const callRef = doc(db, "calls", callId);
+      console.log("USER ID: ", user_id);
       await setDoc(callRef, {
-          callId: callId,
-          caller_id: USER_ID,
-          offer: null,
-          answer: null,
-          callStatus: 'waiting',
-          receiver_id: user_id,
+        callId: callId,
+        caller_id: USER_ID,
+        offer: null,
+        answer: null,
+        callStatus: "waiting",
+        receiver_id: user_id,
       });
-      
+
       router.push({
-        pathname: '/calls/outgoing',
-        params: { mode: 'caller', callId: callId, username: username },
+        pathname: "/calls/outgoing",
+        params: { mode: "caller", callId: callId, username: username },
       });
     } catch (error) {
-      console.error(error);
+      console.error("error", error);
     }
   };
-
 
   const renderItem = ({ item }: { item: Report }) => {
     const [datePart, timePart] = item.report_date.split("T");
