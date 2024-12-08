@@ -155,13 +155,15 @@ export default function Outgoing() {
   };
 
   const startCall = async () => {
+    // @ts-ignore
+    const callRef = doc(db, "calls", callId);
     if (mode === "caller") {
       const localPC = new RTCPeerConnection(iceServersConfig);
       localStream?.getTracks().forEach((track) => {
         localPC.addTrack(track, localStream);
       });
-      // @ts-ignore
-      const callRef = doc(db, "calls", callId);
+      
+     
       const callerCandidatesCollection = collection(
         callRef,
         "callerCandidates"
@@ -280,12 +282,12 @@ export default function Outgoing() {
         });
       });
 
-      // onSnapshot(callRef, (doc) => {
-      //     const data: any = doc.data();
-      //     if(!data.answer){
-
-      //     }
-      // });
+      onSnapshot(callRef, (doc) => {
+          const data: any = doc.data();
+          if(data.callStatus === 'ended'){
+              router.push('/(tabs)/manage')
+          }
+      });
 
       setCacheLocalPC(localPC);
     }
