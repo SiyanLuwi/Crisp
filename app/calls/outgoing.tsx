@@ -13,11 +13,25 @@ const db = getFirestore(app)
 import { RTCPeerConnection, mediaDevices, MediaStream, RTCSessionDescription, RTCIceCandidate, RTCView } from 'react-native-webrtc';
 
 
-const configuration = {
-  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun2.l.google.com:19302' }],
-  iceCandidatePoolSize: 2,
-}
-
+const iceServersConfig = {
+  iceServers: [
+    {
+      urls: ["stun:ss-turn2.xirsys.com"]
+    },
+    {
+      username: "3g_qAMgcCEEbTDNAgtWOl3c7xB3NJ8DCD2KiSYzt74bmyGNbCD9HN2DZeW54rvRqAAAAAGdVY41jcmlzcA==",
+      credential: "e2d702da-b544-11ef-a0f7-0242ac140004",
+      urls: [
+        "turn:ss-turn2.xirsys.com:80?transport=udp",
+        "turn:ss-turn2.xirsys.com:3478?transport=udp",
+        "turn:ss-turn2.xirsys.com:80?transport=tcp",
+        "turn:ss-turn2.xirsys.com:3478?transport=tcp",
+        "turns:ss-turn2.xirsys.com:443?transport=tcp",
+        "turns:ss-turn2.xirsys.com:5349?transport=tcp"
+      ]
+    }
+  ]
+};
 
 
 export default function Outgoing() {
@@ -95,7 +109,7 @@ const saveIceCandidate = async (callId: any, iceCandidate: any) => {
 const startCall = async () => {
 
   if(mode === "caller"){
-    const localPC = new RTCPeerConnection(configuration)
+    const localPC = new RTCPeerConnection(iceServersConfig)
     localStream?.getTracks().forEach((track) =>  {
       localPC.addTrack(track, localStream)
     });
@@ -156,7 +170,7 @@ const startCall = async () => {
         console.log("Document does not exist.");
     }
     
-    const localPC = new RTCPeerConnection(configuration)
+    const localPC = new RTCPeerConnection(iceServersConfig)
     localStream?.getTracks().forEach((track) =>  {
       localPC.addTrack(track, localStream)
     });
