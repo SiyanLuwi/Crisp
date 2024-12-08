@@ -28,12 +28,12 @@
         "backgroundColor": "#00000000"
       },
       "permissions": [
-            "CAMERA",
-            "RECORD_AUDIO",
-            "ACCESS_FINE_LOCATION",
-            "ACCESS_COARSE_LOCATION",
-            "ACCESS_BACKGROUND_LOCATION",
-            "INTERNET"
+        "CAMERA",
+        "RECORD_AUDIO",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "INTERNET"
       ],
       "package": "com.crisp.notification"
     },

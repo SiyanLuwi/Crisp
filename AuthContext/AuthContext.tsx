@@ -128,7 +128,7 @@ export const AuthProvider = ({ children }: any) => {
           if (callData.callStatus === 'ended') {
             console.log("Call ended");
             setIncomingCall(null);
-            router.back();
+            router.push('/(tabs)/home');
           }
         }
       } else {

@@ -7,43 +7,74 @@ import { router, useLocalSearchParams, useRouter } from "expo-router";
 import { useAuth } from "@/AuthContext/AuthContext";
 import { doc, getFirestore, setDoc, updateDoc } from "firebase/firestore";
 import { app } from "@/firebase/firebaseConfig";
-const db = getFirestore(app)
+import { Audio } from "expo-av";
+
+const db = getFirestore(app);
+
 export default function Incoming() {
- const {incomingCall} = useAuth()
-  const [callerName, setClallerName] = useState()
+  const { incomingCall } = useAuth();
+  const [callerName, setClallerName] = useState();
   const callerImage = "https://randomuser.me/api/portraits/men/1.jpg"; // Use a placeholder image
-  const router = useRouter()
+  const router = useRouter();
+  const [sound, setSound] = useState<Audio.Sound | undefined>(undefined);
 
   useEffect(() => {
-    if(incomingCall) setClallerName(incomingCall.username)
-  }, [])
+    if (incomingCall) {
+      setClallerName(incomingCall.username);
+      playRingSound(); // Play the ring sound when the incoming call arrives
+    }
+
+    return () => {
+      if (sound) {
+        sound.stopAsync(); // Stop the sound when the component unmounts or call is answered
+      }
+    };
+  }, [incomingCall]);
+
+  const playRingSound = async () => {
+    try {
+      const { sound } = await Audio.Sound.createAsync(
+        require("../../assets/ring.mp3") // Replace this with the actual path to your ring sound file
+      );
+      setSound(sound);
+      await sound.playAsync(); // Start playing the ring sound
+    } catch (error) {
+      console.error("Error playing sound: ", error);
+    }
+  };
+
   const handleEndCall = async () => {
     try {
-      const callRef = doc(db, 'calls', incomingCall.callId);
-      await setDoc(callRef, { callStatus: 'ended', offer: null }, { merge: true });
+      const callRef = doc(db, "calls", incomingCall.callId);
+      await setDoc(
+        callRef,
+        { callStatus: "ended", offer: null },
+        { merge: true }
+      );
     } catch (error) {
-      console.error("Incoming call handle end call: ",error)
+      console.error("Incoming call handle end call: ", error);
     }
-   
   };
 
   const handleAnswerCall = async () => {
     try {
-        if (incomingCall) {
-          console.log("Receiver CALLID: ", incomingCall.callId)
-            await updateDoc(doc(db, 'calls', incomingCall.callId), {callStatus: 'answered', });
-            router.push({
-                pathname: '/calls/outgoing',
-                params: { 
-                    callId: incomingCall.callId, 
-                    callerName: incomingCall.callerName,
-                    mode: 'callee'
-                },
-            });
-        }
+      if (incomingCall) {
+        console.log("Receiver CALLID: ", incomingCall.callId);
+        await updateDoc(doc(db, "calls", incomingCall.callId), {
+          callStatus: "answered",
+        });
+        router.push({
+          pathname: "/calls/outgoing",
+          params: {
+            callId: incomingCall.callId,
+            callerName: incomingCall.callerName,
+            mode: "callee",
+          },
+        });
+      }
     } catch (error) {
-        console.error('Error answering the call', error);
-        Alert.alert('Error', 'Could not answer the call.');
+      console.error("Error answering the call", error);
+      Alert.alert("Error", "Could not answer the call.");
     }
   };
 
