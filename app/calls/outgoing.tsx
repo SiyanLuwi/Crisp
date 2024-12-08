@@ -34,15 +34,30 @@ export default function Outgoing() {
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null)
   const [cachedLocalPC, setCacheLocalPC] = useState<any>(null)
 
+  useEffect(() => {
+    //@ts-ignore
+    const callRef = doc(db, 'calls', callId);
+    const unsubscribe = onSnapshot(callRef, (doc) => {
+      const data = doc.data();
 
+      if (data?.callStatus === 'ended') {
+        console.log('Call has ended');
+        
+        if (cachedLocalPC) {
+          cachedLocalPC.close();
+          setCacheLocalPC(null); 
+        }
+        router.back();
+      }
+    });
+  
+    return () => unsubscribe();
+  }, [callId, cachedLocalPC]);
  
   const startLocalStream = async () => {
    const isFront = true;
    const constraints = {
        audio: true,
-       video: {
-           facingMode: isFront ? "user" : "environment",
-       },
    };
  
    try {
@@ -84,7 +99,7 @@ const startCall = async () => {
     localStream?.getTracks().forEach((track) =>  {
       localPC.addTrack(track, localStream)
     });
-    
+    // @ts-ignore
     const callRef = doc(db, 'calls', callId);
     const callerCandidatesCollection = collection(callRef, 'callerCandidates')
     const calleeCandidatesCollection = collection(callRef, 'calleeCandidates')
@@ -96,6 +111,7 @@ const startCall = async () => {
       }
        saveIceCandidate(callId, e.candidate)
     })
+    // @ts-ignore
     localPC.ontrack = (e: any) => {
       const newStream = new MediaStream();
       e.streams[0].getTracks().forEach((track: any) => {
@@ -104,7 +120,7 @@ const startCall = async () => {
       });
       setRemoteStream(e.streams[0]);
   };
-  
+    // @ts-ignore
     const offer = await localPC.createOffer()
     await localPC.setLocalDescription(offer);
   
@@ -130,6 +146,7 @@ const startCall = async () => {
     });
     setCacheLocalPC(localPC)
   }else{
+    // @ts-ignore
     const callRef = doc(db, 'calls', callId);
     const callSnapshot = await getDoc(callRef)
     console.log("GetDoc: ", callSnapshot)
@@ -155,22 +172,24 @@ const startCall = async () => {
       }
        addDoc(calleeCandidatesCollection, e.candidate.toJSON())
     })
+    // @ts-ignore
     localPC.ontrack = (e) => {
         const newStream = new MediaStream();
-        e.streams[0].getTracks().forEach((track) => {
+        e.streams[0].getTracks().forEach((track: any) => {
             console.log('Received track:', track); // Log received track
             newStream.addTrack(track);
         });
         setRemoteStream(e.streams[0]);
     };
+    // @ts-ignore
     localPC.oniceconnectionstatechange = () => {
         console.log('ICE Connection State Change:', localPC.iceConnectionState);
         };
-    
+    // @ts-ignore
         localPC.onconnectionstatechange = () => {
             console.log('Connection State Change:', localPC.connectionState);
         };
-
+  // @ts-ignore
     const offer = await callSnapshot.data().offer;
     console.log("Offer: ", offer)
     await localPC.setRemoteDescription(offer);
@@ -202,21 +221,29 @@ const startCall = async () => {
 
 
   const handleEndCall = async () => {
-
+    // @ts-ignore
     const callRef = doc(db, 'calls', callId);
-      await setDoc(callRef, {
-          callStatus: 'ended'
-      }, {merge: true});
-    router.back()
-    // router.push("/(tabs)_employee/reports");
+    await setDoc(callRef, { callStatus: 'ended' }, { merge: true });
+    
+    if (cachedLocalPC) {
+      cachedLocalPC.close();
+      setCacheLocalPC(null);
+    }
+
+    router.back(); // Navigate back after ending the call
     console.log("Call Ended");
   };
 
   const handleMute = () => {
-    // Logic for muting the call
-    setIsMicOn(!isMicOn); // Flip the state between true and false
-    console.log(isMicOn ? "Microphone Off" : "Microphone On");
+    if (localStream) {
+      localStream.getAudioTracks().forEach(track => {
+        track.enabled = !track.enabled; // Toggle the microphone
+      });
+      setIsMicOn(!isMicOn); // Flip the state between true and false
+      console.log(isMicOn ? "Microphone Off" : "Microphone On");
+    }
   };
+  
 
   const handleSpeaker = () => {
     // Toggle the speaker state

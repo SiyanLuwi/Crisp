@@ -5,7 +5,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { RFPercentage } from "react-native-responsive-fontsize";
 import { router, useLocalSearchParams, useRouter } from "expo-router";
 import { useAuth } from "@/AuthContext/AuthContext";
-import { doc, getFirestore, updateDoc } from "firebase/firestore";
+import { doc, getFirestore, setDoc, updateDoc } from "firebase/firestore";
 import { app } from "@/firebase/firebaseConfig";
 const db = getFirestore(app)
 export default function Incoming() {
@@ -17,10 +17,14 @@ export default function Incoming() {
   useEffect(() => {
     if(incomingCall) setClallerName(incomingCall.username)
   }, [])
-  const handleEndCall = () => {
-    
-    router.back();
-    console.log("Call Ended");
+  const handleEndCall = async () => {
+    try {
+      const callRef = doc(db, 'calls', incomingCall.callId);
+      await setDoc(callRef, { callStatus: 'ended', offer: null }, { merge: true });
+    } catch (error) {
+      console.error("Incoming call handle end call: ",error)
+    }
+   
   };
 
   const handleAnswerCall = async () => {
