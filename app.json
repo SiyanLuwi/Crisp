@@ -4,7 +4,7 @@
     "slug": "Crisp",
     "version": "1.0.9",
     "orientation": "portrait",
-    "icon": "./assets/images/android-icon-square.png",
+    "icon": "./assets/images/androidIcon.png",
     "scheme": "crisp",
     "userInterfaceStyle": "automatic",
     "owner": "thesis-group",
@@ -24,8 +24,8 @@
       },
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/android-icon-square.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/images/androidIcon.png",
+        "backgroundColor": "#00000000"
       },
       "permissions": [
             "CAMERA",
