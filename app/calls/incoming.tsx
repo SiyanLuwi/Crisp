@@ -10,9 +10,28 @@ import { app } from "@/firebase/firebaseConfig";
 import { Audio } from "expo-av";
 
 const db = getFirestore(app);
-
+const iceServersConfig = {
+  iceServers: [
+    {
+      urls: ["stun:ss-turn2.xirsys.com"],
+    },
+    {
+      username:
+        "3g_qAMgcCEEbTDNAgtWOl3c7xB3NJ8DCD2KiSYzt74bmyGNbCD9HN2DZeW54rvRqAAAAAGdVY41jcmlzcA==",
+      credential: "e2d702da-b544-11ef-a0f7-0242ac140004",
+      urls: [
+        "turn:ss-turn2.xirsys.com:80?transport=udp",
+        "turn:ss-turn2.xirsys.com:3478?transport=udp",
+        "turn:ss-turn2.xirsys.com:80?transport=tcp",
+        "turn:ss-turn2.xirsys.com:3478?transport=tcp",
+        "turns:ss-turn2.xirsys.com:443?transport=tcp",
+        "turns:ss-turn2.xirsys.com:5349?transport=tcp",
+      ],
+    },
+  ],
+};
 export default function Incoming() {
-  const { incomingCall } = useAuth();
+  const { incomingCall, USER_ID } = useAuth();
   const [callerName, setClallerName] = useState();
   const callerImage = "https://randomuser.me/api/portraits/men/1.jpg"; // Use a placeholder image
   const router = useRouter();
@@ -45,12 +64,21 @@ export default function Incoming() {
 
   const handleEndCall = async () => {
     try {
+      if(!USER_ID){
+        console.log("USER ID NOT FOUND ! AT INCOMING .TSX")
+        return;
+      }
       const callRef = doc(db, "calls", incomingCall.callId);
+      const userRef = doc(db, "users", USER_ID);
+
       await setDoc(
         callRef,
-        { callStatus: "ended", offer: null },
+        { callStatus: "declined", offer: null },
         { merge: true }
       );
+      await updateDoc(userRef, {
+        callStatus: "available"
+      })
     } catch (error) {
       console.error("Incoming call handle end call: ", error);
     }
@@ -59,15 +87,22 @@ export default function Incoming() {
   const handleAnswerCall = async () => {
     try {
       if (incomingCall) {
+        if(!USER_ID){
+          console.log("USER ID NOT FOUND ! AT INCOMING .TSX")
+          return;
+        }
         console.log("Receiver CALLID: ", incomingCall.callId);
         await updateDoc(doc(db, "calls", incomingCall.callId), {
           callStatus: "answered",
         });
+        await updateDoc(doc(db, "users", USER_ID), {
+          callStatus: "in-call"
+        })
         router.push({
           pathname: "/calls/outgoing",
           params: {
             callId: incomingCall.callId,
-            callerName: incomingCall.callerName,
+            callerName: incomingCall.caller_name,
             mode: "callee",
           },
         });

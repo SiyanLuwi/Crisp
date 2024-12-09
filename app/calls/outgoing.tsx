@@ -54,9 +54,8 @@ export default function Outgoing() {
   const [isMicOn, setIsMicOn] = useState(true);
   const [isSpeakerOn, setIsSpeakerOn] = useState(true);
   // Sample data for the outgoing call UI
-  const callerName = "John Doe";
   const callerImage = "https://randomuser.me/api/portraits/men/1.jpg"; // Use a placeholder image
-  const { callId } = useLocalSearchParams();
+  const { callId, username, receiverId } = useLocalSearchParams();
   const { USER_ID } = useAuth();
   const { mode } = useLocalSearchParams();
   const [ringSound, setRingSound] = useState<Audio.Sound | null>(null);
@@ -213,6 +212,10 @@ export default function Outgoing() {
           }
         });
       });
+      onSnapshot(callRef, (doc) => {
+        const data: any = doc.data();
+        if(data.callStatus === "answered") setRingSound(null)
+    });
       setCacheLocalPC(localPC);
     } else {
       // @ts-ignore
@@ -284,9 +287,15 @@ export default function Outgoing() {
 
       onSnapshot(callRef, (doc) => {
           const data: any = doc.data();
-          if(data.callStatus === 'ended'){
+          if(data.callStatus === 'declined'){
+              if (cachedLocalPC) {
+                cachedLocalPC.close();
+                setCacheLocalPC(null);
+              }
+              setRingSound(null)
               router.push('/(tabs)/manage')
           }
+          if(data.callStatus === "answered") setRingSound(null)
       });
 
       setCacheLocalPC(localPC);
@@ -296,13 +305,18 @@ export default function Outgoing() {
   const handleEndCall = async () => {
     // @ts-ignore
     const callRef = doc(db, "calls", callId);
-    await setDoc(callRef, { callStatus: "ended" }, { merge: true });
+    // @ts-ignore
+    const userRef = doc(db, "users", receiverId);
+
+    await Promise.all([
+      setDoc(callRef, { callStatus: "ended" }, { merge: true }),
+      updateDoc(userRef, { callStatus: "available" }),
+    ]);
 
     if (cachedLocalPC) {
       cachedLocalPC.close();
       setCacheLocalPC(null);
     }
-
     router.back();
     console.log("Call Ended");
   };
@@ -340,7 +354,7 @@ export default function Outgoing() {
           source={{ uri: callerImage }}
           className="w-32 h-32 rounded-full border-4 border-white"
         /> */}
-        <Text className="mt-4 text-3xl text-white font-bold">{callerName}</Text>
+        <Text className="mt-4 text-3xl text-white font-bold">{username}</Text>
         <Text className="mt-2 text-lg text-gray-400">Calling...</Text>
       </View>
 

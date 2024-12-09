@@ -10,6 +10,7 @@ import {
   Modal,
   TouchableWithoutFeedback,
   RefreshControl,
+  Alert,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import MapView, { Marker, Region } from "react-native-maps";
@@ -29,7 +30,9 @@ import {
   getDoc,
   setDoc,
   addDoc,
+  updateDoc,
 } from "firebase/firestore";
+import { Timestamp } from 'firebase/firestore'; 
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
 import { app } from "@/firebase/firebaseConfig";
 import * as SecureStore from "expo-secure-store";
@@ -37,6 +40,7 @@ import * as Location from "expo-location";
 const { height, width } = Dimensions.get("window");
 import uuid from "react-native-uuid";
 import { useRouter } from "expo-router";
+
 const db = getFirestore(app);
 
 interface Report {
@@ -81,7 +85,7 @@ export default function Reports() {
   const [feedbackStatus, setFeedbackStatus] = useState<{
     [key: string]: boolean;
   }>({});
-  const { USER_ID } = useAuth();
+  const { USER_ID, USERNAME } = useAuth();
   const router = useRouter();
   const fetchAllDocuments = async () => {
     const categories = [
@@ -158,7 +162,7 @@ export default function Reports() {
     };
   };
 
-  useEffect(() => {
+  useEffect(() => { 
     const fetchData = async () => {
       const unsubscribe = await fetchAllDocuments();
       return unsubscribe; // Return the unsubscribe function for cleanup
@@ -245,26 +249,73 @@ export default function Reports() {
   const handleCall = async (user_id: number, username: string) => {
     try {
       const callId = uuid.v4();
-      // @ts-ignore
+      //@ts-ignore
       const callRef = doc(db, "calls", callId);
-      console.log("USER ID: ", user_id);
-      await setDoc(callRef, {
-        callId: callId,
-        caller_id: USER_ID,
-        offer: null,
-        answer: null,
-        callStatus: "waiting",
-        receiver_id: user_id,
-      });
+      //@ts-ignore
+      const userRef = doc(db, "users", String(user_id));
+      const timestamp = Timestamp.now();
+      
+      const userDoc = await getDoc(userRef);
 
+      if (userDoc.exists()) {
+        const userStatus = userDoc.data();
+        if (userStatus.callStatus === "in-call") {
+          Alert.alert("The user is currently in another call.")
+          console.log("The user is currently in another call.");
+          return; 
+        }
+        await updateDoc(userRef, {
+          user_id,
+          callId,
+          caller_id: USER_ID,
+          caller_name: USERNAME,
+          callStatus: "calling", 
+          timestamp,
+        });
+  
+        // Create the call record with the existing receiver
+        await setDoc(callRef, {
+          callId,
+          caller_id: USER_ID, // Use Firebase Auth UID for caller
+          offer: null,
+          answer: null,
+          callStatus: "calling",
+          receiver_id: user_id,
+          timestamp,
+        });
+  
+      } else {
+        await setDoc(userRef, {
+          user_id,
+          callId,
+          caller_id: USER_ID,
+          caller_name: USERNAME,
+          callStatus: "calling", 
+          timestamp,
+        });
+  
+        // Create the call record
+        await setDoc(callRef, {
+          callId,
+          caller_id: USER_ID,
+          offer: null,
+          answer: null,
+          callStatus: "calling",
+          receiver_id: user_id,
+          timestamp,
+        });
+      }
+  
+      // Navigate to the outgoing call screen
       router.push({
         pathname: "/calls/outgoing",
-        params: { mode: "caller", callId: callId, username: username },
+        params: { mode: "caller", callId, username, receiverId: user_id },
       });
     } catch (error) {
-      console.error("error", error);
+      console.error("Error during handleCall:", error);
     }
   };
+  
 
   const renderItem = ({ item }: { item: Report }) => {
     const [datePart, timePart] = item.report_date.split("T");
