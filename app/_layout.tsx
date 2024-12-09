@@ -33,7 +33,7 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <Stack screenOptions={{ gestureEnabled: false }}>
+        <Stack screenOptions={{}}>
           <Stack.Screen
             name="index"
             options={{ headerShown: false, animation: "fade" }}
