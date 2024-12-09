@@ -7,6 +7,7 @@ import * as FileSystem from "expo-file-system";
 import { app } from "@/firebase/firebaseConfig";
 import { addDoc, doc, getDocs, getFirestore, setDoc } from "firebase/firestore";
 const db = getFirestore(app);
+import { Timestamp } from 'firebase/firestore';
 
 interface AuthProps {
   onRefresh?: (refreshToken: string) => Promise<any>;
@@ -18,6 +19,7 @@ interface AuthProps {
   isPending?: boolean;
   setIncomingCall?: any;
   authState?: { token: string | null; authenticated: boolean | null };
+  USERNAME?: string;
   onRegister?: (
     username: string,
     email: string,
@@ -99,49 +101,31 @@ export const AuthProvider = ({ children }: any) => {
   const [USER_ID, SET_USER_ID] = useState("");
   const [peerConnection, setPeerConnection] = useState(null);
   const [isPending, setIsPending] = useState(false);
+  const [username, setUsername] = useState("")
   const router = useRouter();
   
   useEffect(() => {
-    if (!USER_ID) {
-      console.log("USER_ID is not available yet.");
-      return;
+    if (USER_ID) {
+      const userRef = doc(db, "users", USER_ID);
+      const unsubscribe = onSnapshot(userRef, (doc) => {
+        const data = doc.data();
+  
+        if (data) {
+          console.log(data)
+          if (data.callStatus === "calling") {        
+            router.push({
+              pathname: "/calls/incoming",
+              params: { caller_id: data.caller_id, callId: data.callId, callerName: data.caller_name}
+            })
+          }
+          setIncomingCall(data)
+        }
+      });
+     
+  
+      return () => unsubscribe();
     }
-
-    const q = collection(db, 'calls');
-    
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      if (!snapshot.empty) {
-        // Manually filter the snapshot data based on the receiver_id
-        const callData = snapshot.docs
-          .map(doc => doc.data())
-          .find(call => call.receiver_id == USER_ID);
-        console.log(callData)
-        if (callData) {
-          console.log("Call Data Status: ", callData.callStatus);
-
-          if (callData.callStatus === 'waiting') {
-            console.log("Incoming call is waiting");
-            setIncomingCall(callData);
-            router.push('/calls/incoming');
-          }
-
-          if (callData.callStatus === 'ended') {
-            console.log("Call ended");
-            setIncomingCall(null);
-            router.push('/(tabs)/home');
-          }
-        }
-      } else {
-        // No incoming call, clear the state
-        if (incomingCall && incomingCall.callStatus !== 'answered' && incomingCall.callStatus !== 'declined') {
-          console.log("No incoming call, clearing state...");
-          setIncomingCall(null);
-        }
-      }
-    });
-
-    return () => unsubscribe();
-  }, [USER_ID, router]);
+  }, [USER_ID]);
 
 
   const receiveIncomingCall = (callData: any) => {
@@ -153,10 +137,19 @@ export const AuthProvider = ({ children }: any) => {
     setIncomingCall(null);
   };
 
-
+  useEffect(() => {
+   const getUsername = async () => {
+    const username = await SecureStore.getItemAsync("username")
+    if(username){
+      setUsername(username)
+    }
+   }
+   getUsername()
+  } ,[username])
   useEffect(() => {
     const loadToken = async () => {
       const token = await SecureStore.getItemAsync(TOKEN_KEY);
+      
       console.log("stored: ", token);
       if (token) {
         axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -165,6 +158,7 @@ export const AuthProvider = ({ children }: any) => {
           authenticated: true,
         });
       }
+   
     };
     const loadId = async () => {
       const user_id = await SecureStore.getItemAsync("user_id");
@@ -713,6 +707,7 @@ export const AuthProvider = ({ children }: any) => {
     onVerifyEmail: onVerifyEmail,
     authState,
     USER_ID,
+    USERNAME: username,
     createReport: createReport,
     getUserInfo,
     updateProfile,
