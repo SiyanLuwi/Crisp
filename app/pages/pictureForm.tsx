@@ -164,7 +164,7 @@ export default function PictureForm() {
     return new Promise((resolve, reject) => {
         Alert.alert(
             "Duplicate Report Detected",
-            `A similar report already exists at ${location}. Type: ${type_of_report}, Description: ${report_description}, Reported on: ${report_date}. Do you want to submit this report anyway?`,
+            `A similar report already exists at ${location}. Would you like to proceed? Your submission will verify the existing report and increase its count by 1.`,
             [
                 {
                     text: "Cancel",

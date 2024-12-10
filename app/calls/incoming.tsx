@@ -79,6 +79,7 @@ export default function Incoming() {
       await updateDoc(userRef, {
         callStatus: "available"
       })
+      router.push("/(tabs)/home")
     } catch (error) {
       console.error("Incoming call handle end call: ", error);
     }
@@ -98,6 +99,7 @@ export default function Incoming() {
         await updateDoc(doc(db, "users", USER_ID), {
           callStatus: "in-call"
         })
+        setSound(undefined)
         router.push({
           pathname: "/calls/outgoing",
           params: {

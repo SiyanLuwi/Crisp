@@ -63,7 +63,9 @@ export default function Outgoing() {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [cachedLocalPC, setCacheLocalPC] = useState<any>(null);
-
+  const [isAnswered, setAnswered] = useState(false); 
+  const [timerInterval, setTimerInterval] = useState<any>(0);
+  
   // Load and play ringing sound
   const playRingingSound = async () => {
     const { sound } = await Audio.Sound.createAsync(
@@ -76,10 +78,15 @@ export default function Outgoing() {
 
   // Stop ringing sound
   const stopRingingSound = async () => {
-    if (ringSound) {
-      await ringSound.stopAsync();
-      await ringSound.unloadAsync();
-      setRingSound(null);
+    try {
+      console.log("Stopping the ringing sound...");
+      if (ringSound) {
+        await ringSound.stopAsync();
+        await ringSound.unloadAsync();
+        setRingSound(null);
+      }
+    } catch (error) {
+      console.log("stopping sound error: ", error)
     }
   };
 
@@ -96,25 +103,42 @@ export default function Outgoing() {
     const callRef = doc(db, "calls", callId);
     const unsubscribe = onSnapshot(callRef, (doc) => {
       const data = doc.data();
-
+      let interval;
       if (data?.callStatus === "ended") {
         console.log("Call has ended");
-        stopRingingSound();
-
+        setAnswered(false)
         if (cachedLocalPC) {
           cachedLocalPC.close();
           setCacheLocalPC(null);
         }
-        router.back();
+        clearInterval(interval)
+        if(mode === 'caller'){
+          router.back(); // or handle cleanup
+        }else{
+          router.push('/(tabs)/home')
+        }
       }
-      if (data?.connected) {
-        stopRingingSound(); // Stop ringing when the call connects
+    
+      if (data?.callStatus === "answered") {
+        console.log("Call has been answered");
+        stopRingingSound();
+        setRingSound(null);
+        setAnswered(true)
+        interval = startTimer()
       }
     });
-
+  
     return () => unsubscribe();
-  }, [callId, cachedLocalPC]);
+  }, [callId]);
+  
+  const startTimer = () => {
+    const interval = setInterval(() => {
+      setTimerInterval((prevTimer: any) => prevTimer + 1);
+    }, 1000);
 
+    return interval;
+  };
+  
   const startLocalStream = async () => {
     const isFront = true;
     const constraints = {
@@ -199,6 +223,7 @@ export default function Outgoing() {
         if (!localPC.remoteDescription && data?.answer) {
           const rtcSessionDescription = new RTCSessionDescription(data.answer);
           localPC.setRemoteDescription(rtcSessionDescription);
+          
         } else {
           setRemoteStream(null);
         }
@@ -212,10 +237,7 @@ export default function Outgoing() {
           }
         });
       });
-      onSnapshot(callRef, (doc) => {
-        const data: any = doc.data();
-        if(data.callStatus === "answered") setRingSound(null)
-    });
+    
       setCacheLocalPC(localPC);
     } else {
       // @ts-ignore
@@ -284,20 +306,6 @@ export default function Outgoing() {
           }
         });
       });
-
-      onSnapshot(callRef, (doc) => {
-          const data: any = doc.data();
-          if(data.callStatus === 'declined'){
-              if (cachedLocalPC) {
-                cachedLocalPC.close();
-                setCacheLocalPC(null);
-              }
-              setRingSound(null)
-              router.push('/(tabs)/manage')
-          }
-          if(data.callStatus === "answered") setRingSound(null)
-      });
-
       setCacheLocalPC(localPC);
     }
   };
@@ -317,7 +325,6 @@ export default function Outgoing() {
       cachedLocalPC.close();
       setCacheLocalPC(null);
     }
-    router.back();
     console.log("Call Ended");
   };
 
@@ -355,7 +362,7 @@ export default function Outgoing() {
           className="w-32 h-32 rounded-full border-4 border-white"
         /> */}
         <Text className="mt-4 text-3xl text-white font-bold">{username}</Text>
-        <Text className="mt-2 text-lg text-gray-400">Calling...</Text>
+        <Text className="mt-2 text-lg text-gray-400">{isAnswered ? timerInterval :'Calling...'}</Text>
       </View>
 
       {/* Buttons (Mute, End Call, Speaker) */}
