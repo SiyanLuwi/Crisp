@@ -36,7 +36,6 @@ import * as SecureStore from "expo-secure-store";
 import { Report, Reports } from "../utils/reports";
 import api from "../api/axios";
 
-
 const db = getFirestore(app);
 const { height, width } = Dimensions.get("window");
 
@@ -225,12 +224,12 @@ export default function ManageReports() {
       if (!USER_ID) {
         throw new Error("Cannot fetch USER_ID!");
       }
-      const notif = await SecureStore.getItemAsync('notificationsFetched');
+      const notif = await SecureStore.getItemAsync("notificationsFetched");
       if (notif !== null) {
         const isTrue = JSON.parse(notif);
         setHasNewNotification(isTrue);
       } else {
-        setHasNewNotification(false); 
+        setHasNewNotification(false);
       }
       const votes = await fetchAllVotes();
       if (!votes) {
@@ -313,7 +312,6 @@ export default function ManageReports() {
       }
       const reportData = reportSnap.data();
 
-      
       await api.delete(`api/reports/${reportId}/delete/`);
       await deleteCollectionDocuments(
         reportId,
@@ -635,7 +633,7 @@ export default function ManageReports() {
     >
       <SafeAreaView className="flex-1 w-full">
         <View className="flex flex-row h-auto w-full items-center justify-between px-8">
-          <Text className="font-bold text-4xl text-white mt-3 mb-2">
+          <Text className="font-bold text-3xl text-white mt-3 mb-2">
             Manage Reports
           </Text>
           <TouchableOpacity

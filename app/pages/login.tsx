@@ -121,7 +121,7 @@ export default function Login() {
               <Text className="text-md font-semibold text-red-500 ml-1">*</Text>
             </View>
             <TextInput
-              className="w-4/5 bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+              className="w-4/5 bg-white text-md px-4 py-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
               placeholder="Enter your email"
               onChangeText={(text) => setUsername(text.toLowerCase())}
               placeholderTextColor="#888"
@@ -134,7 +134,7 @@ export default function Login() {
             </View>
             <View className="w-4/5 bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
               <TextInput
-                className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
+                className="w-4/5 text-md px-4 py-3 text-[#0C3B2D] font-semibold items-start justify-start"
                 placeholder="Enter your password"
                 placeholderTextColor="#888"
                 secureTextEntry={!passwordVisible}
@@ -174,10 +174,10 @@ export default function Login() {
               className="w-full flex items-center justify-center flex-row mt-20"
               onPress={() => router.navigate(`/pages/register`)}
             >
-              <Text className="text-xl text-[#7e9778] mr-3 mt-1 mb-8 font-semibold flex">
+              <Text className="text-lg text-[#7e9778] mr-3 mt-1 mb-8 font-semibold flex">
                 Don't have an account?
               </Text>
-              <Text className="text-xl text-[#0C3B2D] mt-1 mb-8 font-bold flex">
+              <Text className="text-lg text-[#0C3B2D] mt-1 mb-8 font-bold flex">
                 Register
               </Text>
             </TouchableOpacity>

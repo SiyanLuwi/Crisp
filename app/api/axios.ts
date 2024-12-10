@@ -4,7 +4,8 @@ import * as SecureStore from 'expo-secure-store'
 
 
 const api = axios.create({
-    baseURL: 'https://django-firebase-psql.onrender.com/'
+    // baseURL: 'https://django-firebase-psql.onrender.com/'
+    baseURL: 'http://192.168.1.13:8000/'
 })
 
 api.interceptors.request.use(

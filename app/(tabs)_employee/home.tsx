@@ -482,7 +482,7 @@ export default function Home() {
               </Text>
             </View>
             <View className="items-start justify-start">
-              <Text className="text-[#0C3B2D] font-extrabold text-5xl">
+              <Text className="text-[#0C3B2D] font-extrabold text-4xl">
                 {`${currentWeather.temperature}°C`}
               </Text>
             </View>

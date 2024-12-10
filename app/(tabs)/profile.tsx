@@ -308,7 +308,7 @@ function App() {
     >
       <SafeAreaView className="w-full h-full flex-1 justify-start items-center absolute bg-[#0C3B2D] pt-9">
         <View className="flex flex-row h-auto w-full items-center justify-between px-6">
-          <Text className="font-bold text-4xl text-white mt-3 mb-2">
+          <Text className="font-bold text-3xl text-white mt-3 mb-2">
             Account
           </Text>
           <TouchableOpacity onPress={() => setLogoutModalVisible(true)}>

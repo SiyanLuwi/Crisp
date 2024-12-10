@@ -62,26 +62,32 @@ export default function PictureForm() {
   const [missingFieldsMessage, setMissingFieldsMessage] = useState("");
   const { createReport } = useAuth();
 
-
   const report = async () => {
     try {
       setLoading(true);
-  
+
       // Validate required fields
-      if (!location || !coordinates || !selectedItem || !description || !imageUri) {
+      if (
+        !location ||
+        !coordinates ||
+        !selectedItem ||
+        !description ||
+        !imageUri
+      ) {
         setMissingFieldsMessage("Please fill in all required fields.");
         setMissingFieldsModalVisible(true);
         return;
       }
-  
+
       const [latitude, longitude] = coordinates.split(",");
-      const is_emergency = isEmergency?.toLowerCase() === "yes" ? "emergency" : "not emergency";
+      const is_emergency =
+        isEmergency?.toLowerCase() === "yes" ? "emergency" : "not emergency";
       const user_id = await SecureStore.getItemAsync("user_id");
       if (!user_id) {
         console.error("USER_ID is missing!");
         return;
       }
-  
+
       if (createReport) {
         try {
           const res = await createReport(
@@ -95,33 +101,41 @@ export default function PictureForm() {
             floorNumber,
             location
           );
-  
+
           if (res) {
-            handleReportSuccess(user_id, selectedItem)
+            handleReportSuccess(user_id, selectedItem);
           }
         } catch (error: any) {
-          if (error?.response?.data?.detail === "You've already reported this incident.") {
-            setLoading(false)
-            const existingReport = error?.response?.data?.existing_report;
-            Alert.alert("Duplicate Report Detected", `A similar report already exists at ${location}. Type: ${existingReport.type_of_report}, Description: ${existingReport.report_description}, Reported on: ${existingReport.report_date}.`)
-          } else if(error?.response?.data?.detail === "A similar report already exists."){
-              const existingReport = error?.response?.data?.existing_report;
-              const formData = new FormData();
-              formData.append("type_of_report", selectedItem);
-              formData.append("report_description", description);
-              formData.append("longitude", longitude);
-              formData.append("latitude", latitude);
-              formData.append("is_emergency", is_emergency);
-              formData.append("image_path", imageUri);
-              formData.append("custom_type", customType);
-              formData.append("floor_number", floorNumber);
-              formData.append("location", location);
-              await handleDuplicateReport(existingReport, formData);
-          }
-          else {
-            
+          if (
+            error?.response?.data?.detail ===
+            "You've already reported this incident."
+          ) {
             setLoading(false);
-            const errorMessage = error?.message || "An unexpected error occurred. Please try again.";
+            const existingReport = error?.response?.data?.existing_report;
+            Alert.alert(
+              "Duplicate Report Detected",
+              `A similar report already exists at ${location}. Type: ${existingReport.type_of_report}, Description: ${existingReport.report_description}, Reported on: ${existingReport.report_date}.`
+            );
+          } else if (
+            error?.response?.data?.detail === "A similar report already exists."
+          ) {
+            const existingReport = error?.response?.data?.existing_report;
+            const formData = new FormData();
+            formData.append("type_of_report", selectedItem);
+            formData.append("report_description", description);
+            formData.append("longitude", longitude);
+            formData.append("latitude", latitude);
+            formData.append("is_emergency", is_emergency);
+            formData.append("image_path", imageUri);
+            formData.append("custom_type", customType);
+            formData.append("floor_number", floorNumber);
+            formData.append("location", location);
+            await handleDuplicateReport(existingReport, formData);
+          } else {
+            setLoading(false);
+            const errorMessage =
+              error?.message ||
+              "An unexpected error occurred. Please try again.";
             console.error("Error creating report:", errorMessage);
             alert(errorMessage);
           }
@@ -129,16 +143,15 @@ export default function PictureForm() {
       } else {
         console.error("createReport function is not defined");
       }
-  
     } catch (error: any) {
       setLoading(false);
-      const errorMessage = error.message || "An unexpected error occurred. Please try again.";
+      const errorMessage =
+        error.message || "An unexpected error occurred. Please try again.";
       console.error("Error creating report:", errorMessage);
       alert(errorMessage);
     }
   };
-  
-  
+
   const handleReportSuccess = async (user_id: string, selectedItem: string) => {
     scheduleNotification(
       "Your Report Has Been Submitted!",
@@ -146,7 +159,7 @@ export default function PictureForm() {
       1,
       "/(tabs)/manage"
     );
-  
+
     await addDoc(collection(db, "notifications"), {
       userId: user_id,
       title: "Your Report Has Been Submitted!",
@@ -154,53 +167,61 @@ export default function PictureForm() {
       screen: "/(tabs)/manage",
       createdAt: new Date(),
     });
-    setLoading(false)
+    setLoading(false);
     setSuccessModalVisible(true);
-    
   };
-  
+
   const handleDuplicateReport = async (existingReport: any, formData: any) => {
-    const { location, type_of_report, report_description, report_date } = existingReport;
+    const { location, type_of_report, report_description, report_date } =
+      existingReport;
     return new Promise((resolve, reject) => {
-        Alert.alert(
-            "Duplicate Report Detected",
-            `A similar report already exists at ${location}. Type: ${type_of_report}, Description: ${report_description}, Reported on: ${report_date}. Do you want to submit this report anyway?`,
-            [
-                {
-                    text: "Cancel",
-                    style: "cancel",
-                    onPress: () => reject(new Error("Report submission canceled.")),
-                },
-                {
-                    text: "Submit Anyway",
-                    onPress: async () => {
-                        formData.append("force_submit", "true");
-                        try {
-                            const retryRes = await api.post("api/create-report/", formData, {
-                              headers: {
-                                "Content-Type": "multipart/form-data",                               
-                              },
-                            });
-                            const user_id = await SecureStore.getItemAsync("user_id");
-                            if (!user_id) {
-                              console.error("USER_ID is missing!");
-                              return;
-                            }
-                            if(!selectedItem){
-                              console.error("USER_ID is missing!");
-                              return;
-                            }
-                            handleReportSuccess(user_id, selectedItem)
-                            resolve(retryRes); 
-                        } catch (retryError: any) {
-                            reject(new Error(`An error occurred during forced submission: ${retryError.message}`));
-                        }
+      Alert.alert(
+        "Duplicate Report Detected",
+        `A similar report already exists at ${location}. Type: ${type_of_report}, Description: ${report_description}, Reported on: ${report_date}. Do you want to submit this report anyway?`,
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+            onPress: () => reject(new Error("Report submission canceled.")),
+          },
+          {
+            text: "Submit Anyway",
+            onPress: async () => {
+              formData.append("force_submit", "true");
+              try {
+                const retryRes = await api.post(
+                  "api/create-report/",
+                  formData,
+                  {
+                    headers: {
+                      "Content-Type": "multipart/form-data",
                     },
-                },
-            ]
-        );
+                  }
+                );
+                const user_id = await SecureStore.getItemAsync("user_id");
+                if (!user_id) {
+                  console.error("USER_ID is missing!");
+                  return;
+                }
+                if (!selectedItem) {
+                  console.error("USER_ID is missing!");
+                  return;
+                }
+                handleReportSuccess(user_id, selectedItem);
+                resolve(retryRes);
+              } catch (retryError: any) {
+                reject(
+                  new Error(
+                    `An error occurred during forced submission: ${retryError.message}`
+                  )
+                );
+              }
+            },
+          },
+        ]
+      );
     });
-};
+  };
 
   const fetchData = async () => {
     try {
@@ -247,7 +268,7 @@ export default function PictureForm() {
           behavior={Platform.OS === "ios" ? "padding" : "height"} // Adjust based on your header size
         >
           <ScrollView className="w-full h-full flex p-6">
-            <Text className="font-bold text-4xl text-white mt-3 mb-4 ml-4">
+            <Text className="font-bold text-3xl text-white mt-3 mb-3 ml-4">
               Make a Report
             </Text>
             <View className="justify-center items-center px-3 mt-3">
@@ -281,7 +302,7 @@ export default function PictureForm() {
               </View>
               <View className="w-full bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
                 <TextInput
-                  className="w-full text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
+                  className="w-full text-md px-4 py-3 text-[#0C3B2D] font-semibold items-center justify-center"
                   placeholderTextColor="#888"
                   placeholder="Location"
                   value={location || ""}
@@ -298,7 +319,7 @@ export default function PictureForm() {
                 </Text>
               </View>
               <TextInput
-                className="w-full bg-white p-4 rounded-lg mb-4 border border-[#0C3B2D] justify-center text-md text-[#0C3B2D] font-semibold"
+                className="w-full bg-white px-4 py-3 rounded-lg mb-4 border border-[#0C3B2D] justify-center text-md text-[#0C3B2D] font-semibold"
                 value={selectedItem || ""}
                 editable={false}
               />
@@ -312,7 +333,7 @@ export default function PictureForm() {
                     </Text>
                   </View>
                   <TextInput
-                    className="w-full bg-white p-4 rounded-lg mb-4 border border-[#0C3B2D] justify-center text-md text-[#0C3B2D] font-semibold"
+                    className="w-full bg-white px-4 py-3 rounded-lg mb-4 border border-[#0C3B2D] justify-center text-md text-[#0C3B2D] font-semibold"
                     placeholder="Please specify..."
                     placeholderTextColor={"#888"}
                     value={customType}
@@ -326,7 +347,7 @@ export default function PictureForm() {
                 </Text>
               </View>
               <TextInput
-                className="w-full bg-white p-4 rounded-lg mb-4 border border-[#0C3B2D] justify-center text-md text-[#0C3B2D] font-semibold"
+                className="w-full bg-white px-4 py-3 rounded-lg mb-4 border border-[#0C3B2D] justify-center text-md text-[#0C3B2D] font-semibold"
                 placeholder="Please specify..."
                 placeholderTextColor={"#888"}
                 value={floorNumber}
@@ -342,7 +363,7 @@ export default function PictureForm() {
                 </Text>
               </View>
               <TextInput
-                className="w-full bg-white text-md p-4 rounded-lg items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                className="w-full bg-white text-md px-4 py-3 rounded-lg items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                 placeholderTextColor="#888"
                 placeholder="Description"
                 multiline={true}
@@ -392,8 +413,8 @@ export default function PictureForm() {
                       <TouchableOpacity
                         className="bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center"
                         onPress={() => {
-                          setSuccessModalVisible(false)
-                          router.push('/(tabs)/reports')
+                          setSuccessModalVisible(false);
+                          router.push("/(tabs)/reports");
                         }} // Close the modal here
                       >
                         <Text className="text-md font-semibold text-white px-4">

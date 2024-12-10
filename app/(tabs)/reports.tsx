@@ -847,7 +847,7 @@ export default function ReportPage() {
     >
       <SafeAreaView className="flex-1 w-full">
         <View className="flex flex-row h-auto w-full items-center justify-between px-8">
-          <Text className="font-bold text-4xl text-white mt-3 mb-2">
+          <Text className="font-bold text-3xl text-white mt-3 mb-2">
             Reports
           </Text>
           <TouchableOpacity
