@@ -115,8 +115,11 @@ export default function CameraComp() {
         base64: true,
         skipProcessing: true,
       });
-
-      if (photo?.uri) {
+      if (!photo?.uri) {
+        console.error("Photo capturing failed: photo is undefined.");
+        Alert.alert("Error capturing photo. Please try again.");
+        return;
+      }
         const optimizedUri = await resizeImage(photo.uri);
         const classificationResult = await classifyImage(optimizedUri);
 
@@ -132,9 +135,7 @@ export default function CameraComp() {
         );
 
         router.push("/pages/pictureForm");
-      } else {
-        console.error("Photo capturing failed: photo is undefined.");
-      }
+
     } catch (error) {
       console.error("Error capturing photo:", error);
       Alert.alert("Error capturing photo. Please try again.");
