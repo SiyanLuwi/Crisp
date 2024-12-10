@@ -535,15 +535,15 @@ export default function ReportPage() {
             />
             <View className="flex flex-row w-full justify-between items-start">
               <View className="flex flex-col items-start ">
-                <Text className="pl-3 text-xl font-bold">
+                <Text className="pl-3 text-md font-bold">
                   {item.username.length > 18
                     ? item.username.slice(0, 18) + "..."
                     : item.username}
                 </Text>
 
-                <Text className="pl-3 text-md font-bold text-slate-500">
+                <Text className="pl-3 text-xs font-bold text-slate-500">
                   {formattedDate} {"\n"}
-                  <Text className="text-md font-normal text-slate-500">
+                  <Text className="text-xs font-normal text-slate-500">
                     {formattedTime}
                   </Text>
                 </Text>
@@ -581,20 +581,20 @@ export default function ReportPage() {
             }}
             className="w-full flex flex-row mt-2"
           >
-            <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
+            <Text className="text-md text-left pr-2 font-semibold text-slate-500">
               Location:
-              <Text className="text-lg font-normal text-black ml-2">
+              <Text className="text-md font-normal text-black ml-2">
                 {" " + item.location}
               </Text>
             </Text>
           </TouchableOpacity>
           <View className="w-full flex flex-row">
-            <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
+            <Text className="text-md text-left pr-2 font-semibold text-slate-500">
               Type of Report:
-              <Text className="text-lg font-normal text-black ml-2">
+              <Text className="text-md font-normal text-black ml-2">
                 {" " + item.type_of_report}
                 {item.custom_type && item.custom_type.length > 0 && (
-                  <Text className="text-lg font-normal text-black ml-2">
+                  <Text className="text-md font-normal text-black ml-2">
                     {", " + item.custom_type}
                   </Text>
                 )}
@@ -603,18 +603,18 @@ export default function ReportPage() {
           </View>
           {item.floor_number ? (
             <View className="w-full flex flex-row">
-              <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
+              <Text className="text-md text-left pr-2 font-semibold text-slate-500">
                 Floor Number:
-                <Text className="text-lg font-normal text-black ml-2">
+                <Text className="text-md font-normal text-black ml-2">
                   {" " + item.floor_number}
                 </Text>
               </Text>
             </View>
           ) : null}
           <View className="w-full flex flex-row">
-            <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
+            <Text className="text-md text-left pr-2 font-semibold text-slate-500">
               Description:
-              <Text className="text-lg font-normal text-black ml-2">
+              <Text className="text-md font-normal text-black ml-2">
                 {" " + item.report_description}
               </Text>
             </Text>
@@ -658,7 +658,7 @@ export default function ReportPage() {
                       paddingHorizontal={10}
                     />
                   </TouchableOpacity>
-                  <Text className="text-lg mx-1">{item.upvoteCount}</Text>
+                  <Text className="text-md mx-1">{item.upvoteCount}</Text>
                   <TouchableOpacity
                     onPress={() => {
                       if (!isVerified) {
@@ -681,7 +681,7 @@ export default function ReportPage() {
                       paddingHorizontal={10}
                     />
                   </TouchableOpacity>
-                  <Text className="text-lg mx-1">{item.downvoteCount}</Text>
+                  <Text className="text-md mx-1">{item.downvoteCount}</Text>
                 </View>
                 <View className="flex flex-row items-center">
                   <TouchableOpacity
@@ -744,7 +744,7 @@ export default function ReportPage() {
                       }
                     }}
                   >
-                    <Text className="text-md font-semibold text-white px-4">
+                    <Text className="text-xs font-semibold text-white px-4">
                       Verify Report
                     </Text>
                   </TouchableOpacity>
@@ -768,7 +768,7 @@ export default function ReportPage() {
                       }
                     }}
                   >
-                    <Text className="text-md font-semibold text-[#0C3B2D] px-4">
+                    <Text className="text-xs font-semibold text-[#0C3B2D] px-4">
                       Mark as False
                     </Text>
                   </TouchableOpacity>
@@ -779,14 +779,14 @@ export default function ReportPage() {
           {item.status === "reviewing" && (
             <View className="w-full flex flex-col mt-2">
               <View className="w-full h-px bg-slate-300 mb-2" />
-              <Text className="text-xl font-bold">Feedback:</Text>
+              <Text className="text-lg font-bold">Feedback:</Text>
               {item.workerFeedback?.map((feedback, index) => (
                 <Text
                   key={index}
                   className="text-lg text-left pr-2 font-semibold text-slate-700"
                 >
                   Worker:
-                  <Text className="text-md font-normal text-[#0C3B2D]">
+                  <Text className="text-sm font-normal text-[#0C3B2D]">
                     {" " + feedback.description + "\n"}
                   </Text>
                   <Text className="text-xs font-semibold text-slate-500 ml-2 mt-3 items-center">
@@ -800,14 +800,14 @@ export default function ReportPage() {
             <>
               <View className="w-full flex flex-col mt-2">
                 <View className="w-full h-px bg-slate-300 mb-2" />
-                <Text className="text-xl font-bold">Feedback:</Text>
+                <Text className="text-lg font-bold">Feedback:</Text>
                 {item.workerFeedback?.map((feedback, index) => (
                   <Text
                     key={index}
                     className="text-lg text-left pr-2 font-semibold text-slate-700"
                   >
                     Worker:
-                    <Text className="text-md font-normal text-[#0C3B2D]">
+                    <Text className="text-sm font-normal text-[#0C3B2D]">
                       {" " + feedback.description + "\n"}
                     </Text>
                     <Text className="text-xs font-semibold text-slate-500 ml-2 mt-3 items-center">
@@ -823,7 +823,7 @@ export default function ReportPage() {
                     className="text-lg text-left pr-2 font-semibold text-slate-700"
                   >
                     {item.username + ":"}
-                    <Text className="text-md font-normal text-[#0C3B2D]">
+                    <Text className="text-sm font-normal text-[#0C3B2D]">
                       {" " + feedback.description + "\n"}
                     </Text>
                     <Text className="text-xs font-semibold text-slate-500 ml-2 mt-3 items-center">
@@ -847,7 +847,7 @@ export default function ReportPage() {
     >
       <SafeAreaView className="flex-1 w-full">
         <View className="flex flex-row h-auto w-full items-center justify-between px-8">
-          <Text className="font-bold text-4xl text-white mt-3 mb-2">
+          <Text className="font-bold text-3xl text-white mt-3 mb-2">
             Reports
           </Text>
           <TouchableOpacity

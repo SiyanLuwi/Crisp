@@ -195,7 +195,7 @@ function App() {
     >
       <SafeAreaView className="w-full h-full flex-1 justify-start items-center absolute bg-[#0C3B2D] pt-9">
         <View className="flex flex-row h-auto w-full items-center justify-between px-6">
-          <Text className="font-bold text-4xl text-white mt-3 mb-2">
+          <Text className="font-bold text-3xl text-white mt-3 mb-2">
             Account
           </Text>
           <TouchableOpacity onPress={() => setLogoutModalVisible(true)}>
@@ -223,7 +223,7 @@ function App() {
                 <Text className="text-md text-white mb-1">Name:</Text>
               </View>
               <TextInput
-                className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                className="w-full bg-white text-md px-4 py-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                 value={name}
                 editable={isEditing}
                 onChangeText={setName}
@@ -237,7 +237,7 @@ function App() {
               </View>
               <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
                 <TextInput
-                  className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
+                  className="w-4/5 text-md px-4 py-3 text-[#0C3B2D] font-semibold items-center justify-center"
                   value={address}
                   editable={isEditing}
                   onChangeText={setAddress}
@@ -266,7 +266,7 @@ function App() {
                 <Text className="text-md text-white mb-1">Email Address:</Text>
               </View>
               <TextInput
-                className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                className="w-full bg-white text-md px-4 py-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                 value={email}
                 editable={false}
                 onChangeText={setEmail}
@@ -277,7 +277,7 @@ function App() {
                 <Text className="text-md text-white mb-1">Contact Number:</Text>
               </View>
               <TextInput
-                className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                className="w-full bg-white text-md px-4 py-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                 value={contact}
                 editable={isEditing}
                 onChangeText={setContact}
@@ -293,17 +293,17 @@ function App() {
                 {!isVerified ? (
                   <>
                     {isPending ? (
-                      <Text className="text-md p-4 font-bold text-[#0C3B2D]">
+                      <Text className="text-md px-4 py-3 font-bold text-[#0C3B2D]">
                         Verification is in Process..
                       </Text>
                     ) : (
-                      <Text className="text-md p-4 font-bold text-[#0C3B2D]">
+                      <Text className="text-md px-4 py-3 font-bold text-[#0C3B2D]">
                         Not Yet Verified
                       </Text>
                     )}
                     {isPending ? (
                       <TouchableOpacity
-                        className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg"
+                        className="bg-[#0C3B2D] border border-[#8BC34A] px-4 py-3 rounded-lg"
                         onPress={() => router.push("/pages/verifyPage")}
                         disabled
                       >
@@ -313,7 +313,7 @@ function App() {
                       </TouchableOpacity>
                     ) : (
                       <TouchableOpacity
-                        className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg"
+                        className="bg-[#0C3B2D] border border-[#8BC34A] px-4 py-3 rounded-lg"
                         onPress={() => router.push("/pages/verifyPage")}
                       >
                         <Text className="text-white text-md font-normal">
@@ -323,7 +323,7 @@ function App() {
                     )}
                   </>
                 ) : (
-                  <Text className="text-md p-4 font-bold text-[#0C3B2D]">
+                  <Text className="text-md px-4 py-3 font-bold text-[#0C3B2D]">
                     Verified
                   </Text>
                 )}

@@ -262,7 +262,7 @@ export default function VerifyPage() {
                   </Text>
                 </View>
                 <TextInput
-                  className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                  className="w-full bg-white text-md px-4 py-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                   placeholderTextColor="#888"
                   placeholder="Last Name"
                   value={lastName}
@@ -277,7 +277,7 @@ export default function VerifyPage() {
                   </Text>
                 </View>
                 <TextInput
-                  className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                  className="w-full bg-white text-md px-4 py-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                   placeholderTextColor="#888"
                   placeholder="First Name"
                   value={firstName}
@@ -292,7 +292,7 @@ export default function VerifyPage() {
                   </Text>
                 </View>
                 <TextInput
-                  className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                  className="w-full bg-white text-md px-4 py-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                   placeholderTextColor="#888"
                   placeholder="Middle Name"
                   value={middleName}
@@ -307,7 +307,7 @@ export default function VerifyPage() {
                   </Text>
                 </View>
                 <TextInput
-                  className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                  className="w-full bg-white text-md px-4 py-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                   placeholderTextColor="#888"
                   placeholder="Address"
                   value={address}
@@ -325,7 +325,7 @@ export default function VerifyPage() {
                   {/* Birthday Button */}
                   <TouchableOpacity onPress={() => setShowDatePicker(true)}>
                     <TextInput
-                      className="w-full text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
+                      className="w-full text-md px-4 py-3 text-[#0C3B2D] font-semibold items-center justify-center"
                       placeholderTextColor="#888"
                       placeholder="Select Birthday"
                       value={birthday}
@@ -351,7 +351,7 @@ export default function VerifyPage() {
                   </Text>
                 </View>
                 <TextInput
-                  className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                  className="w-full bg-white text-md px-4 py-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                   placeholderTextColor="#888"
                   placeholder="ID Number"
                   value={idNumber}
@@ -370,7 +370,7 @@ export default function VerifyPage() {
                 </View>
                 <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
                   <TextInput
-                    className="w-3/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
+                    className="w-3/5 text-md px-4 py-3 text-[#0C3B2D] font-semibold items-center justify-center"
                     value={photo || ""}
                     editable={false}
                     placeholderTextColor="#888"
@@ -385,7 +385,7 @@ export default function VerifyPage() {
                   />
                   <TouchableOpacity
                     onPress={pickImage}
-                    className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg"
+                    className="bg-[#0C3B2D] border border-[#8BC34A] px-4 py-3 rounded-lg"
                   >
                     <Text className="text-white text-md font-normal">
                       Choose Photo
@@ -404,7 +404,7 @@ export default function VerifyPage() {
                 {/* Selfie with ID Button */}
                 <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
                   <TextInput
-                    className="w-3/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
+                    className="w-3/5 text-md px-4 py-3 text-[#0C3B2D] font-semibold items-center justify-center"
                     value={selfie || ""}
                     editable={false}
                     placeholderTextColor="#888"
@@ -419,7 +419,7 @@ export default function VerifyPage() {
                   />
                   <TouchableOpacity
                     onPress={takeSelfie}
-                    className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg"
+                    className="bg-[#0C3B2D] border border-[#8BC34A] px-4 py-3 rounded-lg"
                   >
                     <Text className="text-white text-md font-normal">
                       Take Selfie
@@ -438,7 +438,7 @@ export default function VerifyPage() {
                 {/* Take Picture of ID Button */}
                 <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
                   <TextInput
-                    className="w-3/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
+                    className="w-3/5 text-md px-4 py-3 text-[#0C3B2D] font-semibold items-center justify-center"
                     value={idPicture || ""}
                     editable={false}
                     placeholderTextColor="#888"
@@ -453,7 +453,7 @@ export default function VerifyPage() {
                   />
                   <TouchableOpacity
                     onPress={takeIdPicture}
-                    className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg"
+                    className="bg-[#0C3B2D] border border-[#8BC34A] px-4 py-3 rounded-lg"
                   >
                     <Text className="text-white text-md font-normal">
                       Capture ID
