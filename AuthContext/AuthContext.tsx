@@ -362,7 +362,7 @@ export const AuthProvider = ({ children }: any) => {
       authenticated: null,
     });
     console.log("Logging out...");
-    router.push("/pages/login");
+   router.replace("/pages/login");
   };
 
   const onVerifyEmail = async (email: string, otp: string) => {
