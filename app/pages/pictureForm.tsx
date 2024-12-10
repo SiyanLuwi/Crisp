@@ -175,26 +175,39 @@ export default function PictureForm() {
     const { location, type_of_report, report_description, report_date } =
       existingReport;
     return new Promise((resolve, reject) => {
-      Alert.alert(
-        "Duplicate Report Detected",
-        `A similar report already exists at ${location}. Type: ${type_of_report}, Description: ${report_description}, Reported on: ${report_date}. Do you want to submit this report anyway?`,
-        [
-          {
-            text: "Cancel",
-            style: "cancel",
-            onPress: () => reject(new Error("Report submission canceled.")),
-          },
-          {
-            text: "Submit Anyway",
-            onPress: async () => {
-              formData.append("force_submit", "true");
-              try {
-                const retryRes = await api.post(
-                  "api/create-report/",
-                  formData,
-                  {
-                    headers: {
-                      "Content-Type": "multipart/form-data",
+        Alert.alert(
+            "Duplicate Report Detected",
+            `A similar report already exists at ${location}. Would you like to proceed? Your submission will verify the existing report and increase its count by 1.`,
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel",
+                    onPress: () => reject(new Error("Report submission canceled.")),
+                },
+                {
+                    text: "Submit Anyway",
+                    onPress: async () => {
+                        formData.append("force_submit", "true");
+                        try {
+                            const retryRes = await api.post("api/create-report/", formData, {
+                              headers: {
+                                "Content-Type": "multipart/form-data",                               
+                              },
+                            });
+                            const user_id = await SecureStore.getItemAsync("user_id");
+                            if (!user_id) {
+                              console.error("USER_ID is missing!");
+                              return;
+                            }
+                            if(!selectedItem){
+                              console.error("USER_ID is missing!");
+                              return;
+                            }
+                            handleReportSuccess(user_id, selectedItem)
+                            resolve(retryRes); 
+                        } catch (retryError: any) {
+                            reject(new Error(`An error occurred during forced submission: ${retryError.message}`));
+                        }
                     },
                   }
                 );

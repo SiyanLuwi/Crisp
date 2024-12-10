@@ -78,6 +78,7 @@ import * as Network from "expo-network";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { scheduleNotification } from "@/app/utils/notifications";
 import { Alert } from "react-native";
+import { callNotification } from "@/app/utils/callingNotification";
 const TOKEN_KEY = "my-jwt";
 const REFRESH_KEY = "my-jwt-refresh";
 const EXPIRATION = "accessTokenExpiration";
@@ -112,7 +113,8 @@ export const AuthProvider = ({ children }: any) => {
   
         if (data) {
           console.log(data)
-          if (data.callStatus === "calling") {        
+          if (data.callStatus === "calling") {   
+            callNotification(`${data.caller_name} - CRISP`, "Calling...", 1,  "/calls/incoming")     
             router.push({
               pathname: "/calls/incoming",
               params: { caller_id: data.caller_id, callId: data.callId, callerName: data.caller_name}
