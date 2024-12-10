@@ -36,7 +36,6 @@ import * as SecureStore from "expo-secure-store";
 import { Report, Reports } from "../utils/reports";
 import api from "../api/axios";
 
-
 const db = getFirestore(app);
 const { height, width } = Dimensions.get("window");
 
@@ -225,12 +224,12 @@ export default function ManageReports() {
       if (!USER_ID) {
         throw new Error("Cannot fetch USER_ID!");
       }
-      const notif = await SecureStore.getItemAsync('notificationsFetched');
+      const notif = await SecureStore.getItemAsync("notificationsFetched");
       if (notif !== null) {
         const isTrue = JSON.parse(notif);
         setHasNewNotification(isTrue);
       } else {
-        setHasNewNotification(false); 
+        setHasNewNotification(false);
       }
       const votes = await fetchAllVotes();
       if (!votes) {
@@ -313,7 +312,6 @@ export default function ManageReports() {
       }
       const reportData = reportSnap.data();
 
-      
       await api.delete(`api/reports/${reportId}/delete/`);
       await deleteCollectionDocuments(
         reportId,
@@ -424,15 +422,15 @@ export default function ManageReports() {
 
             <View className="flex flex-row w-full justify-between items-start">
               <View className="flex flex-col items-start ">
-                <Text className="pl-3 text-xl font-bold">
+                <Text className="pl-3 text-md font-bold">
                   {item.username.length > 18
                     ? item.username.slice(0, 18) + "..."
                     : item.username}
                 </Text>
 
-                <Text className="pl-3 text-md font-bold text-slate-500">
+                <Text className="pl-3 text-xs font-bold text-slate-500">
                   {formattedDate} {"\n"}
-                  <Text className="text-md font-normal text-slate-500">
+                  <Text className="text-xs font-normal text-slate-500">
                     {formattedTime}
                   </Text>
                 </Text>
@@ -450,7 +448,7 @@ export default function ManageReports() {
                   className={`w-8 h-8 border rounded-full mt-2 mr-16 ${
                     item.status === "Pending"
                       ? "bg-yellow-400" // Amber for pending
-                      : item.status === "ongoing"
+                      : item.status === "Ongoing"
                         ? "bg-blue-500" // Blue for ongoing
                         : item.status === "reviewing"
                           ? "bg-orange-500" // Orange for pending review
@@ -469,35 +467,35 @@ export default function ManageReports() {
             }}
             className="w-full flex flex-row mt-2"
           >
-            <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
+            <Text className="text-md text-left pr-2 font-semibold text-slate-500">
               Location:
-              <Text className="text-lg font-normal text-black ml-2">
+              <Text className="text-md font-normal text-black ml-2">
                 {" " + item.location}
               </Text>
             </Text>
           </TouchableOpacity>
           <View className="w-full flex flex-row">
-            <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
+            <Text className="text-md text-left pr-2 font-semibold text-slate-500">
               Type of Report:
-              <Text className="text-lg font-normal text-black ml-2">
+              <Text className="text-md font-normal text-black ml-2">
                 {" " + item.type_of_report}
               </Text>
             </Text>
           </View>
           {item.floor_number ? (
             <View className="w-full flex flex-row">
-              <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
+              <Text className="text-md text-left pr-2 font-semibold text-slate-500">
                 Floor Number:
-                <Text className="text-lg font-normal text-black ml-2">
+                <Text className="text-md font-normal text-black ml-2">
                   {" " + item.floor_number}
                 </Text>
               </Text>
             </View>
           ) : null}
           <View className="w-full flex flex-row">
-            <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
+            <Text className="text-md text-left pr-2 font-semibold text-slate-500">
               Description:
-              <Text className="text-lg font-normal text-black ml-2">
+              <Text className="text-md font-normal text-black ml-2">
                 {" " + item.report_description}
               </Text>
             </Text>
@@ -523,14 +521,14 @@ export default function ManageReports() {
                 color={"#A0A0A0"}
                 paddingHorizontal={10}
               />
-              <Text className="text-lg mx-1">{item.upvoteCount}</Text>
+              <Text className="text-md mx-1">{item.upvoteCount}</Text>
               <MaterialCommunityIcons
                 name="thumb-down-outline"
                 size={width * 0.06}
                 color={"#A0A0A0"}
                 paddingHorizontal={10}
               />
-              <Text className="text-lg mx-1">{item.downvoteCount}</Text>
+              <Text className="text-md mx-1">{item.downvoteCount}</Text>
             </View>
             <View className="flex flex-row items-center">
               {item.status === "reviewing" && (
@@ -571,13 +569,13 @@ export default function ManageReports() {
               {item.workerFeedback?.map((feedback, index) => (
                 <Text
                   key={index}
-                  className="text-lg text-left pr-2 font-semibold text-slate-700"
+                  className="text-md text-left pr-2 font-semibold text-slate-700"
                 >
                   Worker
                   <Text className="text-sm font-semibold text-slate-500 ml-2 items-center">
                     {"   " + formatDate(feedback.submited_at)}
                   </Text>
-                  <Text className="text-lg font-normal text-black ml-2">
+                  <Text className="text-md font-normal text-black ml-2">
                     {"\n" + feedback.description}
                   </Text>
                 </Text>
@@ -592,13 +590,13 @@ export default function ManageReports() {
                 {item.workerFeedback?.map((feedback, index) => (
                   <Text
                     key={index}
-                    className="text-lg text-left pr-2 font-semibold text-slate-700"
+                    className="text-md text-left pr-2 font-semibold text-slate-700"
                   >
                     Worker
                     <Text className="text-sm font-semibold text-slate-500 ml-2 items-center">
                       {"   " + formatDate(feedback.submited_at)}
                     </Text>
-                    <Text className="text-lg font-normal text-black ml-2">
+                    <Text className="text-md font-normal text-black ml-2">
                       {"\n" + feedback.description}
                     </Text>
                   </Text>
@@ -608,13 +606,13 @@ export default function ManageReports() {
                 {item.userFeedback?.map((feedback, index) => (
                   <Text
                     key={index}
-                    className="text-lg text-left pr-2 font-semibold text-slate-700"
+                    className="text-md text-left pr-2 font-semibold text-slate-700"
                   >
                     {item.username}
                     <Text className="text-sm font-semibold text-slate-500 ml-2 items-center">
                       {"   " + formatDate(feedback.submited_at)}
                     </Text>
-                    <Text className="text-lg font-normal text-black ml-2">
+                    <Text className="text-md font-normal text-black ml-2">
                       {"\n" + feedback.description}
                     </Text>
                   </Text>
@@ -635,7 +633,7 @@ export default function ManageReports() {
     >
       <SafeAreaView className="flex-1 w-full">
         <View className="flex flex-row h-auto w-full items-center justify-between px-8">
-          <Text className="font-bold text-4xl text-white mt-3 mb-2">
+          <Text className="font-bold text-3xl text-white mt-3 mb-2">
             Manage Reports
           </Text>
           <TouchableOpacity

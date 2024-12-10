@@ -32,7 +32,7 @@ import {
   addDoc,
   updateDoc,
 } from "firebase/firestore";
-import { Timestamp } from 'firebase/firestore'; 
+import { Timestamp } from "firebase/firestore";
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
 import { app } from "@/firebase/firebaseConfig";
 import * as SecureStore from "expo-secure-store";
@@ -162,7 +162,7 @@ export default function Reports() {
     };
   };
 
-  useEffect(() => { 
+  useEffect(() => {
     const fetchData = async () => {
       const unsubscribe = await fetchAllDocuments();
       return unsubscribe; // Return the unsubscribe function for cleanup
@@ -254,25 +254,25 @@ export default function Reports() {
       //@ts-ignore
       const userRef = doc(db, "users", String(user_id));
       const timestamp = Timestamp.now();
-      
+
       const userDoc = await getDoc(userRef);
 
       if (userDoc.exists()) {
         const userStatus = userDoc.data();
         if (userStatus.callStatus === "in-call") {
-          Alert.alert("The user is currently in another call.")
+          Alert.alert("The user is currently in another call.");
           console.log("The user is currently in another call.");
-          return; 
+          return;
         }
         await updateDoc(userRef, {
           user_id,
           callId,
           caller_id: USER_ID,
           caller_name: USERNAME,
-          callStatus: "calling", 
+          callStatus: "calling",
           timestamp,
         });
-  
+
         // Create the call record with the existing receiver
         await setDoc(callRef, {
           callId,
@@ -283,17 +283,16 @@ export default function Reports() {
           receiver_id: user_id,
           timestamp,
         });
-  
       } else {
         await setDoc(userRef, {
           user_id,
           callId,
           caller_id: USER_ID,
           caller_name: USERNAME,
-          callStatus: "calling", 
+          callStatus: "calling",
           timestamp,
         });
-  
+
         // Create the call record
         await setDoc(callRef, {
           callId,
@@ -305,7 +304,7 @@ export default function Reports() {
           timestamp,
         });
       }
-  
+
       // Navigate to the outgoing call screen
       router.push({
         pathname: "/calls/outgoing",
@@ -315,7 +314,6 @@ export default function Reports() {
       console.error("Error during handleCall:", error);
     }
   };
-  
 
   const renderItem = ({ item }: { item: Report }) => {
     const [datePart, timePart] = item.report_date.split("T");
@@ -334,15 +332,15 @@ export default function Reports() {
             />
             <View className="flex flex-row w-full justify-between items-start">
               <View className="flex flex-col items-start ">
-                <Text className="pl-3 text-xl font-bold">
+                <Text className="pl-3 text-md font-bold">
                   {item.username.length > 18
                     ? item.username.slice(0, 18) + "..."
                     : item.username}
                 </Text>
 
-                <Text className="pl-3 text-md font-bold text-slate-500">
+                <Text className="pl-3 text-xs font-bold text-slate-500">
                   {formattedDate} {"\n"}
-                  <Text className="text-md font-normal text-slate-500">
+                  <Text className="text-xs font-normal text-slate-500">
                     {formattedTime}
                   </Text>
                 </Text>
@@ -399,25 +397,25 @@ export default function Reports() {
             }}
             className="w-full flex flex-row mt-2"
           >
-            <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
+            <Text className="text-md text-left pr-2 font-semibold text-slate-500">
               Location:
-              <Text className="text-lg font-normal text-black ml-2">
+              <Text className="text-md font-normal text-black ml-2">
                 {" " + item.location}
               </Text>
             </Text>
           </TouchableOpacity>
           <View className="w-full flex flex-row">
-            <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
+            <Text className="text-md text-left pr-2 font-semibold text-slate-500">
               Type of Report:
-              <Text className="text-lg font-normal text-black ml-2">
+              <Text className="text-md font-normal text-black ml-2">
                 {" " + item.type_of_report}
               </Text>
             </Text>
           </View>
           <View className="w-full flex flex-row">
-            <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
+            <Text className="text-md text-left pr-2 font-semibold text-slate-500">
               Description:
-              <Text className="text-lg font-normal text-black ml-2">
+              <Text className="text-md font-normal text-black ml-2">
                 {" " + item.report_description}
               </Text>
             </Text>
@@ -436,40 +434,59 @@ export default function Reports() {
             </TouchableOpacity>
           ) : null}
           <View className="flex flex-row justify-end w-full mt-3">
-            <TouchableOpacity
-              className={`bg-[#134c3b] p-2 rounded-lg h-auto items-center justify-center mr-3 ${
-                item.status === "reviewing" ? "opacity-50" : ""
-              }`}
-              onPress={() => handleCall(item.user_id, item.username)}
-            >
-              <Text className="text-md font-extrabold text-white px-5">
-                Call User
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className={`bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center ${
-                feedbackExists ? "opacity-50" : ""
-              }`}
-              onPress={() => {
-                if (feedbackExists) {
-                  // If feedback exists, show the modal message
-                  setModalMessage(
-                    `The Report is already marked as ${item.status.toUpperCase()}`
-                  );
-                  setIsSuccess(false);
-                  setIsModalVisible(true);
-                } else {
-                  // If feedback doesn't exist, show the feedback modal
-                  setFeedbackModalVisible(true);
-                  setSelectedReport(item);
-                }
-              }}
-              // disabled={feedbackExists}
-            >
-              <Text className="text-md font-extrabold text-white px-5">
-                Done
-              </Text>
-            </TouchableOpacity>
+            <View className="flex flex-row items-center">
+              {/* Call User Button */}
+              <TouchableOpacity
+                className={`bg-[#134c3b] p-2 rounded-md h-auto items-center justify-center mr-2 ${
+                  item.status === "reviewing" ? "opacity-50" : ""
+                }`}
+                onPress={() => handleCall(item.user_id, item.username)}
+                disabled={item.status === "reviewing"} // Disable if status is "reviewing"
+              >
+                <Text className="text-xs font-extrabold text-white px-3">
+                  Call User
+                </Text>
+              </TouchableOpacity>
+
+              {/* Disregard Button */}
+              <TouchableOpacity
+                className={`bg-[#134c3b] p-2 rounded-md h-auto items-center justify-center mr-2 ${
+                  item.status === "reviewing" ? "opacity-50" : ""
+                }`}
+                // onPress={() => handleDisregard(item.id)} // Replace with your disregard handler
+                disabled={item.status === "reviewing"} // Disable if status is "reviewing"
+              >
+                <Text className="text-xs font-extrabold text-white px-3">
+                  False
+                </Text>
+              </TouchableOpacity>
+
+              {/* Done Button */}
+              <TouchableOpacity
+                className={`bg-[#0C3B2D] p-2 rounded-md h-auto items-center justify-center ${
+                  feedbackExists ? "opacity-50" : ""
+                }`}
+                onPress={() => {
+                  if (feedbackExists) {
+                    // If feedback exists, show the modal message
+                    setModalMessage(
+                      `The Report is already marked as ${item.status.toUpperCase()}`
+                    );
+                    setIsSuccess(false);
+                    setIsModalVisible(true);
+                  } else {
+                    // If feedback doesn't exist, show the feedback modal
+                    setFeedbackModalVisible(true);
+                    setSelectedReport(item);
+                  }
+                }}
+                disabled={feedbackExists} // Disable button if feedback exists
+              >
+                <Text className="text-xs font-extrabold text-white px-3">
+                  Done
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </View>
@@ -484,7 +501,7 @@ export default function Reports() {
     >
       <SafeAreaView className="flex-1 w-full">
         <View className="flex flex-row h-auto w-full items-center justify-between px-8">
-          <Text className="font-bold text-4xl text-white mt-3 mb-2">
+          <Text className="font-bold text-3xl text-white mt-3 mb-2">
             Reports
           </Text>
           <TouchableOpacity onPress={() => router.push("/pages/notification")}>

@@ -90,7 +90,7 @@ export default function Home() {
   const fetchAllDocuments = async () => {
     const categories = [
       "fires",
-      "street light",
+      "street lights",
       "potholes",
       "floods",
       "others",
@@ -370,7 +370,7 @@ export default function Home() {
             <Marker
               coordinate={region}
               title={"You are here"}
-              pinColor="pink"
+              pinColor="blue"
             />
 
             {reports.map((item, index) => (
@@ -482,7 +482,7 @@ export default function Home() {
               </Text>
             </View>
             <View className="items-start justify-start">
-              <Text className="text-[#0C3B2D] font-extrabold text-5xl">
+              <Text className="text-[#0C3B2D] font-extrabold text-4xl">
                 {`${currentWeather.temperature}°C`}
               </Text>
             </View>

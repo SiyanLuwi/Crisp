@@ -251,7 +251,7 @@ export default function Register() {
                 </Text>
               </View>
               <TextInput
-                className="w-4/5 bg-white text-md p-4 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                className="w-4/5 bg-white text-md px-4 py-3 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                 placeholder="Enter your name"
                 placeholderTextColor="#888"
                 onChangeText={(text) => setUsername(text.toLowerCase())}
@@ -266,7 +266,7 @@ export default function Register() {
               </View>
               <View className="w-4/5 bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
                 <TextInput
-                  className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
+                  className="w-4/5 text-md px-4 py-3 text-[#0C3B2D] font-semibold items-center justify-center"
                   placeholder="Enter your address"
                   placeholderTextColor="#888"
                   value={address}
@@ -293,7 +293,7 @@ export default function Register() {
                 </Text>
               </View>
               <TextInput
-                className="w-4/5 bg-white text-md p-4 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                className="w-4/5 bg-white text-md px-4 py-3 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                 placeholder="Enter your email"
                 placeholderTextColor="#888"
                 onChangeText={setEmail}
@@ -307,7 +307,7 @@ export default function Register() {
                 </Text>
               </View>
               <TextInput
-                className="w-4/5 bg-white text-md p-4 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                className="w-4/5 bg-white text-md px-4 py-3 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                 placeholder="Enter your mobile number"
                 placeholderTextColor="#888"
                 keyboardType="numeric"
@@ -324,7 +324,7 @@ export default function Register() {
               </View>
               <View className="w-4/5 bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
                 <TextInput
-                  className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
+                  className="w-4/5 text-md px-4 py-3 text-[#0C3B2D] font-semibold items-center justify-center"
                   placeholder="Enter your password"
                   placeholderTextColor="#888"
                   secureTextEntry={!passwordVisible}
@@ -352,7 +352,7 @@ export default function Register() {
               </View>
               <View className="w-4/5 bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
                 <TextInput
-                  className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
+                  className="w-4/5 text-md px-4 py-3 text-[#0C3B2D] font-semibold items-center justify-center"
                   placeholder="Confirm your password"
                   placeholderTextColor="#888"
                   secureTextEntry={!confirmPasswordVisible}
@@ -433,10 +433,10 @@ export default function Register() {
                 className="w-full flex items-center justify-center flex-row mt-6"
                 onPress={() => router.navigate(`/pages/login`)}
               >
-                <Text className="text-xl text-[#7e9778] mr-3 mt-1 mb-8 font-semibold flex">
+                <Text className="text-lg text-[#7e9778] mr-3 mt-1 mb-8 font-semibold flex">
                   Already an account?
                 </Text>
-                <Text className="text-xl text-[#0C3B2D] mt-1 mb-8 font-bold flex">
+                <Text className="text-lg text-[#0C3B2D] mt-1 mb-8 font-bold flex">
                   Login
                 </Text>
               </TouchableOpacity>
