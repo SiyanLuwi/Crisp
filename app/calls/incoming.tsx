@@ -32,14 +32,14 @@ const iceServersConfig = {
 };
 export default function Incoming() {
   const { incomingCall, USER_ID } = useAuth();
-  const [callerName, setClallerName] = useState();
+  const { callerName } = useLocalSearchParams()
   const callerImage = "https://randomuser.me/api/portraits/men/1.jpg"; // Use a placeholder image
   const router = useRouter();
   const [sound, setSound] = useState<Audio.Sound | undefined>(undefined);
 
   useEffect(() => {
     if (incomingCall) {
-      setClallerName(incomingCall.username);
+
       playRingSound(); // Play the ring sound when the incoming call arrives
     }
 
@@ -68,6 +68,7 @@ export default function Incoming() {
         console.log("USER ID NOT FOUND ! AT INCOMING .TSX")
         return;
       }
+
       const callRef = doc(db, "calls", incomingCall.callId);
       const userRef = doc(db, "users", USER_ID);
 
@@ -77,7 +78,7 @@ export default function Incoming() {
         { merge: true }
       );
       await updateDoc(userRef, {
-        callStatus: "available"
+        callStatus: "ended"
       })
       router.push("/(tabs)/home")
     } catch (error) {

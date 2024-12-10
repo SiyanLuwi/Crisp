@@ -55,7 +55,7 @@ export default function Outgoing() {
   const [isSpeakerOn, setIsSpeakerOn] = useState(true);
   // Sample data for the outgoing call UI
   const callerImage = "https://randomuser.me/api/portraits/men/1.jpg"; // Use a placeholder image
-  const { callId, username, receiverId } = useLocalSearchParams();
+  const { callId, username, receiverId, callerName } = useLocalSearchParams();
   const { USER_ID } = useAuth();
   const { mode } = useLocalSearchParams();
   const [ringSound, setRingSound] = useState<Audio.Sound | null>(null);
@@ -64,37 +64,49 @@ export default function Outgoing() {
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [cachedLocalPC, setCacheLocalPC] = useState<any>(null);
   const [isAnswered, setAnswered] = useState(false); 
-  const [timerInterval, setTimerInterval] = useState<any>(0);
-  
+  const [timerInterval, setTimerInterval] = useState<number>(0);
+  let interval: number | NodeJS.Timer | undefined;
+
   // Load and play ringing sound
   const playRingingSound = async () => {
-    const { sound } = await Audio.Sound.createAsync(
-      require("../../assets/ring.mp3") // Replace with your ringtone file path
-    );
-    setRingSound(sound);
-    await sound.setIsLoopingAsync(true); // Loop the sound
-    await sound.playAsync();
+    try {
+      if (ringSound) {
+        console.log("A sound is already playing. Stop it first.");
+        return;
+      }
+      console.log("Loading and playing the ringing sound...");
+      const { sound } = await Audio.Sound.createAsync(
+        require("../../assets/ring.mp3") // Replace with your ringtone file path
+      );
+      setRingSound(sound);
+      await sound.setIsLoopingAsync(true); // Loop the sound
+      await sound.playAsync();
+    } catch (error) {
+      console.log("Error while playing sound: ", error);
+    }
   };
 
-  // Stop ringing sound
   const stopRingingSound = async () => {
     try {
-      console.log("Stopping the ringing sound...");
       if (ringSound) {
+        console.log("Stopping the ringing sound...");
         await ringSound.stopAsync();
-        await ringSound.unloadAsync();
-        setRingSound(null);
+        await ringSound.unloadAsync(); 
+      } else {
+        console.log("No sound is playing to stop.");
       }
     } catch (error) {
-      console.log("stopping sound error: ", error)
+      console.log("Error while stopping sound: ", error);
     }
   };
 
   useEffect(() => {
-    playRingingSound(); // Play the ringing sound on mount
+   if(mode === 'caller'){
+     playRingingSound(); 
+   }
 
     return () => {
-      stopRingingSound(); // Stop the ringing sound on unmount
+      stopRingingSound(); 
     };
   }, []);
 
@@ -103,28 +115,23 @@ export default function Outgoing() {
     const callRef = doc(db, "calls", callId);
     const unsubscribe = onSnapshot(callRef, (doc) => {
       const data = doc.data();
-      let interval;
-      if (data?.callStatus === "ended") {
+      if (data?.callStatus === "answered") {
+        console.log("Call has been answered, stopping ringing sound...");
+        stopRingingSound();
+        setAnswered(true);
+        startTimer();
+      } else if (data?.callStatus === "ended") {
         console.log("Call has ended");
-        setAnswered(false)
+        setAnswered(false);
         if (cachedLocalPC) {
           cachedLocalPC.close();
           setCacheLocalPC(null);
         }
-        clearInterval(interval)
-        if(mode === 'caller'){
+        if (mode === 'caller') {
           router.back(); // or handle cleanup
-        }else{
-          router.push('/(tabs)/home')
+        } else {
+          router.push('/(tabs)/home');
         }
-      }
-    
-      if (data?.callStatus === "answered") {
-        console.log("Call has been answered");
-        stopRingingSound();
-        setRingSound(null);
-        setAnswered(true)
-        interval = startTimer()
       }
     });
   
@@ -132,11 +139,39 @@ export default function Outgoing() {
   }, [callId]);
   
   const startTimer = () => {
-    const interval = setInterval(() => {
-      setTimerInterval((prevTimer: any) => prevTimer + 1);
-    }, 1000);
+    if (!interval) {
+      interval = setInterval(() => {
+        setTimerInterval((prevTimer) => prevTimer + 1);
+      }, 1000);
+    }
+  };
 
-    return interval;
+  // Stop the timer
+  const stopTimer = () => {
+    if (interval) {
+      clearInterval(interval as number); // Cast to number for browser compatibility
+      interval = undefined;
+    }
+  };
+
+  // Reset the timer
+  const resetTimer = () => {
+    stopTimer();
+    setTimerInterval(0);
+  };
+  useEffect(() => {
+    return () => {
+      if (interval) {
+        clearInterval(interval as number);
+      }
+    };
+  }, []);
+  const formatTimer = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
   };
   
   const startLocalStream = async () => {
@@ -311,22 +346,36 @@ export default function Outgoing() {
   };
 
   const handleEndCall = async () => {
-    // @ts-ignore
-    const callRef = doc(db, "calls", callId);
-    // @ts-ignore
-    const userRef = doc(db, "users", receiverId);
-
-    await Promise.all([
-      setDoc(callRef, { callStatus: "ended" }, { merge: true }),
-      updateDoc(userRef, { callStatus: "available" }),
-    ]);
-
-    if (cachedLocalPC) {
-      cachedLocalPC.close();
-      setCacheLocalPC(null);
+    try {
+      if (!callId) {
+        throw new Error("callId is required but was not provided.");
+      }
+      const callRef = doc(db, "calls", callId as string);
+  
+      // Reference to the user document
+      
+      const userRef = mode === "caller"//@ts-ignore
+        ? doc(db, "users", receiverId)//@ts-ignore
+        : doc(db, "users", USER_ID);
+  
+      // Update call and user status
+      await Promise.all([
+        setDoc(callRef, { callStatus: "ended", callLogs: timerInterval }, { merge: true }),
+        updateDoc(userRef, { callStatus: "available" }),
+      ]);
+  
+      // Close and clean up the peer connection
+      if (cachedLocalPC) {
+        cachedLocalPC.close();
+        setCacheLocalPC(null);
+      }
+  
+      console.log("Call Ended");
+    } catch (error) {
+      console.error("Error ending the call:", error);
     }
-    console.log("Call Ended");
   };
+  
 
   const handleMute = () => {
     if (localStream) {
@@ -361,8 +410,8 @@ export default function Outgoing() {
           source={{ uri: callerImage }}
           className="w-32 h-32 rounded-full border-4 border-white"
         /> */}
-        <Text className="mt-4 text-3xl text-white font-bold">{username}</Text>
-        <Text className="mt-2 text-lg text-gray-400">{isAnswered ? timerInterval :'Calling...'}</Text>
+        <Text className="mt-4 text-3xl text-white font-bold">{username || callerName}</Text>
+        <Text className="mt-2 text-lg text-gray-400">{isAnswered ? formatTimer(timerInterval) : "Calling..."}</Text>
       </View>
 
       {/* Buttons (Mute, End Call, Speaker) */}
