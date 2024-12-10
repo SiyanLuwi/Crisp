@@ -101,10 +101,9 @@ export default function Outgoing() {
   };
 
   useEffect(() => {
-   if(mode === 'caller'){
-     playRingingSound(); 
-   }
-
+     if(mode === 'calller'){
+        playRingingSound(); 
+     }
     return () => {
       stopRingingSound(); 
     };
@@ -117,7 +116,10 @@ export default function Outgoing() {
       const data = doc.data();
       if (data?.callStatus === "answered") {
         console.log("Call has been answered, stopping ringing sound...");
-        stopRingingSound();
+        if (ringSound) {
+          ringSound.stopAsync(); 
+          ringSound.unloadAsync(); 
+        }
         setAnswered(true);
         startTimer();
       } else if (data?.callStatus === "ended") {
@@ -393,7 +395,6 @@ export default function Outgoing() {
     console.log(isSpeakerOn ? "Speaker Volume Low" : "Speaker Volume High");
   };
 
-  useEffect(() => {}, []);
 
   return (
     <View className="flex-1 bg-blue-900 justify-between px-12 py-20">
