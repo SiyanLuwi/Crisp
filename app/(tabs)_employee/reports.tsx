@@ -332,15 +332,15 @@ export default function Reports() {
             />
             <View className="flex flex-row w-full justify-between items-start">
               <View className="flex flex-col items-start ">
-                <Text className="pl-3 text-xl font-bold">
+                <Text className="pl-3 text-md font-bold">
                   {item.username.length > 18
                     ? item.username.slice(0, 18) + "..."
                     : item.username}
                 </Text>
 
-                <Text className="pl-3 text-md font-bold text-slate-500">
+                <Text className="pl-3 text-xs font-bold text-slate-500">
                   {formattedDate} {"\n"}
-                  <Text className="text-md font-normal text-slate-500">
+                  <Text className="text-xs font-normal text-slate-500">
                     {formattedTime}
                   </Text>
                 </Text>
@@ -397,25 +397,25 @@ export default function Reports() {
             }}
             className="w-full flex flex-row mt-2"
           >
-            <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
+            <Text className="text-md text-left pr-2 font-semibold text-slate-500">
               Location:
-              <Text className="text-lg font-normal text-black ml-2">
+              <Text className="text-md font-normal text-black ml-2">
                 {" " + item.location}
               </Text>
             </Text>
           </TouchableOpacity>
           <View className="w-full flex flex-row">
-            <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
+            <Text className="text-md text-left pr-2 font-semibold text-slate-500">
               Type of Report:
-              <Text className="text-lg font-normal text-black ml-2">
+              <Text className="text-md font-normal text-black ml-2">
                 {" " + item.type_of_report}
               </Text>
             </Text>
           </View>
           <View className="w-full flex flex-row">
-            <Text className="text-lg text-left pr-2 font-semibold text-slate-500">
+            <Text className="text-md text-left pr-2 font-semibold text-slate-500">
               Description:
-              <Text className="text-lg font-normal text-black ml-2">
+              <Text className="text-md font-normal text-black ml-2">
                 {" " + item.report_description}
               </Text>
             </Text>
@@ -437,33 +437,33 @@ export default function Reports() {
             <View className="flex flex-row items-center">
               {/* Call User Button */}
               <TouchableOpacity
-                className={`bg-[#134c3b] p-2 rounded-lg h-auto items-center justify-center mr-2 ${
+                className={`bg-[#134c3b] p-2 rounded-md h-auto items-center justify-center mr-2 ${
                   item.status === "reviewing" ? "opacity-50" : ""
                 }`}
                 onPress={() => handleCall(item.user_id, item.username)}
                 disabled={item.status === "reviewing"} // Disable if status is "reviewing"
               >
-                <Text className="text-md font-extrabold text-white px-5">
+                <Text className="text-xs font-extrabold text-white px-3">
                   Call User
                 </Text>
               </TouchableOpacity>
 
               {/* Disregard Button */}
               <TouchableOpacity
-                className={`bg-[#134c3b] p-2 rounded-lg h-auto items-center justify-center mr-2 ${
+                className={`bg-[#134c3b] p-2 rounded-md h-auto items-center justify-center mr-2 ${
                   item.status === "reviewing" ? "opacity-50" : ""
                 }`}
                 // onPress={() => handleDisregard(item.id)} // Replace with your disregard handler
                 disabled={item.status === "reviewing"} // Disable if status is "reviewing"
               >
-                <Text className="text-md font-extrabold text-white px-5">
+                <Text className="text-xs font-extrabold text-white px-3">
                   False
                 </Text>
               </TouchableOpacity>
 
               {/* Done Button */}
               <TouchableOpacity
-                className={`bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center ${
+                className={`bg-[#0C3B2D] p-2 rounded-md h-auto items-center justify-center ${
                   feedbackExists ? "opacity-50" : ""
                 }`}
                 onPress={() => {
@@ -482,7 +482,7 @@ export default function Reports() {
                 }}
                 disabled={feedbackExists} // Disable button if feedback exists
               >
-                <Text className="text-md font-extrabold text-white px-5">
+                <Text className="text-xs font-extrabold text-white px-3">
                   Done
                 </Text>
               </TouchableOpacity>
