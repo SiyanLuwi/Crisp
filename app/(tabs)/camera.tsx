@@ -107,12 +107,12 @@ export default function CameraComp() {
 
   const capturePhoto = async () => {
     if (!cameraRef.current) return;
-
+  
     setLoading(true);
     try {
       const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.5,
-        base64: true,
+        quality: 0.3, // Reduce quality for faster processing
+        base64: false,
         skipProcessing: true,
       });
       if (!photo?.uri) {
@@ -120,22 +120,22 @@ export default function CameraComp() {
         Alert.alert("Error capturing photo. Please try again.");
         return;
       }
-        const optimizedUri = await resizeImage(photo.uri);
-        const classificationResult = await classifyImage(optimizedUri);
 
-        // Store results securely
-        await SecureStore.setItemAsync("imageUri", photo.uri);
-        await SecureStore.setItemAsync(
-          "isEmergency",
-          classificationResult.isEmergency
-        );
-        await SecureStore.setItemAsync(
-          "report_type",
-          classificationResult.class
-        );
+      const optimizedUriPromise = resizeImage(photo.uri);  
+  
+      const optimizedUri = await optimizedUriPromise;
+   
+      const classificationResultPromise = classifyImage(optimizedUri);
 
-        router.push("/pages/pictureForm");
-
+      const classificationResult = await classificationResultPromise;
+      
+      // Store results securely
+      await SecureStore.setItemAsync("imageUri", photo.uri);
+      await SecureStore.setItemAsync("isEmergency", classificationResult.isEmergency);
+      await SecureStore.setItemAsync("report_type", classificationResult.class);
+  
+      router.push("/pages/pictureForm");
+  
     } catch (error) {
       console.error("Error capturing photo:", error);
       Alert.alert("Error capturing photo. Please try again.");
@@ -143,20 +143,17 @@ export default function CameraComp() {
       setLoading(false);
     }
   };
-
+  
   const resizeImage = async (uri: string) => {
     try {
-      const result = await manipulateAsync(
-        uri,
-        [{ resize: { width: 224, height: 224 } }],
-        { format: SaveFormat.JPEG }
-      );
+      const result = await manipulateAsync(uri, [{ resize: { width: 640, height: 480 } }], { format: SaveFormat.JPEG });
       return result.uri;
     } catch (error) {
       console.error("Error resizing image:", error);
       return uri; // Return original image URI if resizing fails
     }
   };
+  
 
   const classifyImage = async (uri: string) => {
     try {
