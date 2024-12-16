@@ -162,7 +162,7 @@ export default function CameraComp() {
       });
 
       const res = await axios.post(
-        "https://detect.roboflow.com/image_classification_fv/1",
+        Constants.expoConfig?.extra?.ROBFLOW_URL,
         base64image,
         {
           params: { api_key: Constants.expoConfig?.extra?.ROBOFLOW_API_KEY },

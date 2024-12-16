@@ -1,5 +1,6 @@
 import { initializeApp, getApp, getApps } from "firebase/app"; // Include getApp and getApps
 import { getAnalytics } from "firebase/analytics";
+
 import Constants from 'expo-constants';
 
 // Firebase configuration
@@ -16,6 +17,5 @@ const firebaseConfig = {
 
 
 const app = initializeApp(firebaseConfig);
-
 export { app };
 

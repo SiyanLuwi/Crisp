@@ -97,9 +97,9 @@ export default function Index() {
         setAccountType(accountType);
         // Redirect based on account type
         if (accountType === "citizen") {
-          router.push("/(tabs)/home");
+          router.push("/(tabs)/camera");
         } else if (accountType === "worker") {
-          router.push("/(tabs)_employee/home");
+          router.push("/(tabs)_employee/reports");
         } else {
           alert("Unexpected account type");
         }
