@@ -109,33 +109,32 @@ export default function CameraComp() {
     if (!cameraRef.current) return;
   
     setLoading(true);
+  
     try {
+      // Capture photo
       const photo = await cameraRef.current.takePictureAsync({
         quality: 0.3, // Reduce quality for faster processing
         base64: false,
         skipProcessing: true,
       });
+  
       if (!photo?.uri) {
         console.error("Photo capturing failed: photo is undefined.");
         Alert.alert("Error capturing photo. Please try again.");
         return;
       }
-
-      const optimizedUriPromise = resizeImage(photo.uri);  
   
-      const optimizedUri = await optimizedUriPromise;
-   
-      const classificationResultPromise = classifyImage(optimizedUri);
-
-      const classificationResult = await classificationResultPromise;
-      
+      // Resize the captured image
+      const optimizedUri = await resizeImage(photo.uri);
+  
+      // Classify the image
+      const classificationResult = await classifyImage(optimizedUri);
+  
       // Store results securely
-      await SecureStore.setItemAsync("imageUri", photo.uri);
-      await SecureStore.setItemAsync("isEmergency", classificationResult.isEmergency);
-      await SecureStore.setItemAsync("report_type", classificationResult.class);
+      await storeClassificationResults(photo.uri, classificationResult);
   
+      // Navigate to the next page
       router.push("/pages/pictureForm");
-  
     } catch (error) {
       console.error("Error capturing photo:", error);
       Alert.alert("Error capturing photo. Please try again.");
@@ -144,56 +143,100 @@ export default function CameraComp() {
     }
   };
   
-  const resizeImage = async (uri: string) => {
+  const resizeImage = async (uri: any) => {
     try {
-      const result = await manipulateAsync(uri, [{ resize: { width: 640, height: 480 } }], { format: SaveFormat.JPEG });
+      const result = await manipulateAsync(
+        uri,
+        [{ resize: { width: 224, height: 224 } }], // Optimize for faster upload
+        { format: SaveFormat.JPEG }
+      );
       return result.uri;
     } catch (error) {
       console.error("Error resizing image:", error);
-      return uri; // Return original image URI if resizing fails
+      return uri; // Fallback to original URI
     }
   };
   
-
-  const classifyImage = async (uri: string) => {
+  const classifyImage = async (uri: any) => {
     try {
       const base64image = await FileSystem.readAsStringAsync(uri, {
         encoding: FileSystem.EncodingType.Base64,
       });
-
-      const res = await axios.post(
-        Constants.expoConfig?.extra?.ROBFLOW_URL,
+  
+      const { data } = await axios.post(
+        Constants.expoConfig?.extra?.ROBOFLOW_URL,
         base64image,
         {
           params: { api_key: Constants.expoConfig?.extra?.ROBOFLOW_API_KEY },
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
         }
       );
-
-      const result = getHighestConfidenceClass(res.data.predictions);
-      console.log("Classified result:", result);
-
+  
+      console.log("Data: ", data);
+  
+      const predictions = data.predictions.sort((a: any, b: any) => b.confidence - a.confidence);
+      let highestConfidence = predictions[0];
+  
+      // Handle "others" logic
+      if (
+        highestConfidence.class === "others" &&
+        highestConfidence.confidence < 0.7 
+      ) {
+        console.log(
+          `"Others" confidence (${highestConfidence.confidence}) is below threshold. Using next best prediction.`
+        );
+        highestConfidence = predictions[1]; 
+      }
+  
+      const formatClassName = (className: any) =>
+        className
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, (char: any) => char.toUpperCase()); 
+  
+      const formattedClass = formatClassName(highestConfidence.class);
+  
+      // Handle new classifications
       const classification = {
-        class: result.class,
-        isEmergency: ["Fires", "Floods", "Road Accident"].includes(result.class)
-          ? "Yes"
-          : "No",
+        class: formattedClass,
+        isEmergency: (() => {
+          if (highestConfidence.class === "nudity") {
+            Alert.alert("Warning", "Nudity detected. Operation cannot proceed.");
+            throw new Error("Nudity detected, stopping process.");
+          }
+          return ["Fire", "Flood", "Road Accident", "Graphic Violence", "Fallen Tree"].includes(
+            formattedClass
+          )
+            ? "Yes"
+            : "No";
+        })(),
       };
+  
       console.log("Classification:", classification);
-
       return classification;
     } catch (error: any) {
       console.error("Error during classification:", error.message);
       Alert.alert("Error classifying image. Please try again.");
-      return { class: "Unknown", isEmergency: "No" }; // Default return on error
+      return { class: "Unknown", isEmergency: "No" }; // Fallback classification
     }
   };
-
-  const getHighestConfidenceClass = (results: any[]) => {
-    return results.reduce((prev, current) =>
+  
+  
+  const getHighestConfidenceClass = (results: any[]) =>
+    results.reduce((prev, current) =>
       prev.confidence > current.confidence ? prev : current
     );
+  
+  const storeClassificationResults = async (imageUri: any, classificationResult: any) => {
+    try {
+      await SecureStore.setItemAsync("imageUri", imageUri);
+      await SecureStore.setItemAsync("isEmergency", classificationResult.isEmergency);
+      await SecureStore.setItemAsync("report_type", classificationResult.class);
+    } catch (error) {
+      console.error("Error storing classification results:", error);
+      Alert.alert("Error storing results. Please try again.");
+    }
   };
+  
 
   return (
     <View className="w-full h-full flex justify-center items-center">

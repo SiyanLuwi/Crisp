@@ -93,11 +93,12 @@ export default function ManageReports() {
   }
   const fetchAllDocuments = async (userId: string, votes: any[]) => {
     const categories = [
-      "fires",
-      "street lights",
-      "potholes",
-      "floods",
+      "fire",
+      "street light",
+      "pothole",
+      "flood",
       "others",
+      "fallen trees",
       "road accident",
     ];
 

@@ -89,12 +89,13 @@ export default function Reports() {
   const router = useRouter();
   const fetchAllDocuments = async () => {
     const categories = [
-      "fires",
-      "street lights",
-      "potholes",
-      "floods",
+      "fire",
+      "street light",
+      "pothole",
+      "flood",
       "others",
-      "road incidents",
+      "fallen trees",
+      "road incident",
     ];
 
     // Fetch the supervisor_id asynchronously
