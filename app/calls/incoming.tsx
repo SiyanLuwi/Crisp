@@ -35,14 +35,12 @@ export default function Incoming() {
   const { callerName } = useLocalSearchParams()
   const callerImage = "https://randomuser.me/api/portraits/men/1.jpg"; // Use a placeholder image
   const router = useRouter();
-  const [sound, setSound] = useState<Audio.Sound | undefined>(undefined);
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
 
   useEffect(() => {
     if (incomingCall) {
-
-      playRingSound(); // Play the ring sound when the incoming call arrives
+      playRingSound();
     }
-
     return () => {
       if (sound) {
         sound.stopAsync(); // Stop the sound when the component unmounts or call is answered
@@ -56,7 +54,7 @@ export default function Incoming() {
         require("../../assets/ring.mp3") // Replace this with the actual path to your ring sound file
       );
       setSound(sound);
-      await sound.playAsync(); // Start playing the ring sound
+      await sound.playAsync(); 
     } catch (error) {
       console.error("Error playing sound: ", error);
     }
@@ -100,7 +98,8 @@ export default function Incoming() {
         await updateDoc(doc(db, "users", USER_ID), {
           callStatus: "in-call"
         })
-        setSound(undefined)
+        await sound?.stopAsync()
+        await sound?.unloadAsync()
         router.push({
           pathname: "/calls/outgoing",
           params: {

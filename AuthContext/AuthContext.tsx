@@ -5,8 +5,10 @@ import { useRouter } from "expo-router";
 import api from "@/app/api/axios";
 import * as FileSystem from "expo-file-system";
 import { app } from "@/firebase/firebaseConfig";
-import { addDoc, doc, getDocs, getFirestore, setDoc } from "firebase/firestore";
+import { addDoc, doc, getDocs, getFirestore, setDoc  } from "firebase/firestore";
+import { getAuth, signInWithCustomToken } from 'firebase/auth';
 const db = getFirestore(app);
+const auth = getAuth()
 import { Timestamp } from 'firebase/firestore';
 
 interface AuthProps {
@@ -300,7 +302,9 @@ export const AuthProvider = ({ children }: any) => {
         is_verified: data.is_verified,
         score: data.score,
         violation: data.violation,
+        firebase_token: data.firebase_token,
       };
+
       if (data.account_type === "worker") {
         console.log("SUpervisor id: ", data.supervisor);
         storageItems.supervisor_id = data.supervisor;
@@ -320,7 +324,22 @@ export const AuthProvider = ({ children }: any) => {
           }
         })
       );
-
+      const firebaseToken = data.firebase_token;
+      signInWithCustomToken(auth, firebaseToken)
+      .then((userCredential) => {
+        const user = userCredential.user;
+        console.log("User signed in with Firebase: ", user.uid);
+        //    this is how to get the token results which needed in authentication on firebase
+        // user.getIdTokenResult().then((idTokenResult) => {
+        //   console.log("User Claims:", idTokenResult.claims);
+        //   console.log("User Role:", idTokenResult.claims.role);
+        // }).catch((error) => {
+        //   console.error("Error fetching token claims:", error);
+        // });
+      })
+      .catch((error) => {
+        console.error("Error signing in with Firebase token: ", error);
+      });
       return data;
     } catch (error: any) {
       // console.error("Login error occurred:", error);

@@ -81,6 +81,7 @@ function App() {
       const violation = await SecureStore.getItemAsync("violation");
       setScore(userInfo?.score || score || 0);
       setViolation(userInfo?.violation || violation || 0);
+      console.log(userInfo.is_verified)
     };
 
     loadUserInfo();

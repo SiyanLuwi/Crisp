@@ -67,11 +67,12 @@ export default function ReportPage() {
     useState<boolean>(false);
   const categories = [
     "all",
-    "fires",
-    "street lights",
-    "potholes",
-    "floods",
+    "fire",
+    "street light",
+    "pothole",
+    "flood",
     "road accident",
+    "fallen trees",
     "others",
   ];
   const statuses = ["all", "Pending", "ongoing", "reviewing", "done"];
@@ -115,11 +116,12 @@ export default function ReportPage() {
   // console.log("isVerified:", isVerified);
   const fetchAllDocuments = async (userId: string, votes: any[]) => {
     const categories = [
-      "fires",
-      "street lights",
-      "potholes",
-      "floods",
-      "others",
+      "fire",
+      "street light",
+      "pothole",
+      "flood",
+      "fallen trees",
+      "other",
       "road accident",
     ];
 
