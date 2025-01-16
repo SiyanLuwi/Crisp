@@ -231,227 +231,166 @@ export default function Register() {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0}
       >
         <ImageBackground source={bgImage} style={{ flex: 1 }}>
-          <View className="w-full h-full relative items-center justify-center">
-            <View className="w-full h-auto bg-[#F0F4C3] flex flex-col rounded-t-3xl justify-center items-center bottom-0 absolute">
-              {/* <View className="w-full h-auto bg-white flex flex-col rounded-t-3xl justify-center items-center bottom-0 absolute border-2 border-[#0C3B2D]"> */}
-              <View className="w-full flex justify-start items-start">
-                <Text className="text-3xl font-extrabold text-[#0C3B2D] my-10 ml-10">
-                  Create an Account
-                </Text>
-              </View>
-              <View className="w-full flex flex-row">
-                <Text className="text-md font-semibold text-[#0C3B2D] mb-1 ml-12">
-                  Enter your name
-                </Text>
-                <Text className="text-md font-semibold text-red-500 ml-1">
-                  *
-                </Text>
-              </View>
-              <TextInput
-                className="w-4/5 bg-white text-md px-4 py-3 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
-                placeholder="Enter your name"
-                placeholderTextColor="#888"
-                onChangeText={(text) => setUsername(text.toLowerCase())}
-              />
-              <View className="w-full flex flex-row">
-                <Text className="text-md font-semibold text-[#0C3B2D] mb-1 ml-12">
-                  Enter your address
-                </Text>
-                <Text className="text-md font-semibold text-red-500 ml-1">
-                  *
-                </Text>
-              </View>
-              <View className="w-4/5 bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View className="w-full h-full relative flex items-center justify-end">
+              <View className="w-full h-auto bg-[#F0F4C3] flex flex-col rounded-t-3xl justify-center items-center">
+                {/* Header */}
+                <View className="w-full flex justify-start items-start">
+                  <Text className="text-3xl font-extrabold text-[#0C3B2D] my-10 ml-10">
+                    Create an Account
+                  </Text>
+                </View>
+
+                {/* Name Input */}
+                <View className="w-full flex flex-row">
+                  <Text className="text-md font-semibold text-[#0C3B2D] mb-1 ml-12">
+                    Enter your name
+                  </Text>
+                  <Text className="text-md font-semibold text-red-500 ml-1">
+                    *
+                  </Text>
+                </View>
                 <TextInput
-                  className="w-4/5 text-md px-4 py-3 text-[#0C3B2D] font-semibold items-center justify-center"
-                  placeholder="Enter your address"
+                  className="w-4/5 bg-white text-md px-4 py-3 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                  placeholder="Enter your name"
                   placeholderTextColor="#888"
-                  value={address}
-                  editable={false} // Make it non-editable
-                  onChangeText={setAddress}
+                  onChangeText={(text) => setUsername(text.toLowerCase())}
                 />
-                <TouchableOpacity
-                  onPress={() => setShowMapPicker(true)}
-                  className="text-lg p-3 items-center justify-center"
-                >
-                  <MaterialCommunityIcons
-                    name="map-marker"
-                    size={24}
-                    color="#0C3B2D"
+
+                {/* Address Input */}
+                <View className="w-full flex flex-row">
+                  <Text className="text-md font-semibold text-[#0C3B2D] mb-1 ml-12">
+                    Enter your address
+                  </Text>
+                  <Text className="text-md font-semibold text-red-500 ml-1">
+                    *
+                  </Text>
+                </View>
+                <View className="w-4/5 bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
+                  <TextInput
+                    className="w-4/5 text-md px-4 py-3 text-[#0C3B2D] font-semibold items-center justify-center"
+                    placeholder="Enter your address"
+                    placeholderTextColor="#888"
+                    value={address}
+                    editable={false}
+                    onChangeText={setAddress}
                   />
-                </TouchableOpacity>
-              </View>
-              <View className="w-full flex flex-row">
-                <Text className="text-md font-semibold text-[#0C3B2D] mb-1 ml-12">
-                  Enter your email
-                </Text>
-                <Text className="text-md font-semibold text-red-500 ml-1">
-                  *
-                </Text>
-              </View>
-              <TextInput
-                className="w-4/5 bg-white text-md px-4 py-3 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
-                placeholder="Enter your email"
-                placeholderTextColor="#888"
-                onChangeText={setEmail}
-              />
-              <View className="w-full flex flex-row">
-                <Text className="text-md font-semibold text-[#0C3B2D] mb-1 ml-12">
-                  Enter your 11 digits mobile number
-                </Text>
-                <Text className="text-md font-semibold text-red-500 ml-1">
-                  *
-                </Text>
-              </View>
-              <TextInput
-                className="w-4/5 bg-white text-md px-4 py-3 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
-                placeholder="Enter your mobile number"
-                placeholderTextColor="#888"
-                keyboardType="numeric"
-                maxLength={11}
-                onChangeText={setContactNumber}
-              />
-              <View className="w-full flex flex-row">
-                <Text className="text-md font-semibold text-[#0C3B2D] mb-1 ml-12">
-                  Enter your password
-                </Text>
-                <Text className="text-md font-semibold text-red-500 ml-1">
-                  *
-                </Text>
-              </View>
-              <View className="w-4/5 bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
+                  <TouchableOpacity
+                    onPress={() => setShowMapPicker(true)}
+                    className="text-lg p-3 items-center justify-center"
+                  >
+                    <MaterialCommunityIcons
+                      name="map-marker"
+                      size={24}
+                      color="#0C3B2D"
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Email Input */}
+                <View className="w-full flex flex-row">
+                  <Text className="text-md font-semibold text-[#0C3B2D] mb-1 ml-12">
+                    Enter your email
+                  </Text>
+                  <Text className="text-md font-semibold text-red-500 ml-1">
+                    *
+                  </Text>
+                </View>
                 <TextInput
-                  className="w-4/5 text-md px-4 py-3 text-[#0C3B2D] font-semibold items-center justify-center"
+                  className="w-4/5 bg-white text-md px-4 py-3 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                  placeholder="Enter your email"
+                  placeholderTextColor="#888"
+                  onChangeText={setEmail}
+                />
+
+                {/* Mobile Number Input */}
+                <View className="w-full flex flex-row">
+                  <Text className="text-md font-semibold text-[#0C3B2D] mb-1 ml-12">
+                    Enter your 11 digits mobile number
+                  </Text>
+                  <Text className="text-md font-semibold text-red-500 ml-1">
+                    *
+                  </Text>
+                </View>
+                <TextInput
+                  className="w-4/5 bg-white text-md px-4 py-3 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                  placeholder="Enter your mobile number"
+                  placeholderTextColor="#888"
+                  keyboardType="numeric"
+                  maxLength={11}
+                  onChangeText={setContactNumber}
+                />
+
+                {/* Password Inputs */}
+                {/* Password */}
+                <TextInput
+                  className="w-4/5 bg-white text-md px-4 py-3 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                   placeholder="Enter your password"
                   placeholderTextColor="#888"
                   secureTextEntry={!passwordVisible}
                   maxLength={16}
                   onChangeText={handlePasswordChange}
                 />
-                <TouchableOpacity
-                  className="text-lg p-3 items-center justify-center"
-                  onPress={() => setPasswordVisible(!passwordVisible)}
-                >
-                  <MaterialCommunityIcons
-                    name={passwordVisible ? "eye-off" : "eye"}
-                    size={24}
-                    color="#0C3B2D"
-                  />
-                </TouchableOpacity>
-              </View>
-              <View className="w-full flex flex-row">
-                <Text className="text-md font-semibold text-[#0C3B2D] mb-1 ml-12">
-                  Confirm your password
-                </Text>
-                <Text className="text-md font-semibold text-red-500 ml-1">
-                  *
-                </Text>
-              </View>
-              <View className="w-4/5 bg-white mb-2 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
+
+                {/* Confirm Password */}
                 <TextInput
-                  className="w-4/5 text-md px-4 py-3 text-[#0C3B2D] font-semibold items-center justify-center"
+                  className="w-4/5 bg-white text-md px-4 py-3 rounded-lg mb-2 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                   placeholder="Confirm your password"
                   placeholderTextColor="#888"
                   secureTextEntry={!confirmPasswordVisible}
                   maxLength={16}
                   onChangeText={handleConfirmPasswordChange}
                 />
-                <TouchableOpacity
-                  className="text-lg p-3 items-center justify-center"
-                  onPress={() =>
-                    setConfirmPasswordVisible(!confirmPasswordVisible)
-                  }
-                >
-                  <MaterialCommunityIcons
-                    name={confirmPasswordVisible ? "eye-off" : "eye"}
-                    size={24}
-                    color="#0C3B2D"
+
+                {/* Checkbox */}
+                <View className={"flex-row items-center my-2"}>
+                  <Checkbox
+                    value={isChecked}
+                    onValueChange={handleCheckboxChange}
+                    className="mr-2"
+                    color={isChecked ? "#0C3B2D" : "gray"}
                   />
+                  <Text className={"text-sm"}>
+                    I agree to the{" "}
+                    <TouchableOpacity
+                      onPress={() => setFullImageModalVisible(true)}
+                    >
+                      <Text className={"text-[#0C3B2D] font-bold mt-1"}>
+                        Terms and Conditions
+                      </Text>
+                    </TouchableOpacity>
+                  </Text>
+                </View>
+
+                {/* Register Button */}
+                <LoadingButton
+                  style="mt-3 w-full max-w-[80%] bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center"
+                  title="REGISTER"
+                  onPress={handleRegister}
+                  loading={loading}
+                />
+
+                {/* Login Redirect */}
+                <TouchableOpacity
+                  className="w-full flex items-center justify-center flex-row mt-6"
+                  onPress={() => router.navigate(`/pages/login`)}
+                >
+                  <Text className="text-lg text-[#7e9778] mr-3 mt-1 mb-8 font-semibold flex">
+                    Already have an account?
+                  </Text>
+                  <Text className="text-lg text-[#0C3B2D] mt-1 mb-8 font-bold flex">
+                    Login
+                  </Text>
                 </TouchableOpacity>
               </View>
-              <View className={"flex-row items-center my-2"}>
-                <Checkbox
-                  value={isChecked}
-                  onValueChange={handleCheckboxChange}
-                  className="mr-2"
-                  color={isChecked ? "#0C3B2D" : "gray"}
-                />
-                <Text className={"text-sm"}>
-                  I agree to the{" "}
-                  <TouchableOpacity
-                    onPress={() => {
-                      setFullImageModalVisible(true);
-                    }}
-                  >
-                    <Text className={"text-[#0C3B2D] font-bold mt-1"}>
-                      Terms and Conditions
-                    </Text>
-                  </TouchableOpacity>
-                </Text>
-              </View>
-              {password.length > 0 && password.length < 6 && (
-                <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
-                  Password must be at least 6 characters long.
-                </Text>
-              )}
-              {password.length > 0 && !/[A-Z]/.test(password) && (
-                <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
-                  Password must contain at least one uppercase letter.
-                </Text>
-              )}
-              {password.length > 0 && !/\d/.test(password) && (
-                <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
-                  Password must contain at least one number.
-                </Text>
-              )}
-              {password.length > 0 &&
-                !/[!@#$%^&*(),.?":{}|<>]/.test(password) && (
-                  <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
-                    Password must contain at least one special character.
-                  </Text>
-                )}
-              {password_confirm.length > 0 && password_confirm !== password && (
-                <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
-                  Passwords do not match.
-                </Text>
-              )}
-              {errors && (
-                <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">
-                  {errors}
-                </Text>
-              )}
-              <LoadingButton
-                style="mt-3 w-full max-w-[80%] bg-[#0C3B2D] rounded-xl p-2 shadow-lg justify-center items-center"
-                title="REGISTER"
-                onPress={handleRegister}
-                loading={loading}
-              />
-              <TouchableOpacity
-                className="w-full flex items-center justify-center flex-row mt-6"
-                onPress={() => router.navigate(`/pages/login`)}
-              >
-                <Text className="text-lg text-[#7e9778] mr-3 mt-1 mb-8 font-semibold flex">
-                  Already an account?
-                </Text>
-                <Text className="text-lg text-[#0C3B2D] mt-1 mb-8 font-bold flex">
-                  Login
-                </Text>
-              </TouchableOpacity>
             </View>
-            {showMapPicker && (
-              <MapPicker
-                onLocationSelect={handleLocationSelect}
-                onClose={() => setShowMapPicker(false)}
-              />
-            )}
-            <TermsCondition
-              fullImageModalVisible={fullImageModalVisible}
-              setFullImageModalVisible={setFullImageModalVisible}
-            />
-          </View>
+          </ScrollView>
         </ImageBackground>
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
