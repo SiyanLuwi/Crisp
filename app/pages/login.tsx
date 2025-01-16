@@ -174,7 +174,7 @@ export default function Login() {
               className="w-full flex items-center justify-center flex-row mt-20"
               onPress={() => router.navigate(`/pages/register`)}
             >
-              <Text className="text-lg text-[#7e9778] mr-3 mt-1 mb-8 font-semibold flex">
+              <Text className="text-lg text-[#7e9778] mr-3 mt-1 mb-10 font-semibold flex">
                 Don't have an account?
               </Text>
               <Text className="text-lg text-[#0C3B2D] mt-1 mb-8 font-bold flex">
