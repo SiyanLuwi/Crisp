@@ -5,11 +5,9 @@ import { useRouter } from "expo-router";
 import api from "@/app/api/axios";
 import * as FileSystem from "expo-file-system";
 import { app } from "@/firebase/firebaseConfig";
-import { addDoc, doc, getDocs, getFirestore, setDoc  } from "firebase/firestore";
-import { getAuth, signInWithCustomToken } from 'firebase/auth';
+import { addDoc, doc, getDocs, getFirestore  } from "firebase/firestore";
 const db = getFirestore(app);
-const auth = getAuth()
-import { Timestamp } from 'firebase/firestore';
+
 
 interface AuthProps {
   onRefresh?: (refreshToken: string) => Promise<any>;
@@ -225,6 +223,7 @@ export const AuthProvider = ({ children }: any) => {
   ) => {
     const ipv = await Network.getIpAddressAsync();
     try {
+ 
       const res = await api.post("api/citizen/registration/", {
         username,
         email,
@@ -235,32 +234,42 @@ export const AuthProvider = ({ children }: any) => {
         contact_number: contact_no,
         ipv,
       });
-
+      
+      
       await SecureStore.setItemAsync("email", email.toString());
 
-      return res;
+      return res; // Return successful response
     } catch (error: any) {
+      console.error("Error during registration:", error);
+  
+      // Handle server error responses
       if (error.response && error.response.data) {
-        // console.error("Register error details:", error.response.data);
-        const errorMessage =
-          error.response.data?.username ||
-          error.response.data?.email ||
-          error.response.data?.contact_number ||
-          error.response.data?.ipv ||
-          "Unknown error occurred";
+        const serverErrors = error.response.data;
+  
+        // Aggregate all possible error fields into a readable message
+        const errorMessage = [
+          serverErrors.username?.join(" ") || "",
+          serverErrors.email?.join(" ") || "",
+          serverErrors.contact_number?.join(" ") || "",
+          serverErrors.ipv?.join(" ") || "",
+        ]
+          .filter((msg) => msg.trim()) // Remove empty fields
+          .join(" ");
+  
         return {
           error: true,
-          msg: errorMessage,
-        };
-      } else {
-        console.error("Register error:", error);
-        return {
-          error: true,
-          msg: "An unknown error occurred during registration.",
+          msg: errorMessage || "Unknown error occurred from the server.",
         };
       }
+  
+      // Handle network or unexpected errors
+      return {
+        error: true,
+        msg: "A network or unexpected error occurred during registration.",
+      };
     }
   };
+  
 
   //Login function
   const login = async (username: string, password: string) => {
@@ -271,7 +280,11 @@ export const AuthProvider = ({ children }: any) => {
         username,
         password,
       });
-      console.log("Login response received:", data); // Log the response from the server
+
+      if(!data.is_email_verified){
+        router.push("/pages/verifyEmail");
+        return;
+      }
 
       if (!data.access || !data.refresh) {
         throw new Error(
@@ -324,25 +337,10 @@ export const AuthProvider = ({ children }: any) => {
           }
         })
       );
-      const firebaseToken = data.firebase_token;
-      signInWithCustomToken(auth, firebaseToken)
-      .then((userCredential) => {
-        const user = userCredential.user;
-        console.log("User signed in with Firebase: ", user.uid);
-        //    this is how to get the token results which needed in authentication on firebase
-        // user.getIdTokenResult().then((idTokenResult) => {
-        //   console.log("User Claims:", idTokenResult.claims);
-        //   console.log("User Role:", idTokenResult.claims.role);
-        // }).catch((error) => {
-        //   console.error("Error fetching token claims:", error);
-        // });
-      })
-      .catch((error) => {
-        console.error("Error signing in with Firebase token: ", error);
-      });
       return data;
     } catch (error: any) {
       // console.error("Login error occurred:", error);
+      console.log("Error: ", error);
       if (error.response) {
         console.log("Error response data:", error.response.data);
         if (error.response.status === 401) {
