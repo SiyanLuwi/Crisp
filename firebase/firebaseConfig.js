@@ -1,5 +1,4 @@
-import { initializeApp, getApp, getApps } from "firebase/app"; // Include getApp and getApps
-import { getAnalytics } from "firebase/analytics";
+import { initializeApp, } from "firebase/app"; // Include getApp and getApps
 
 import Constants from 'expo-constants';
 

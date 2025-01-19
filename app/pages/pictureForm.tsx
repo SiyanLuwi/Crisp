@@ -34,6 +34,9 @@ import { Report } from "../utils/reports";
 import { addDoc, collection, getFirestore } from "firebase/firestore";
 import { app } from "@/firebase/firebaseConfig";
 import api from "../api/axios";
+import axios from "axios";
+import Constants from "expo-constants";
+import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 const { width, height } = Dimensions.get("window");
 const db = getFirestore(app);
 
@@ -59,26 +62,40 @@ export default function PictureForm() {
   const [coordinates, setCoordinates] = useState<string>("");
   const [missingFieldsModalVisible, setMissingFieldsModalVisible] =
     useState(false);
+  const [trigger, setTrigger] = useState(false)
   const [missingFieldsMessage, setMissingFieldsMessage] = useState("");
   const { createReport } = useAuth();
 
+  
+  useEffect(() => {
+    if (selectedItem && trigger) {
+      console.log("Trigger report...")
+      report();
+    }
+  }, [selectedItem, trigger]);
   const report = async () => {
     try {
+      if (!selectedItem) {
+        setLoading(true);  
+        return;
+      }
+      setTrigger(true)
       setLoading(true);
 
       // Validate required fields
       if (
         !location ||
-        !coordinates ||
-        !selectedItem ||
-        !description ||
-        !imageUri
+        !coordinates ||    
+        !description || !imageUri
       ) {
         setMissingFieldsMessage("Please fill in all required fields.");
         setMissingFieldsModalVisible(true);
         return;
       }
-
+      if(!selectedItem)
+        {
+            return;
+        }
       const [latitude, longitude] = coordinates.split(",");
       const is_emergency =
         isEmergency?.toLowerCase() === "yes" ? "emergency" : "not emergency";
@@ -87,6 +104,7 @@ export default function PictureForm() {
         console.error("USER_ID is missing!");
         return;
       }
+      
 
       if (createReport) {
         try {
@@ -111,6 +129,7 @@ export default function PictureForm() {
             "You've already reported this incident."
           ) {
             setLoading(false);
+            setTrigger(false)
             const existingReport = error?.response?.data?.existing_report;
             Alert.alert(
               "Duplicate Report Detected",
@@ -133,6 +152,7 @@ export default function PictureForm() {
             await handleDuplicateReport(existingReport, formData);
           } else {
             setLoading(false);
+            setTrigger(false)
             const errorMessage =
               error?.message ||
               "An unexpected error occurred. Please try again.";
@@ -230,6 +250,7 @@ export default function PictureForm() {
 
   const fetchData = async () => {
     try {
+
       const [uri, locations, coordinates, report_type, isEmergency] =
         await Promise.all([
           SecureStore.getItemAsync("imageUri"),
@@ -238,12 +259,13 @@ export default function PictureForm() {
           SecureStore.getItemAsync("report_type"),
           SecureStore.getItemAsync("isEmergency"),
         ]);
-      console.log(locations, coordinates);
-      setIsEmergency(isEmergency);
-      setSelectedItem(report_type);
+       
+     
       setCoordinates(coordinates as string);
       setLocation(locations);
       setImageUri(uri);
+      setIsEmergency(isEmergency)
+      setSelectedItem(report_type)
       setFetch(true);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -325,7 +347,7 @@ export default function PictureForm() {
               </View>
               <TextInput
                 className="w-full bg-white px-4 py-3 rounded-lg mb-4 border border-[#0C3B2D] justify-center text-md text-[#0C3B2D] font-semibold"
-                value={selectedItem || ""}
+                value={selectedItem || "Identifying report category..."}
                 editable={false}
               />
 
