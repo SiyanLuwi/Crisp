@@ -115,7 +115,7 @@ export default function CameraComp() {
       // Step 1: Capture photo
       const captureStartTime = Date.now();
       const photo = await cameraRef.current.takePictureAsync({
-        quality: 1,
+        quality: 0.7,
         base64: false,
         skipProcessing: true
       });
@@ -164,7 +164,7 @@ export default function CameraComp() {
      try {
        const result = await manipulateAsync(
          uri,
-         [{ resize: { width: 224, height: 224 } }], // Resize to fixed dimensions
+         [{ resize: { width: 150, height: 150 } }], // Resize to fixed dimensions
          { format: SaveFormat.JPEG }
        );
        return result.uri;
@@ -190,29 +190,21 @@ export default function CameraComp() {
            headers: { "Content-Type": "application/x-www-form-urlencoded" },
          }
        );
-   
-       const formatClassName = (className: string): string =>
-         className
-           .replace(/_/g, " ")
-           .replace(/\b\w/g, (char: string) => char.toUpperCase());
-   
-       const formattedClass = formatClassName(data.top);
-   
-       // Determine if the classification is an emergency
+       console.log("Data: ", data);
+       const modifiedName = data.top === 'fire' ? 'Fire Accident' : data.top === 'flood' ? 'Flood' : data.top === 'road_accident' ? 'Road Accident' : data.top === 'graphic_violence' ? 'Graphic Violence' : data.top === 'fallen_trees' ? 'Fallen Tree' : data.top;
        const isEmergency = (() => {
          if (data.top === "nudity") {
            Alert.alert("Warning", "Nudity detected. Operation cannot proceed.");
            throw new Error("Nudity detected, stopping process.");
          }
-         return ["Fire", "Flood", "Road Accident", "Graphic Violence", "Fallen Tree"].includes(
-           formattedClass
+         return ["Fire Accident", "Flood", "Road Accident", "Graphic Violence", "Fallen Tree"].includes(
+          modifiedName
          )
            ? "Yes"
            : "No";
        })();
-   
-       // Return the classification result
-       const classification = { class: formattedClass, isEmergency };
+    
+       const classification = { class: modifiedName, isEmergency };
        console.log("Classification:", classification);
        return classification;
      } catch (error: any) {
