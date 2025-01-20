@@ -75,7 +75,7 @@ export default function ReportPage() {
     "fallen trees",
     "others",
   ];
-  const statuses = ["all", "Pending", "ongoing", "reviewing", "done"];
+  const statuses = ["all", "Pending", "ongoing", "Under Review", "done"];
   const [feedbackStatus, setFeedbackStatus] = useState<{
     [key: string]: boolean;
   }>({});
@@ -116,11 +116,11 @@ export default function ReportPage() {
   // console.log("isVerified:", isVerified);
   const fetchAllDocuments = async (userId: string, votes: any[]) => {
     const categories = [
-      "fire",
+      "fire accident",
       "street light",
       "pothole",
       "flood",
-      "fallen trees",
+      "fallen tree",
       "other",
       "road accident",
     ];
@@ -177,6 +177,7 @@ export default function ReportPage() {
                   proof: doc.data().proof,
                   submited_at: doc.data().submited_at,
                 }));
+              // fetch only the reports that are not done
 
               return {
                 id: reportId,
@@ -204,7 +205,7 @@ export default function ReportPage() {
             const newReports = filteredReports.filter(
               (report) => !prevReports.some((r) => r.id === report.id)
             );
-
+            
             // Combine previous reports with the new ones
             const combinedReports = [...prevReports, ...newReports];
 
@@ -565,7 +566,7 @@ export default function ReportPage() {
                       ? "bg-yellow-400" // Amber for pending
                       : item.status === "Ongoing"
                         ? "bg-blue-500" // Blue for ongoing
-                        : item.status === "reviewing"
+                        : item.status === "Under Review"
                           ? "bg-orange-500" // Orange for pending review
                           : item.status === "done"
                             ? "bg-green-500" // Green for done
@@ -778,7 +779,7 @@ export default function ReportPage() {
               </View>
             )}
           </View>
-          {item.status === "reviewing" && (
+          {item.status === "Under Review" && (
             <View className="w-full flex flex-col mt-2">
               <View className="w-full h-px bg-slate-300 mb-2" />
               <Text className="text-lg font-bold">Feedback:</Text>

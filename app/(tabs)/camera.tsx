@@ -191,7 +191,7 @@ export default function CameraComp() {
          }
        );
        console.log("Data: ", data);
-       const modifiedName = data.top === 'fire' ? 'Fire Accident' : data.top === 'flood' ? 'Flood' : data.top === 'road_accident' ? 'Road Accident' : data.top === 'graphic_violence' ? 'Graphic Violence' : data.top === 'fallen_trees' ? 'Fallen Tree' : data.top;
+       const modifiedName = data.top === 'fire' ? 'Fire Accident' : data.top === 'flood' ? 'Flood' : data.top === 'road_accident' ? 'Road Accident' : data.top === 'graphic_violence' ? 'Graphic Violence' : data.top === 'fallen_trees' ? 'Fallen Tree' : data.top === 'others' ? 'Others' : data.top === 'pot_holes' ? 'Pot Holes' : data.top === 'street_light' ? 'Street Light' : data.top;
        const isEmergency = (() => {
          if (data.top === "nudity") {
            Alert.alert("Warning", "Nudity detected. Operation cannot proceed.");

@@ -89,7 +89,7 @@ export default function Reports() {
   const router = useRouter();
   const fetchAllDocuments = async () => {
     const categories = [
-      "fire",
+      "fire accident",
       "street light",
       "pothole",
       "flood",
@@ -381,7 +381,7 @@ export default function Reports() {
                       ? "bg-yellow-400" // Amber for pending
                       : item.status === "Ongoing"
                         ? "bg-blue-500" // Blue for ongoing
-                        : item.status === "reviewing"
+                        : item.status === "Under Review"
                           ? "bg-orange-500" // Orange for pending review
                           : item.status === "done"
                             ? "bg-green-500" // Green for done
@@ -439,10 +439,10 @@ export default function Reports() {
               {/* Call User Button */}
               <TouchableOpacity
                 className={`bg-[#134c3b] p-2 rounded-md h-auto items-center justify-center mr-2 ${
-                  item.status === "reviewing" ? "opacity-50" : ""
+                  item.status === "Under Review" ? "opacity-50" : ""
                 }`}
                 onPress={() => handleCall(item.user_id, item.username)}
-                disabled={item.status === "reviewing"} // Disable if status is "reviewing"
+                disabled={item.status === "Under Review"} // Disable if status is "Under Review"
               >
                 <Text className="text-xs font-extrabold text-white px-3">
                   Call User
@@ -452,10 +452,10 @@ export default function Reports() {
               {/* Disregard Button */}
               <TouchableOpacity
                 className={`bg-[#134c3b] p-2 rounded-md h-auto items-center justify-center mr-2 ${
-                  item.status === "reviewing" ? "opacity-50" : ""
+                  item.status === "Under Review" ? "opacity-50" : ""
                 }`}
                 // onPress={() => handleDisregard(item.id)} // Replace with your disregard handler
-                disabled={item.status === "reviewing"} // Disable if status is "reviewing"
+                disabled={item.status === "Under Review"} // Disable if status is "Under Review"
               >
                 <Text className="text-xs font-extrabold text-white px-3">
                   False
