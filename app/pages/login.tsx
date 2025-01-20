@@ -75,7 +75,7 @@ export default function Login() {
       if (account_type === "citizen") {
         router.push("/(tabs)/camera");
       } else if (account_type === "worker") {
-        router.push("/(tabs)_employee/home");
+        router.push("/(tabs)_employee/reports");
       } else {
         // Handle unexpected account types or default case
         setErrors("Unexpected account type");

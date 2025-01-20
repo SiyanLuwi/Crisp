@@ -213,7 +213,7 @@ export class Report implements Reports {
   // Fetch all reports across all categories
   public static async fetchAllReports(): Promise<Report[]> {
     const categories = [
-      "fire",
+      "fire accident",
       "street light",
       "pothole",
       "flood",

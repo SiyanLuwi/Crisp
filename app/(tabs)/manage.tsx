@@ -70,7 +70,7 @@ export default function ManageReports() {
     "road accident",
     "others",
   ];
-  const statuses = ["all", "Pending", "ongoing", "reviewing", "done"];
+  const statuses = ["all", "Pending", "ongoing", "Under Review", "done"];
 
   async function fetchAllVotes() {
     const AllVotes: any[] = [];
@@ -93,7 +93,7 @@ export default function ManageReports() {
   }
   const fetchAllDocuments = async (userId: string, votes: any[]) => {
     const categories = [
-      "fire",
+      "fire accident",
       "street light",
       "pothole",
       "flood",
@@ -451,7 +451,7 @@ export default function ManageReports() {
                       ? "bg-yellow-400" // Amber for pending
                       : item.status === "Ongoing"
                         ? "bg-blue-500" // Blue for ongoing
-                        : item.status === "reviewing"
+                        : item.status === "Under Review"
                           ? "bg-orange-500" // Orange for pending review
                           : item.status === "done"
                             ? "bg-green-500" // Green for done
@@ -532,7 +532,7 @@ export default function ManageReports() {
               <Text className="text-md mx-1">{item.downvoteCount}</Text>
             </View>
             <View className="flex flex-row items-center">
-              {item.status === "reviewing" && (
+              {item.status === "Under Review" && (
                 <TouchableOpacity
                   className="bg-[#0C3B2D] p-2 rounded-md h-auto items-center justify-center"
                   onPress={() => {
@@ -563,7 +563,7 @@ export default function ManageReports() {
             </View>
           </View>
 
-          {item.status === "reviewing" && (
+          {item.status === "Under Review" && (
             <View className="w-full flex flex-col mt-2">
               <View className="w-full h-px bg-slate-300 mb-2" />
               <Text className="text-xl font-bold">Feedback:</Text>
