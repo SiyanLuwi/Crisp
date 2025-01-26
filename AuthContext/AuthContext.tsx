@@ -105,6 +105,65 @@ export const AuthProvider = ({ children }: any) => {
   const [username, setUsername] = useState("")
   const router = useRouter();
   
+ 
+  const fetchNotifications = () => {
+    try {
+      const notificationsRef = collection(db, "globalNotification");
+      // Setting up the real-time listener
+      const unsubscribe = onSnapshot(
+        notificationsRef,
+        async (querySnapshot) => {
+          if (querySnapshot.empty) {
+            console.log("No notifications found.");
+            return;
+          }
+          const data = querySnapshot.docs.map((doc) => ({id:doc.id, ...doc.data(), createdAt: doc.data().createdAt.toDate()}));
+          const latestNotification = getLatestNotification(data);
+          const lastNotifiedReportId = await SecureStore.getItemAsync("lastNotifiedReportId");
+          console.log("Last notified report ID:", lastNotifiedReportId);
+          if (latestNotification && lastNotifiedReportId !== latestNotification.id) {
+            console.log("Latest notification:", latestNotification);
+            scheduleNotification(
+              latestNotification.title,
+              latestNotification.description,
+              3,
+              "/(tabs)/home"
+            );
+            // setHasNewNotification(true);
+            await SecureStore.setItemAsync("lastNotifiedReportId", latestNotification.id);
+          }
+        },
+        (error) => {
+          console.error("Error in onSnapshot listener:", error.message);
+        }
+      );
+      return unsubscribe; // Return the unsubscribe function
+    } catch (error: any) {
+      console.error("Error fetching notifications:", error.message);
+    }
+  };
+  const getLatestNotification = (notifications: any) => {
+    if (notifications.length === 0) return null;
+    const sortedNotifications = notifications.sort(
+      (a: any, b: any) => b.createdAt.getTime() - a.createdAt.getTime()
+    );
+    
+    return sortedNotifications[0];
+  };
+  
+  useEffect(() => {
+    const fetchAndSubscribe = async () => {
+      const unsubscribe = await fetchNotifications();
+      return unsubscribe;
+    };
+    const unsubscribePromise = fetchAndSubscribe();
+    return () => {
+      unsubscribePromise.then((unsubscribe) => {
+        if (unsubscribe) unsubscribe();
+      });
+    };
+  }, [])
+  
   useEffect(() => {
     if (USER_ID) {
       const userRef = doc(db, "users", USER_ID);
