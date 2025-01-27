@@ -39,26 +39,33 @@ export default function Incoming() {
 
   useEffect(() => {
     if (incomingCall) {
-      playRingSound();
+      console.log("Playing ring sound");
+      playRingingSound();
     }
     return () => {
       if (sound) {
-        sound.stopAsync(); // Stop the sound when the component unmounts or call is answered
+        console.log("Stopping ring sound");
+        sound.stopAsync();
       }
     };
   }, [incomingCall]);
 
-  const playRingSound = async () => {
-    try {
-      const { sound } = await Audio.Sound.createAsync(
-        require("../../assets/ring.mp3") // Replace this with the actual path to your ring sound file
-      );
-      setSound(sound);
-      await sound.playAsync(); 
-    } catch (error) {
-      console.error("Error playing sound: ", error);
-    }
-  };
+    const playRingingSound = async () => {
+      if (sound) {
+        console.log("A sound is already playing. Stop it first.");
+        return;
+      }
+      try {
+        const { sound } = await Audio.Sound.createAsync(
+          require("../../assets/ring.mp3")
+        );
+        setSound(sound);
+        await sound.setIsLoopingAsync(true);
+        await sound.playAsync();
+      } catch (error) {
+        console.error("Error playing sound:", error);
+      }
+    };
 
   const handleEndCall = async () => {
     try {
@@ -66,10 +73,20 @@ export default function Incoming() {
         console.log("USER ID NOT FOUND ! AT INCOMING .TSX")
         return;
       }
-
+      console.log("Incoming Call Sound: ", sound);
+      if (sound) {
+        try {
+          console.log("Stopping ring sound from decline");
+          await sound.stopAsync();
+          await sound.unloadAsync();
+        } catch (error) {
+          console.error("Error during sound cleanup:", error);
+        } finally {
+          setSound(null);
+        }
+      }
       const callRef = doc(db, "calls", incomingCall.callId);
       const userRef = doc(db, "users", USER_ID);
-
       await setDoc(
         callRef,
         { callStatus: "declined", offer: null },
@@ -78,6 +95,7 @@ export default function Incoming() {
       await updateDoc(userRef, {
         callStatus: "ended"
       })
+      
       router.push("/(tabs)/home")
     } catch (error) {
       console.error("Incoming call handle end call: ", error);
@@ -98,8 +116,17 @@ export default function Incoming() {
         await updateDoc(doc(db, "users", USER_ID), {
           callStatus: "in-call"
         })
-        await sound?.stopAsync()
-        await sound?.unloadAsync()
+        if (sound) {
+          try {
+            await sound.stopAsync();
+            await sound.unloadAsync();
+          } catch (error) {
+            console.error("Error during sound cleanup:", error);
+          } finally {
+            setSound(null);
+          }
+        }
+        
         router.push({
           pathname: "/calls/outgoing",
           params: {
