@@ -10,11 +10,9 @@ import {
   Platform,
 } from "react-native";
 import { router } from "expo-router";
-import { RFPercentage } from "react-native-responsive-fontsize";
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import api from "./api/axios";
-import { app } from "@/firebase/firebaseConfig";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import Constants from "expo-constants";
@@ -28,12 +26,12 @@ const bgImage = require("@/assets/images/landing_page.png");
 // Get screen dimensions
 const { width, height } = Dimensions.get("window");
 
-const TOKEN_KEY = "my-jwt";
-const REFRESH_KEY = "my-jwt-refresh";
-const EXPIRATION = "accessTokenExpiration";
-const PUSH_TOKEN = "pushToken";
-const ACCOUNT_TYPE = "account_type";
-
+// const TOKEN_KEY = "my-jwt";
+// const REFRESH_KEY = "my-jwt-refresh";
+// const EXPIRATION = "accessTokenExpiration";
+// const PUSH_TOKEN = "pushToken";
+// const ACCOUNT_TYPE = "account_type";
+// const ROLE = "my-role";
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -43,7 +41,6 @@ Notifications.setNotificationHandler({
 });
 
 export default function Index() {
-  const { onRefresh } = useAuth();
   const [expoPushToken, setExpoPushToken] = useState("");
   const [channels, setChannels] = useState<Notifications.NotificationChannel[]>(
     []
@@ -54,62 +51,104 @@ export default function Index() {
   const notificationListener = useRef<Notifications.Subscription>();
   const responseListener = useRef<Notifications.Subscription>();
   const [accountType, setAccountType] = useState<string | null>(null);
+  // const { setAuthState, SET_USER_ID } = useAuth();
+  // const refreshAccessToken = async (refreshToken: string) => {
+  //   try {
+  //     const { data } = await api.post("api/token/refresh/", {
+  //       refresh: refreshToken,
+  //     });
 
-  const checkToken = async () => {
-    const accessToken = await SecureStore.getItemAsync(TOKEN_KEY);
-    const refreshToken = await SecureStore.getItemAsync(REFRESH_KEY);
-    const expiration = await SecureStore.getItemAsync(EXPIRATION);
-    const account_type = await SecureStore.getItemAsync(ACCOUNT_TYPE);
+  //     setAuthState({
+  //       token: data.access,
+  //       authenticated: true,
+  //     });
+  //     SET_USER_ID(data.user_id.toString());
+  //     const expirationTime = Date.now() + 60 * 60 * 1000;
+  //     axios.defaults.headers.common["Authorization"] = `Bearer ${data.access}`;
 
-    const currentTime = Date.now();
-    if (!accessToken || !refreshToken) {
-      return;
-    }
-    if (!onRefresh) {
-      throw new Error("Error on Refreshig a token!");
-    }
-    try {
-      if (!accessToken || !expiration || currentTime > parseInt(expiration)) {
-        if (refreshToken) {
-          console.log(refreshToken);
-          const newAccessToken = await onRefresh(refreshToken);
-          if (!newAccessToken) {
-            console.log("Both tokens are invalid, prompting login...");
-            return null;
-          }
-          return newAccessToken;
-        }
-        // No tokens available
-        return null;
-      }
+  //     const storageItems = {
+  //       [TOKEN_KEY]: data.access,
+  //       [REFRESH_KEY]: data.refresh,
+  //       [ROLE]: data.account_type,
+  //       [EXPIRATION]: expirationTime.toString(),
+  //       user_id: data.user_id.toString(),
+  //       username: data.username,
+  //       email: data.email,
+  //       address: data.address,
+  //       contact_number: data.contact_number,
+  //       account_type: data.account_type,
+  //       is_email_verified: data.is_email_verified,
+  //       is_verified: data.is_verified,
+  //     };
 
-      return accessToken;
-    } catch (error: any) {
-      console.log(error.message);
-    }
-  };
+  //     await Promise.all(
+  //       Object.entries(storageItems).map(([key, value]) =>
+  //         SecureStore.setItemAsync(key, value.toString())
+  //       )
+  //     );
 
-  useEffect(() => {
-    const handleAuthentication = async () => {
-      const accessToken = await checkToken();
-      if (accessToken) {
-        const accountType = await SecureStore.getItemAsync(ACCOUNT_TYPE);
-        setAccountType(accountType);
-        // Redirect based on account type
-        if (accountType === "citizen") {
-          router.push("/(tabs)/camera");
-        } else if (accountType === "worker") {
-          router.push("/(tabs)_employee/reports");
-        } else {
-          alert("Unexpected account type");
-        }
-      } else {
-        // Redirect to login if the token is not valid
-        router.push("/pages/login");
-      }
-    };
-    handleAuthentication();
-  }, []);
+  //     return data;
+  //   } catch (error) {
+  //     console.error("Failed to refresh access token:", error);
+  //     return null;
+  //   }
+  // };
+  // const checkToken = async () => {
+  //   const accessToken = await SecureStore.getItemAsync(TOKEN_KEY);
+  //   const refreshToken = await SecureStore.getItemAsync(REFRESH_KEY);
+  //   const expiration = await SecureStore.getItemAsync(EXPIRATION);
+  //   const currentTime = Date.now();
+  //   if (!accessToken || !refreshToken) {
+  //     return;
+  //   }
+  //   if (!refreshToken) {
+  //     throw new Error("Error on Refreshig a token!");
+  //   }
+  //   console.log("Checking token...");
+  //   try {
+  //     if (!accessToken || !expiration || currentTime > parseInt(expiration)) {
+  //       if (refreshToken) {
+  //         console.log("Refreshing token...");
+  //         console.log("Refresh token:", refreshToken);
+  //         const newAccessToken = await refreshAccessToken(refreshToken);         
+  //         if (!newAccessToken) {
+  //           console.log("Both tokens are invalid, prompting login...");
+  //           return null;
+  //         }
+  //         return newAccessToken;
+  //       }
+  //       // No tokens available
+  //       return null;
+  //     }
+
+  //     return accessToken;
+  //   } catch (error: any) {
+  //     console.log(error.message);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   const handleAuthentication = async () => {
+  //     const accessToken = await checkToken();
+  //     console.log("Access token:", accessToken);
+  //     if (accessToken) {
+  //       const accountType = await SecureStore.getItemAsync(ACCOUNT_TYPE);
+  //       setAccountType(accountType);
+  //       // Redirect based on account type
+  //       if (accountType === "citizen") {
+  //         router.push("/(tabs)/camera");
+  //       } else if (accountType === "worker") {
+  //         router.push("/(tabs)_employee/reports");
+  //       } else {
+  //         alert("Unexpected account type");
+  //       }
+  //     } else {
+  //       // Redirect to login if the token is not valid
+  //       router.push("/pages/login");
+  //     }
+  //   };
+  //   handleAuthentication();
+  // }, []);
 
   useEffect(() => {
     registerForPushNotificationsAsync().then(

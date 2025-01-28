@@ -10,7 +10,6 @@ const db = getFirestore(app);
 
 
 interface AuthProps {
-  onRefresh?: (refreshToken: string) => Promise<any>;
   USER_ID?: string;
   peerConnection?: any;
   setPeerConnection?: any;
@@ -20,6 +19,8 @@ interface AuthProps {
   setIncomingCall?: any;
   authState?: { token: string | null; authenticated: boolean | null };
   USERNAME?: string;
+  setAuthState?: any;
+  SET_USER_ID?: any;
   onRegister?: (
     username: string,
     email: string,
@@ -704,48 +705,7 @@ export const AuthProvider = ({ children }: any) => {
       }
     }
   };
-  const refreshAccessToken = async (refreshToken: string) => {
-    try {
-      console.log(refreshAccessToken);
-      const { data } = await api.post("api/token/refresh/", {
-        refresh: refreshToken,
-      });
 
-      setAuthState({
-        token: data.access,
-        authenticated: true,
-      });
-      SET_USER_ID(data.user_id.toString());
-      const expirationTime = Date.now() + 60 * 60 * 1000;
-      axios.defaults.headers.common["Authorization"] = `Bearer ${data.access}`;
-
-      const storageItems = {
-        [TOKEN_KEY]: data.access,
-        [REFRESH_KEY]: data.refresh,
-        [ROLE]: data.account_type,
-        [EXPIRATION]: expirationTime.toString(),
-        user_id: data.user_id.toString(),
-        username: data.username,
-        email: data.email,
-        address: data.address,
-        contact_number: data.contact_number,
-        account_type: data.account_type,
-        is_email_verified: data.is_email_verified,
-        is_verified: data.is_verified,
-      };
-
-      await Promise.all(
-        Object.entries(storageItems).map(([key, value]) =>
-          SecureStore.setItemAsync(key, value.toString())
-        )
-      );
-
-      return data;
-    } catch (error) {
-      console.error("Failed to refresh access token:", error);
-      return null;
-    }
-  };
   useEffect(() => {
     const checkUserVerificationStatus = async () => {
       const userId = await SecureStore.getItemAsync("user_id");
@@ -784,6 +744,8 @@ export const AuthProvider = ({ children }: any) => {
     onLogout: logout,
     onVerifyEmail: onVerifyEmail,
     authState,
+    setAuthState,
+    SET_USER_ID,
     USER_ID,
     USERNAME: username,
     createReport: createReport,
@@ -792,7 +754,6 @@ export const AuthProvider = ({ children }: any) => {
     verifyCurrentPassword,
     changePassword,
     verifyAccount,
-    onRefresh: refreshAccessToken,
     getAddressFromCoordinates,
     hasNewNotification,
     incomingCall,
