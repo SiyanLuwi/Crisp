@@ -115,7 +115,7 @@ export default function CameraComp() {
       // Step 1: Capture photo
       const captureStartTime = Date.now();
       const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.7,
+        quality: 1,
         base64: false,
         skipProcessing: true
       });
@@ -180,17 +180,17 @@ export default function CameraComp() {
        const base64image = await FileSystem.readAsStringAsync(uri, {
         encoding: FileSystem.EncodingType.Base64,
       });
-   
-       // Call classification API
+       const apiStart = Date.now();
        const { data } = await axios.post(
          Constants.expoConfig?.extra?.ROBOFLOW_URL,
          base64image,
          {
            params: { api_key: Constants.expoConfig?.extra?.ROBOFLOW_API_KEY },
-           headers: { "Content-Type": "application/x-www-form-urlencoded" },
+           headers: {'Content-Type': 'application/x-www-form-urlencoded'}
          }
        );
-       console.log("Data: ", data);
+        const apiEnd = Date.now();
+        console.log(`API call took ${apiEnd - apiStart} ms`);
        const modifiedName = data.top === 'fire' ? 'Fire Accident' : data.top === 'flood' ? 'Flood' : data.top === 'road_accident' ? 'Road Accident' : data.top === 'graphic_violence' ? 'Graphic Violence' : data.top === 'fallen_trees' ? 'Fallen Tree' : data.top === 'others' ? 'Others' : data.top === 'pot_holes' ? 'Pot Holes' : data.top === 'street_light' ? 'Street Light' : data.top;
        const isEmergency = (() => {
          if (data.top === "nudity") {
