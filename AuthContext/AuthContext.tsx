@@ -6,6 +6,8 @@ import api from "@/app/api/axios";
 import * as FileSystem from "expo-file-system";
 import { app } from "@/firebase/firebaseConfig";
 import { addDoc, doc, getDocs, getFirestore  } from "firebase/firestore";
+import * as BackgroundFetch from "expo-background-fetch";
+import * as TaskManager from "expo-task-manager";
 const db = getFirestore(app);
 
 
@@ -80,6 +82,9 @@ import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { scheduleNotification } from "@/app/utils/notifications";
 import { Alert } from "react-native";
 import { callNotification } from "@/app/utils/callingNotification";
+import * as Location from "expo-location";
+import { getDistance } from "geolib";
+import { Report } from "@/app/utils/reports";
 const TOKEN_KEY = "my-jwt";
 const REFRESH_KEY = "my-jwt-refresh";
 const EXPIRATION = "accessTokenExpiration";
@@ -105,7 +110,74 @@ export const AuthProvider = ({ children }: any) => {
   const [isPending, setIsPending] = useState(false);
   const [username, setUsername] = useState("")
   const router = useRouter();
-  
+  const [location, setLocation] = useState<any>(null);
+  const [reports, setReports] = useState<any>([]);
+  useEffect(() => {
+    const startLocationMonitoring = async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        console.error("Location permission not granted!");
+        return;
+      }
+      Location.watchPositionAsync({
+        accuracy: Location.Accuracy.High,
+        timeInterval: 5000,
+        distanceInterval: 10,
+      }, async (location) => {
+         setLocation(location.coords);
+      });
+    }
+    const fetchAllReports = async () => {
+      try {
+        const reports = await Report.fetchAllReports();
+        const notDoneReports = reports.filter((report: any) => report.status !== "done" && report.user_id !== parseInt(USER_ID));
+        setReports(notDoneReports);
+      } catch (error: any) {
+        console.error("Error fetching reports:", error.message);
+    }
+    }
+    fetchAllReports();
+    startLocationMonitoring();
+  }, [])
+  useEffect(()=> {
+     if(authState.authenticated){
+      nearbyReports()
+      }
+  }, [location, reports])
+
+  const nearbyReports = async () => {
+      try{
+        if(!location){
+          console.log("Location not found");
+          return;
+        }
+        reports.filter( async (report: any) => {
+          const distance = getDistance(
+            { latitude: report.latitude, longitude: report.longitude },
+            { latitude: location.latitude, longitude: location.longitude }
+          );
+          if(distance > 200){
+            await SecureStore.setItemAsync("nearbyNotificatioId", "");
+          }
+          if(distance <= 200){
+            console.log("Nearby report found:", report);
+            let nearbyNotificatioId = await SecureStore.getItemAsync("nearbyNotificatioId");
+            console.log("Nearby notification ID:", nearbyNotificatioId);
+            
+            if(nearbyNotificatioId !== report.id.toString()){
+              scheduleNotification(
+                "Nearby Report",
+                `A ${report.type_of_report} report is nearby. Tap to view details.`,
+                1,
+                "/(tabs)/reports",)
+            }
+              await SecureStore.setItemAsync("nearbyNotificatioId", report.id.toString());
+          }
+        });
+      }catch(error:any){
+        console.error("Error fetching nearby reports:", error.message);
+      }
+  }
  
   const fetchNotifications = () => {
     try {

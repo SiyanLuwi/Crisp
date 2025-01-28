@@ -16,11 +16,9 @@ import api from "./api/axios";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import Constants from "expo-constants";
+import * as Location from "expo-location";
 import { useAuth } from "@/AuthContext/AuthContext";
-import {
-  startLocationUpdates,
-  stopLocationUpdates,
-} from "./utils/locationMonitoring";
+
 const bgImage = require("@/assets/images/landing_page.png");
 
 // Get screen dimensions
@@ -51,104 +49,19 @@ export default function Index() {
   const notificationListener = useRef<Notifications.Subscription>();
   const responseListener = useRef<Notifications.Subscription>();
   const [accountType, setAccountType] = useState<string | null>(null);
-  // const { setAuthState, SET_USER_ID } = useAuth();
-  // const refreshAccessToken = async (refreshToken: string) => {
-  //   try {
-  //     const { data } = await api.post("api/token/refresh/", {
-  //       refresh: refreshToken,
-  //     });
 
-  //     setAuthState({
-  //       token: data.access,
-  //       authenticated: true,
-  //     });
-  //     SET_USER_ID(data.user_id.toString());
-  //     const expirationTime = Date.now() + 60 * 60 * 1000;
-  //     axios.defaults.headers.common["Authorization"] = `Bearer ${data.access}`;
-
-  //     const storageItems = {
-  //       [TOKEN_KEY]: data.access,
-  //       [REFRESH_KEY]: data.refresh,
-  //       [ROLE]: data.account_type,
-  //       [EXPIRATION]: expirationTime.toString(),
-  //       user_id: data.user_id.toString(),
-  //       username: data.username,
-  //       email: data.email,
-  //       address: data.address,
-  //       contact_number: data.contact_number,
-  //       account_type: data.account_type,
-  //       is_email_verified: data.is_email_verified,
-  //       is_verified: data.is_verified,
-  //     };
-
-  //     await Promise.all(
-  //       Object.entries(storageItems).map(([key, value]) =>
-  //         SecureStore.setItemAsync(key, value.toString())
-  //       )
-  //     );
-
-  //     return data;
-  //   } catch (error) {
-  //     console.error("Failed to refresh access token:", error);
-  //     return null;
-  //   }
-  // };
-  // const checkToken = async () => {
-  //   const accessToken = await SecureStore.getItemAsync(TOKEN_KEY);
-  //   const refreshToken = await SecureStore.getItemAsync(REFRESH_KEY);
-  //   const expiration = await SecureStore.getItemAsync(EXPIRATION);
-  //   const currentTime = Date.now();
-  //   if (!accessToken || !refreshToken) {
-  //     return;
-  //   }
-  //   if (!refreshToken) {
-  //     throw new Error("Error on Refreshig a token!");
-  //   }
-  //   console.log("Checking token...");
-  //   try {
-  //     if (!accessToken || !expiration || currentTime > parseInt(expiration)) {
-  //       if (refreshToken) {
-  //         console.log("Refreshing token...");
-  //         console.log("Refresh token:", refreshToken);
-  //         const newAccessToken = await refreshAccessToken(refreshToken);         
-  //         if (!newAccessToken) {
-  //           console.log("Both tokens are invalid, prompting login...");
-  //           return null;
-  //         }
-  //         return newAccessToken;
-  //       }
-  //       // No tokens available
-  //       return null;
-  //     }
-
-  //     return accessToken;
-  //   } catch (error: any) {
-  //     console.log(error.message);
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   const handleAuthentication = async () => {
-  //     const accessToken = await checkToken();
-  //     console.log("Access token:", accessToken);
-  //     if (accessToken) {
-  //       const accountType = await SecureStore.getItemAsync(ACCOUNT_TYPE);
-  //       setAccountType(accountType);
-  //       // Redirect based on account type
-  //       if (accountType === "citizen") {
-  //         router.push("/(tabs)/camera");
-  //       } else if (accountType === "worker") {
-  //         router.push("/(tabs)_employee/reports");
-  //       } else {
-  //         alert("Unexpected account type");
-  //       }
-  //     } else {
-  //       // Redirect to login if the token is not valid
-  //       router.push("/pages/login");
-  //     }
-  //   };
-  //   handleAuthentication();
-  // }, []);
+  useEffect(() => {
+    const locationPermission = async () => {
+      const { status } = await Location.requestBackgroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission to access location was denied",
+          "Please enable location permissions in settings to use the app"
+        );
+      }
+    }
+    locationPermission();
+  },[])
 
   useEffect(() => {
     registerForPushNotificationsAsync().then(
@@ -181,18 +94,6 @@ export default function Index() {
         );
       responseListener.current &&
         Notifications.removeNotificationSubscription(responseListener.current);
-    };
-  }, []);
-
-  useEffect(() => {
-    const initiateLocationUpdates = async () => {
-      await startLocationUpdates();
-    };
-
-    initiateLocationUpdates();
-
-    return () => {
-      stopLocationUpdates();
     };
   }, []);
 
