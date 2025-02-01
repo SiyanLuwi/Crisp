@@ -177,7 +177,7 @@ export default function Login() {
               <Text className="text-lg text-[#7e9778] mr-3 mt-1 mb-10 font-semibold flex">
                 Don't have an account?
               </Text>
-              <Text className="text-lg text-[#0C3B2D] mt-1 mb-8 font-bold flex">
+              <Text className="text-lg text-[#0C3B2D] mt-1 mb-10 font-bold flex">
                 Register
               </Text>
             </TouchableOpacity>

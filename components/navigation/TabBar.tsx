@@ -49,7 +49,7 @@ const TabBar = ({
 
   return (
     <>
-      <View className="absolute bottom-[2%] w-auto flex-row justify-center items-center bg-white mx-[2%] py-[2%] rounded-3xl shadow-xl border-[#0C3B2D] border-2">
+      <View className="absolute bottom-[2%] w-auto flex-row justify-center items-center bg-white mx-[2%] py-[1%] rounded-3xl shadow-xl border-[#0C3B2D] border-2">
         {state.routes.map((route: any, index: number) => {
           const { options } = descriptors[route.key];
           const label =

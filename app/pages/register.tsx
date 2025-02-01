@@ -385,18 +385,16 @@ export default function Register() {
                     className="mr-2"
                     color={isChecked ? "#0C3B2D" : "gray"}
                   />
-                  <Text className={"text-sm"}>
-                    I agree to the{" "}
-                    <TouchableOpacity
-                      onPress={() => {
-                        setFullImageModalVisible(true);
-                      }}
-                    >
-                      <Text className={"text-[#0C3B2D] font-bold mt-1"}>
-                        Terms and Conditions
-                      </Text>
-                    </TouchableOpacity>
-                  </Text>
+                  <Text className={"text-sm"}>I agree to the </Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setFullImageModalVisible(true);
+                    }}
+                  >
+                    <Text className={"text-[#0C3B2D] font-bold"}>
+                      Terms and Conditions
+                    </Text>
+                  </TouchableOpacity>
                 </View>
                 {password.length > 0 && password.length < 6 && (
                   <Text className="text-md text-red-800 font-semibold flex text-left w-full ml-24 mt-2">

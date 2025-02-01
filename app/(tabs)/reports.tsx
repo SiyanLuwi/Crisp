@@ -67,12 +67,12 @@ export default function ReportPage() {
     useState<boolean>(false);
   const categories = [
     "all",
-    "fire",
+    "fire accident",
     "street light",
     "pothole",
     "flood",
     "road accident",
-    "fallen trees",
+    "fallen tree",
     "others",
   ];
   const statuses = ["all", "Pending", "ongoing", "Under Review", "done"];
@@ -205,7 +205,7 @@ export default function ReportPage() {
             const newReports = filteredReports.filter(
               (report) => !prevReports.some((r) => r.id === report.id)
             );
-            
+
             // Combine previous reports with the new ones
             const combinedReports = [...prevReports, ...newReports];
 
@@ -883,7 +883,7 @@ export default function ReportPage() {
             onPress={() => setIsDropdownVisible(!isDropdownVisible)}
             className="h-12 bg-white border-2 border-[#0C3B2D] rounded-full flex justify-between items-center mx-3 px-4 flex-row"
           >
-            <Text className="text-normal text-[#0C3B2D]">
+            <Text className="text-normal text-xs text-[#0C3B2D]">
               {selectedCategory.charAt(0).toUpperCase() +
                 selectedCategory.slice(1)}
             </Text>
@@ -906,7 +906,7 @@ export default function ReportPage() {
                     onPress={() => handleSelectCategory(item)}
                     className="px-4 py-2"
                   >
-                    <Text className="text-base text-[#0C3B2D]">
+                    <Text className="text-xs  text-[#0C3B2D]">
                       {item.charAt(0).toUpperCase() + item.slice(1)}
                     </Text>
                   </TouchableOpacity>
@@ -917,9 +917,9 @@ export default function ReportPage() {
           )}
           <TouchableOpacity
             onPress={() => setIsStatusDropdownVisible(!isStatusDropdownVisible)}
-            className="h-12 absolute left-44 bg-white border-2 border-[#0C3B2D] rounded-full flex justify-between items-center mx-3 px-4 flex-row"
+            className="h-12 absolute left-40 bg-white border-2 border-[#0C3B2D] rounded-full flex justify-between items-center mx-3 px-4 flex-row"
           >
-            <Text className="text-normal text-[#0C3B2D]">
+            <Text className="text-normal text-xs text-[#0C3B2D]">
               {selectedStatus.toLowerCase() === "all"
                 ? "Status"
                 : selectedStatus.charAt(0).toUpperCase() +
@@ -938,7 +938,7 @@ export default function ReportPage() {
 
           {/* Dropdown Options */}
           {isStatusDropdownVisible && (
-            <View className="absolute top-16 left-48 bg-white border border-[#0C3B2D] rounded-2xl shadow-lg">
+            <View className="absolute top-16 left-44 bg-white border border-[#0C3B2D] rounded-2xl shadow-lg">
               <FlatList
                 data={statuses}
                 renderItem={({ item }) => (
@@ -946,7 +946,7 @@ export default function ReportPage() {
                     onPress={() => handleSelectStatus(item)}
                     className="px-4 py-2"
                   >
-                    <Text className="text-base text-[#0C3B2D]">
+                    <Text className="text-xs text-[#0C3B2D]">
                       {item.charAt(0).toUpperCase() + item.slice(1)}
                     </Text>
                   </TouchableOpacity>
