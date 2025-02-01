@@ -81,6 +81,7 @@ function App() {
       const violation = await SecureStore.getItemAsync("violation");
       setScore(userInfo?.score || score || 0);
       setViolation(userInfo?.violation || violation || 0);
+      console.log(userInfo.is_verified);
     };
 
     loadUserInfo();
@@ -347,7 +348,7 @@ function App() {
                     </Text>
                   </View>
                   <TextInput
-                    className={`w-full text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D] ${
+                    className={`w-full text-md px-4 py-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D] ${
                       isEditing ? "bg-slate-300" : "bg-white"
                     }`}
                     value={score.toString()}
@@ -361,7 +362,7 @@ function App() {
                     </Text>
                   </View>
                   <TextInput
-                    className={`w-full text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D] ${
+                    className={`w-full text-md px-4 py-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D] ${
                       isEditing ? "bg-slate-300" : "bg-white"
                     }`}
                     value={violation.toString()}
@@ -373,7 +374,7 @@ function App() {
                 <Text className="text-md text-white mb-1">Name:</Text>
               </View>
               <TextInput
-                className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                className="w-full bg-white text-md px-4 py-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                 value={name}
                 editable={isEditing}
                 onChangeText={setName}
@@ -385,7 +386,7 @@ function App() {
               </View>
               <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
                 <TextInput
-                  className="w-4/5 text-md p-4 text-[#0C3B2D] font-semibold items-center justify-center"
+                  className="w-4/5 text-md px-4 py-3 text-[#0C3B2D] font-semibold items-center justify-center"
                   value={address}
                   editable={isEditing}
                   onChangeText={setAddress}
@@ -414,7 +415,7 @@ function App() {
                 <Text className="text-md text-white mb-1">Email Address:</Text>
               </View>
               <TextInput
-                className={`w-full text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D] ${
+                className={`w-full text-md px-4 py-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D] ${
                   isEditing ? "bg-slate-300" : "bg-white"
                 }`}
                 value={email}
@@ -427,7 +428,7 @@ function App() {
                 <Text className="text-md text-white mb-1">Contact Number:</Text>
               </View>
               <TextInput
-                className="w-full bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                className="w-full bg-white text-md px-4 py-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                 value={contact}
                 editable={isEditing}
                 onChangeText={setContact}

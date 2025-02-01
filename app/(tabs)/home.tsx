@@ -89,12 +89,13 @@ export default function Home() {
 
   const fetchAllDocuments = async () => {
     const categories = [
-      "fires",
-      "street lights",
-      "potholes",
-      "floods",
-      "others",
+      "fire accident",
+      "street light",
+      "pothole",
+      "flood",
       "road accident",
+      "fallen tree",
+      "others",
     ];
 
     const unsubscribeFunctions = categories.map((category) => {

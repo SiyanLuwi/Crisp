@@ -69,22 +69,22 @@ export default function Outgoing() {
 
   // Load and play ringing sound
   const playRingingSound = async () => {
+    if (ringSound) {
+      console.log("A sound is already playing. Stop it first.");
+      return;
+    }
     try {
-      if (ringSound) {
-        console.log("A sound is already playing. Stop it first.");
-        return;
-      }
-      console.log("Loading and playing the ringing sound...");
       const { sound } = await Audio.Sound.createAsync(
-        require("../../assets/ring.mp3") // Replace with your ringtone file path
+        require("../../assets/ring.mp3")
       );
       setRingSound(sound);
-      await sound.setIsLoopingAsync(true); // Loop the sound
+      await sound.setIsLoopingAsync(true);
       await sound.playAsync();
     } catch (error) {
-      console.log("Error while playing sound: ", error);
+      console.error("Error playing sound:", error);
     }
   };
+  
 
   const stopRingingSound = async () => {
     try {
@@ -101,38 +101,67 @@ export default function Outgoing() {
   };
 
   useEffect(() => {
-   if(mode === 'caller'){
-     playRingingSound(); 
-   }
-
+     if(mode === 'calller'){
+        playRingingSound(); 
+     }
     return () => {
       stopRingingSound(); 
     };
   }, []);
 
   useEffect(() => {
-    //@ts-ignore
-    const callRef = doc(db, "calls", callId);
-    const unsubscribe = onSnapshot(callRef, (doc) => {
+    if (!ringSound) return;
+    return () => {
+      ringSound.stopAsync().then(() => ringSound.unloadAsync());
+    };
+  }, [ringSound]);
+
+  useEffect(() => {
+    const callRef = doc(db, "calls", callId as string);
+    let localPC: RTCPeerConnection | null = new RTCPeerConnection(iceServersConfig);
+    const unsubscribe = onSnapshot(callRef, async (doc) => {
       const data = doc.data();
       if (data?.callStatus === "answered") {
         console.log("Call has been answered, stopping ringing sound...");
-        stopRingingSound();
+        if (ringSound) {
+          try {
+            await ringSound.stopAsync();
+            await ringSound.unloadAsync();
+          } catch (error) {
+            console.error("Error during sound cleanup:", error);
+          } finally {
+            setRingSound(null);
+          }
+        }        
         setAnswered(true);
         startTimer();
-      } else if (data?.callStatus === "ended") {
-        console.log("Call has ended");
-        setAnswered(false);
+      } 
+      if (data?.callStatus === "declined" || data?.callStatus === "ended") {
+        console.log(`Call has been ${data.callStatus}`);
+        // Clean up local peer connection
+        if (localPC) {
+          localPC.close();
+          localPC = null;
+        }
         if (cachedLocalPC) {
           cachedLocalPC.close();
           setCacheLocalPC(null);
         }
-        if (mode === 'caller') {
-          router.back(); // or handle cleanup
-        } else {
-          router.push('/(tabs)/home');
+    
+        // Reset streams and stop any active timers
+        setLocalStream(null);
+        setRemoteStream(null);
+        resetTimer();
+    
+        // Navigate based on the call status
+        if (data.callStatus === "declined") {
+          router.push('/(tabs)_employee/reports');
+        } else if (data.callStatus === "ended") {
+          mode === "caller" ? router.back() : router.push('/(tabs)/home');
         }
+        unsubscribe();
       }
+
     });
   
     return () => unsubscribe();
@@ -278,7 +307,6 @@ export default function Outgoing() {
       // @ts-ignore
       const callRef = doc(db, "calls", callId);
       const callSnapshot = await getDoc(callRef);
-      console.log("GetDoc: ", callSnapshot);
       if (callSnapshot.exists()) {
         console.log("Document exists!");
       } else {
@@ -310,7 +338,6 @@ export default function Outgoing() {
       localPC.ontrack = (e) => {
         const newStream = new MediaStream();
         e.streams[0].getTracks().forEach((track: any) => {
-          console.log("Received track:", track); // Log received track
           newStream.addTrack(track);
         });
         setRemoteStream(e.streams[0]);
@@ -325,12 +352,10 @@ export default function Outgoing() {
       };
       // @ts-ignore
       const offer = await callSnapshot.data().offer;
-      console.log("Offer: ", offer);
       await localPC.setRemoteDescription(offer);
 
       const answer = await localPC.createAnswer();
       await localPC.setLocalDescription(answer);
-      console.log("Answer: ", answer);
       await updateDoc(callRef, { answer: answer, connected: true });
 
       onSnapshot(callerCandidatesCollection, (snapshot) => {
@@ -351,25 +376,18 @@ export default function Outgoing() {
         throw new Error("callId is required but was not provided.");
       }
       const callRef = doc(db, "calls", callId as string);
-  
-      // Reference to the user document
-      
       const userRef = mode === "caller"//@ts-ignore
         ? doc(db, "users", receiverId)//@ts-ignore
         : doc(db, "users", USER_ID);
-  
-      // Update call and user status
       await Promise.all([
         setDoc(callRef, { callStatus: "ended", callLogs: timerInterval }, { merge: true }),
         updateDoc(userRef, { callStatus: "available" }),
       ]);
-  
-      // Close and clean up the peer connection
+
       if (cachedLocalPC) {
         cachedLocalPC.close();
         setCacheLocalPC(null);
       }
-  
       console.log("Call Ended");
     } catch (error) {
       console.error("Error ending the call:", error);
@@ -393,7 +411,6 @@ export default function Outgoing() {
     console.log(isSpeakerOn ? "Speaker Volume Low" : "Speaker Volume High");
   };
 
-  useEffect(() => {}, []);
 
   return (
     <View className="flex-1 bg-blue-900 justify-between px-12 py-20">

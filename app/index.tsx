@@ -10,30 +10,26 @@ import {
   Platform,
 } from "react-native";
 import { router } from "expo-router";
-import { RFPercentage } from "react-native-responsive-fontsize";
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import api from "./api/axios";
-import { app } from "@/firebase/firebaseConfig";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import Constants from "expo-constants";
+import * as Location from "expo-location";
 import { useAuth } from "@/AuthContext/AuthContext";
-import {
-  startLocationUpdates,
-  stopLocationUpdates,
-} from "./utils/locationMonitoring";
+
 const bgImage = require("@/assets/images/landing_page.png");
 
 // Get screen dimensions
 const { width, height } = Dimensions.get("window");
 
-const TOKEN_KEY = "my-jwt";
-const REFRESH_KEY = "my-jwt-refresh";
-const EXPIRATION = "accessTokenExpiration";
-const PUSH_TOKEN = "pushToken";
-const ACCOUNT_TYPE = "account_type";
-
+// const TOKEN_KEY = "my-jwt";
+// const REFRESH_KEY = "my-jwt-refresh";
+// const EXPIRATION = "accessTokenExpiration";
+// const PUSH_TOKEN = "pushToken";
+// const ACCOUNT_TYPE = "account_type";
+// const ROLE = "my-role";
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -43,7 +39,6 @@ Notifications.setNotificationHandler({
 });
 
 export default function Index() {
-  const { onRefresh } = useAuth();
   const [expoPushToken, setExpoPushToken] = useState("");
   const [channels, setChannels] = useState<Notifications.NotificationChannel[]>(
     []
@@ -55,61 +50,18 @@ export default function Index() {
   const responseListener = useRef<Notifications.Subscription>();
   const [accountType, setAccountType] = useState<string | null>(null);
 
-  const checkToken = async () => {
-    const accessToken = await SecureStore.getItemAsync(TOKEN_KEY);
-    const refreshToken = await SecureStore.getItemAsync(REFRESH_KEY);
-    const expiration = await SecureStore.getItemAsync(EXPIRATION);
-    const account_type = await SecureStore.getItemAsync(ACCOUNT_TYPE);
-
-    const currentTime = Date.now();
-    if (!accessToken || !refreshToken) {
-      return;
-    }
-    if (!onRefresh) {
-      throw new Error("Error on Refreshig a token!");
-    }
-    try {
-      if (!accessToken || !expiration || currentTime > parseInt(expiration)) {
-        if (refreshToken) {
-          console.log(refreshToken);
-          const newAccessToken = await onRefresh(refreshToken);
-          if (!newAccessToken) {
-            console.log("Both tokens are invalid, prompting login...");
-            return null;
-          }
-          return newAccessToken;
-        }
-        // No tokens available
-        return null;
-      }
-
-      return accessToken;
-    } catch (error: any) {
-      console.log(error.message);
-    }
-  };
-
   useEffect(() => {
-    const handleAuthentication = async () => {
-      const accessToken = await checkToken();
-      if (accessToken) {
-        const accountType = await SecureStore.getItemAsync(ACCOUNT_TYPE);
-        setAccountType(accountType);
-        // Redirect based on account type
-        if (accountType === "citizen") {
-          router.push("/(tabs)/home");
-        } else if (accountType === "worker") {
-          router.push("/(tabs)_employee/home");
-        } else {
-          alert("Unexpected account type");
-        }
-      } else {
-        // Redirect to login if the token is not valid
-        router.push("/pages/login");
+    const locationPermission = async () => {
+      const { status } = await Location.requestBackgroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission to access location was denied",
+          "Please enable location permissions in settings to use the app"
+        );
       }
-    };
-    handleAuthentication();
-  }, []);
+    }
+    locationPermission();
+  },[])
 
   useEffect(() => {
     registerForPushNotificationsAsync().then(
@@ -142,18 +94,6 @@ export default function Index() {
         );
       responseListener.current &&
         Notifications.removeNotificationSubscription(responseListener.current);
-    };
-  }, []);
-
-  useEffect(() => {
-    const initiateLocationUpdates = async () => {
-      await startLocationUpdates();
-    };
-
-    initiateLocationUpdates();
-
-    return () => {
-      stopLocationUpdates();
     };
   }, []);
 

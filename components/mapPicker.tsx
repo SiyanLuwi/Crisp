@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
+  Modal,
   View,
   Button,
   Text,
@@ -70,53 +71,33 @@ const MapPicker: React.FC<MapPickerProps> = ({ onLocationSelect, onClose }) => {
   };
 
   return (
-    <TouchableWithoutFeedback onPress={onClose}>
-      <View className="w-full h-full justify-center items-center bg-black/50">
-        <TouchableWithoutFeedback>
-          <View className="w-[95%] h-[80%] bg-white rounded-lg overflow-hidden">
-            {initialRegion && (
-              <MapView
-                style={{ width: "100%", height: "90%" }}
-                onPress={handlePress}
-                initialRegion={initialRegion}
-              >
-                {selectedLocation && <Marker coordinate={selectedLocation} />}
-              </MapView>
-            )}
-            <Button title="Select Location" onPress={handleConfirm} />
-            {selectedLocation && (
-              <Text className="p-1">
-                Selected: {selectedLocation.latitude},{" "}
-                {selectedLocation.longitude}
-              </Text>
-            )}
-          </View>
-        </TouchableWithoutFeedback>
-      </View>
-    </TouchableWithoutFeedback>
+    <View className="flex-1 justify-center items-center">
+      <Modal animationType="fade" transparent={true} onRequestClose={onClose}>
+        <View className="flex-1 h-full py-24 justify-center items-center bg-black/50">
+          <TouchableWithoutFeedback>
+            <View className="w-[95%] h-[80%] bg-white rounded-lg overflow-hidden">
+              {initialRegion && (
+                <MapView
+                  style={{ width: "100%", height: "90%" }}
+                  onPress={handlePress}
+                  initialRegion={initialRegion}
+                >
+                  {selectedLocation && <Marker coordinate={selectedLocation} />}
+                </MapView>
+              )}
+              <Button title="Select Location" onPress={handleConfirm} />
+              {selectedLocation && (
+                <Text className="p-1">
+                  Selected: {selectedLocation.latitude},{" "}
+                  {selectedLocation.longitude}
+                </Text>
+              )}
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </Modal>
+    </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  mapContainer: {
-    width: width * 0.95,
-    height: height * 0.8,
-    backgroundColor: "white",
-    borderRadius: 10,
-    overflow: "hidden",
-  },
-  map: {
-    width: width * 0.95,
-    height: height * 0.732,
-  },
-  coordinates: {
-    padding: 5,
-  },
-});
 
 export default MapPicker;

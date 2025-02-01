@@ -5,12 +5,13 @@ import { useRouter } from "expo-router";
 import api from "@/app/api/axios";
 import * as FileSystem from "expo-file-system";
 import { app } from "@/firebase/firebaseConfig";
-import { addDoc, doc, getDocs, getFirestore, setDoc } from "firebase/firestore";
+import { addDoc, doc, getDocs, getFirestore  } from "firebase/firestore";
+import * as BackgroundFetch from "expo-background-fetch";
+import * as TaskManager from "expo-task-manager";
 const db = getFirestore(app);
-import { Timestamp } from 'firebase/firestore';
+
 
 interface AuthProps {
-  onRefresh?: (refreshToken: string) => Promise<any>;
   USER_ID?: string;
   peerConnection?: any;
   setPeerConnection?: any;
@@ -20,6 +21,8 @@ interface AuthProps {
   setIncomingCall?: any;
   authState?: { token: string | null; authenticated: boolean | null };
   USERNAME?: string;
+  setAuthState?: any;
+  SET_USER_ID?: any;
   onRegister?: (
     username: string,
     email: string,
@@ -79,6 +82,9 @@ import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { scheduleNotification } from "@/app/utils/notifications";
 import { Alert } from "react-native";
 import { callNotification } from "@/app/utils/callingNotification";
+import * as Location from "expo-location";
+import { getDistance } from "geolib";
+import { Report } from "@/app/utils/reports";
 const TOKEN_KEY = "my-jwt";
 const REFRESH_KEY = "my-jwt-refresh";
 const EXPIRATION = "accessTokenExpiration";
@@ -104,6 +110,132 @@ export const AuthProvider = ({ children }: any) => {
   const [isPending, setIsPending] = useState(false);
   const [username, setUsername] = useState("")
   const router = useRouter();
+  const [location, setLocation] = useState<any>(null);
+  const [reports, setReports] = useState<any>([]);
+  useEffect(() => {
+    const startLocationMonitoring = async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        console.error("Location permission not granted!");
+        return;
+      }
+      Location.watchPositionAsync({
+        accuracy: Location.Accuracy.High,
+        timeInterval: 5000,
+        distanceInterval: 10,
+      }, async (location) => {
+         setLocation(location.coords);
+      });
+    }
+    const fetchAllReports = async () => {
+      try {
+        const reports = await Report.fetchAllReports();
+        const notDoneReports = reports.filter((report: any) => report.status !== "done" && report.user_id !== parseInt(USER_ID));
+        setReports(notDoneReports);
+      } catch (error: any) {
+        console.error("Error fetching reports:", error.message);
+    }
+    }
+    fetchAllReports();
+    startLocationMonitoring();
+  }, [])
+  useEffect(()=> {
+     if(authState.authenticated){
+      nearbyReports()
+      }
+  }, [location, reports])
+
+  const nearbyReports = async () => {
+      try{
+        if(!location){
+          console.log("Location not found");
+          return;
+        }
+        reports.filter( async (report: any) => {
+          const distance = getDistance(
+            { latitude: report.latitude, longitude: report.longitude },
+            { latitude: location.latitude, longitude: location.longitude }
+          );
+          if(distance > 200){
+            await SecureStore.setItemAsync("nearbyNotificatioId", "");
+          }
+          if(distance <= 200){
+            console.log("Nearby report found:", report);
+            let nearbyNotificatioId = await SecureStore.getItemAsync("nearbyNotificatioId");
+            console.log("Nearby notification ID:", nearbyNotificatioId);
+            
+            if(nearbyNotificatioId !== report.id.toString()){
+              scheduleNotification(
+                "Nearby Report",
+                `A ${report.type_of_report} report is nearby. Tap to view details.`,
+                1,
+                "/(tabs)/reports",)
+            }
+              await SecureStore.setItemAsync("nearbyNotificatioId", report.id.toString());
+          }
+        });
+      }catch(error:any){
+        console.error("Error fetching nearby reports:", error.message);
+      }
+  }
+ 
+  const fetchNotifications = () => {
+    try {
+      const notificationsRef = collection(db, "globalNotification");
+      // Setting up the real-time listener
+      const unsubscribe = onSnapshot(
+        notificationsRef,
+        async (querySnapshot) => {
+          if (querySnapshot.empty) {
+            console.log("No notifications found.");
+            return;
+          }
+          const data = querySnapshot.docs.map((doc) => ({id:doc.id, ...doc.data(), createdAt: doc.data().createdAt.toDate()}));
+          const latestNotification = getLatestNotification(data);
+          const lastNotifiedReportId = await SecureStore.getItemAsync("lastNotifiedReportId");
+          console.log("Last notified report ID:", lastNotifiedReportId);
+          if (latestNotification && lastNotifiedReportId !== latestNotification.id) {
+            console.log("Latest notification:", latestNotification);
+            scheduleNotification(
+              latestNotification.title,
+              latestNotification.description,
+              3,
+              "/(tabs)/home"
+            );
+            // setHasNewNotification(true);
+            await SecureStore.setItemAsync("lastNotifiedReportId", latestNotification.id);
+          }
+        },
+        (error) => {
+          console.error("Error in onSnapshot listener:", error.message);
+        }
+      );
+      return unsubscribe; // Return the unsubscribe function
+    } catch (error: any) {
+      console.error("Error fetching notifications:", error.message);
+    }
+  };
+  const getLatestNotification = (notifications: any) => {
+    if (notifications.length === 0) return null;
+    const sortedNotifications = notifications.sort(
+      (a: any, b: any) => b.createdAt.getTime() - a.createdAt.getTime()
+    );
+    
+    return sortedNotifications[0];
+  };
+  
+  useEffect(() => {
+    const fetchAndSubscribe = async () => {
+      const unsubscribe = await fetchNotifications();
+      return unsubscribe;
+    };
+    const unsubscribePromise = fetchAndSubscribe();
+    return () => {
+      unsubscribePromise.then((unsubscribe) => {
+        if (unsubscribe) unsubscribe();
+      });
+    };
+  }, [])
   
   useEffect(() => {
     if (USER_ID) {
@@ -223,6 +355,7 @@ export const AuthProvider = ({ children }: any) => {
   ) => {
     const ipv = await Network.getIpAddressAsync();
     try {
+ 
       const res = await api.post("api/citizen/registration/", {
         username,
         email,
@@ -233,32 +366,42 @@ export const AuthProvider = ({ children }: any) => {
         contact_number: contact_no,
         ipv,
       });
-
+      
+      
       await SecureStore.setItemAsync("email", email.toString());
 
-      return res;
+      return res; // Return successful response
     } catch (error: any) {
+      console.error("Error during registration:", error);
+  
+      // Handle server error responses
       if (error.response && error.response.data) {
-        // console.error("Register error details:", error.response.data);
-        const errorMessage =
-          error.response.data?.username ||
-          error.response.data?.email ||
-          error.response.data?.contact_number ||
-          error.response.data?.ipv ||
-          "Unknown error occurred";
+        const serverErrors = error.response.data;
+  
+        // Aggregate all possible error fields into a readable message
+        const errorMessage = [
+          serverErrors.username?.join(" ") || "",
+          serverErrors.email?.join(" ") || "",
+          serverErrors.contact_number?.join(" ") || "",
+          serverErrors.ipv?.join(" ") || "",
+        ]
+          .filter((msg) => msg.trim()) // Remove empty fields
+          .join(" ");
+  
         return {
           error: true,
-          msg: errorMessage,
-        };
-      } else {
-        console.error("Register error:", error);
-        return {
-          error: true,
-          msg: "An unknown error occurred during registration.",
+          msg: errorMessage || "Unknown error occurred from the server.",
         };
       }
+  
+      // Handle network or unexpected errors
+      return {
+        error: true,
+        msg: "A network or unexpected error occurred during registration.",
+      };
     }
   };
+  
 
   //Login function
   const login = async (username: string, password: string) => {
@@ -269,7 +412,11 @@ export const AuthProvider = ({ children }: any) => {
         username,
         password,
       });
-      console.log("Login response received:", data); // Log the response from the server
+
+      if(!data.is_email_verified){
+        router.push("/pages/verifyEmail");
+        return;
+      }
 
       if (!data.access || !data.refresh) {
         throw new Error(
@@ -300,7 +447,9 @@ export const AuthProvider = ({ children }: any) => {
         is_verified: data.is_verified,
         score: data.score,
         violation: data.violation,
+        firebase_token: data.firebase_token,
       };
+
       if (data.account_type === "worker") {
         console.log("SUpervisor id: ", data.supervisor);
         storageItems.supervisor_id = data.supervisor;
@@ -320,10 +469,10 @@ export const AuthProvider = ({ children }: any) => {
           }
         })
       );
-
       return data;
     } catch (error: any) {
       // console.error("Login error occurred:", error);
+      console.log("Error: ", error);
       if (error.response) {
         console.log("Error response data:", error.response.data);
         if (error.response.status === 401) {
@@ -628,48 +777,7 @@ export const AuthProvider = ({ children }: any) => {
       }
     }
   };
-  const refreshAccessToken = async (refreshToken: string) => {
-    try {
-      console.log(refreshAccessToken);
-      const { data } = await api.post("api/token/refresh/", {
-        refresh: refreshToken,
-      });
 
-      setAuthState({
-        token: data.access,
-        authenticated: true,
-      });
-      SET_USER_ID(data.user_id.toString());
-      const expirationTime = Date.now() + 60 * 60 * 1000;
-      axios.defaults.headers.common["Authorization"] = `Bearer ${data.access}`;
-
-      const storageItems = {
-        [TOKEN_KEY]: data.access,
-        [REFRESH_KEY]: data.refresh,
-        [ROLE]: data.account_type,
-        [EXPIRATION]: expirationTime.toString(),
-        user_id: data.user_id.toString(),
-        username: data.username,
-        email: data.email,
-        address: data.address,
-        contact_number: data.contact_number,
-        account_type: data.account_type,
-        is_email_verified: data.is_email_verified,
-        is_verified: data.is_verified,
-      };
-
-      await Promise.all(
-        Object.entries(storageItems).map(([key, value]) =>
-          SecureStore.setItemAsync(key, value.toString())
-        )
-      );
-
-      return data;
-    } catch (error) {
-      console.error("Failed to refresh access token:", error);
-      return null;
-    }
-  };
   useEffect(() => {
     const checkUserVerificationStatus = async () => {
       const userId = await SecureStore.getItemAsync("user_id");
@@ -708,6 +816,8 @@ export const AuthProvider = ({ children }: any) => {
     onLogout: logout,
     onVerifyEmail: onVerifyEmail,
     authState,
+    setAuthState,
+    SET_USER_ID,
     USER_ID,
     USERNAME: username,
     createReport: createReport,
@@ -716,7 +826,6 @@ export const AuthProvider = ({ children }: any) => {
     verifyCurrentPassword,
     changePassword,
     verifyAccount,
-    onRefresh: refreshAccessToken,
     getAddressFromCoordinates,
     hasNewNotification,
     incomingCall,

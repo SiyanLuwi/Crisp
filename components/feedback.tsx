@@ -112,7 +112,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
       // Update the report with the new status and elapsed time
       const updatedReportData = {
         update_date: localDateISOString, // Use the same timestamp for the update date
-        status: "reviewing", // Adjust status as needed (e.g., 'pending_review', 'under_review', etc.)
+        status: 'Under Review',
         review_elapsed_time: formattedTime, // Store the formatted elapsed time
       };
 
@@ -222,14 +222,14 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
                         value={proof || ""}
                         editable={false}
                         placeholderTextColor="#888"
-                        placeholder="Take a Photo"
+                        placeholder="Proof"
                       />
                       <TouchableOpacity
                         onPress={takeProof}
                         className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg"
                       >
                         <Text className="text-white text-md font-normal">
-                          Take Proof
+                          Take Photo
                         </Text>
                       </TouchableOpacity>
                     </View>

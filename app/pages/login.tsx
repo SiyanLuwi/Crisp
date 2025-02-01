@@ -61,21 +61,21 @@ export default function Login() {
       if (!result) {
         throw new Error("Error While Logging in!");
       }
-      console.log(account_type);
-      if (is_email_verified !== "true" && account_type === "citizen") {
-        router.push("/pages/verifyEmail");
-        return;
-      }
-      if (is_email_verified !== "true" && account_type === "worker") {
-        router.push("/pages/verifyEmail");
-        return;
-      }
+      // console.log(account_type);
+      // if (is_email_verified !== "true" && account_type === "citizen") {
+      //   router.push("/pages/verifyEmail");
+      //   return;
+      // }
+      // if (is_email_verified !== "true" && account_type === "worker") {
+      //   router.push("/pages/verifyEmail");
+      //   return;
+      // }
 
       // Redirect based on account type
       if (account_type === "citizen") {
-        router.push("/(tabs)/home");
+        router.push("/(tabs)/camera");
       } else if (account_type === "worker") {
-        router.push("/(tabs)_employee/home");
+        router.push("/(tabs)_employee/reports");
       } else {
         // Handle unexpected account types or default case
         setErrors("Unexpected account type");
@@ -171,13 +171,13 @@ export default function Login() {
               loading={loading}
             />
             <TouchableOpacity
-              className="w-full flex items-center justify-center flex-row mt-20"
+              className="w-full flex items-center justify-center flex-row mt-15 mb-2"
               onPress={() => router.navigate(`/pages/register`)}
             >
-              <Text className="text-lg text-[#7e9778] mr-3 mt-1 mb-8 font-semibold flex">
+              <Text className="text-lg text-[#7e9778] mr-3 mt-1 mb-10 font-semibold flex">
                 Don't have an account?
               </Text>
-              <Text className="text-lg text-[#0C3B2D] mt-1 mb-8 font-bold flex">
+              <Text className="text-lg text-[#0C3B2D] mt-1 mb-10 font-bold flex">
                 Register
               </Text>
             </TouchableOpacity>

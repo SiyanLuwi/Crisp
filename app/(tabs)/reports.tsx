@@ -67,14 +67,15 @@ export default function ReportPage() {
     useState<boolean>(false);
   const categories = [
     "all",
-    "fires",
-    "street lights",
-    "potholes",
-    "floods",
+    "fire accident",
+    "street light",
+    "pothole",
+    "flood",
     "road accident",
+    "fallen tree",
     "others",
   ];
-  const statuses = ["all", "Pending", "ongoing", "reviewing", "done"];
+  const statuses = ["all", "Pending", "ongoing", "Under Review", "done"];
   const [feedbackStatus, setFeedbackStatus] = useState<{
     [key: string]: boolean;
   }>({});
@@ -115,11 +116,12 @@ export default function ReportPage() {
   // console.log("isVerified:", isVerified);
   const fetchAllDocuments = async (userId: string, votes: any[]) => {
     const categories = [
-      "fires",
-      "street lights",
-      "potholes",
-      "floods",
-      "others",
+      "fire accident",
+      "street light",
+      "pothole",
+      "flood",
+      "fallen tree",
+      "other",
       "road accident",
     ];
 
@@ -175,6 +177,7 @@ export default function ReportPage() {
                   proof: doc.data().proof,
                   submited_at: doc.data().submited_at,
                 }));
+              // fetch only the reports that are not done
 
               return {
                 id: reportId,
@@ -563,7 +566,7 @@ export default function ReportPage() {
                       ? "bg-yellow-400" // Amber for pending
                       : item.status === "Ongoing"
                         ? "bg-blue-500" // Blue for ongoing
-                        : item.status === "reviewing"
+                        : item.status === "Under Review"
                           ? "bg-orange-500" // Orange for pending review
                           : item.status === "done"
                             ? "bg-green-500" // Green for done
@@ -776,7 +779,7 @@ export default function ReportPage() {
               </View>
             )}
           </View>
-          {item.status === "reviewing" && (
+          {item.status === "Under Review" && (
             <View className="w-full flex flex-col mt-2">
               <View className="w-full h-px bg-slate-300 mb-2" />
               <Text className="text-lg font-bold">Feedback:</Text>
@@ -880,7 +883,7 @@ export default function ReportPage() {
             onPress={() => setIsDropdownVisible(!isDropdownVisible)}
             className="h-12 bg-white border-2 border-[#0C3B2D] rounded-full flex justify-between items-center mx-3 px-4 flex-row"
           >
-            <Text className="text-normal text-[#0C3B2D]">
+            <Text className="text-normal text-xs text-[#0C3B2D]">
               {selectedCategory.charAt(0).toUpperCase() +
                 selectedCategory.slice(1)}
             </Text>
@@ -903,7 +906,7 @@ export default function ReportPage() {
                     onPress={() => handleSelectCategory(item)}
                     className="px-4 py-2"
                   >
-                    <Text className="text-base text-[#0C3B2D]">
+                    <Text className="text-xs  text-[#0C3B2D]">
                       {item.charAt(0).toUpperCase() + item.slice(1)}
                     </Text>
                   </TouchableOpacity>
@@ -914,9 +917,9 @@ export default function ReportPage() {
           )}
           <TouchableOpacity
             onPress={() => setIsStatusDropdownVisible(!isStatusDropdownVisible)}
-            className="h-12 absolute left-44 bg-white border-2 border-[#0C3B2D] rounded-full flex justify-between items-center mx-3 px-4 flex-row"
+            className="h-12 absolute left-40 bg-white border-2 border-[#0C3B2D] rounded-full flex justify-between items-center mx-3 px-4 flex-row"
           >
-            <Text className="text-normal text-[#0C3B2D]">
+            <Text className="text-normal text-xs text-[#0C3B2D]">
               {selectedStatus.toLowerCase() === "all"
                 ? "Status"
                 : selectedStatus.charAt(0).toUpperCase() +
@@ -935,7 +938,7 @@ export default function ReportPage() {
 
           {/* Dropdown Options */}
           {isStatusDropdownVisible && (
-            <View className="absolute top-16 left-48 bg-white border border-[#0C3B2D] rounded-2xl shadow-lg">
+            <View className="absolute top-16 left-44 bg-white border border-[#0C3B2D] rounded-2xl shadow-lg">
               <FlatList
                 data={statuses}
                 renderItem={({ item }) => (
@@ -943,7 +946,7 @@ export default function ReportPage() {
                     onPress={() => handleSelectStatus(item)}
                     className="px-4 py-2"
                   >
-                    <Text className="text-base text-[#0C3B2D]">
+                    <Text className="text-xs text-[#0C3B2D]">
                       {item.charAt(0).toUpperCase() + item.slice(1)}
                     </Text>
                   </TouchableOpacity>

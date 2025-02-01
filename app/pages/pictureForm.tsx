@@ -108,7 +108,7 @@ export default function PictureForm() {
         } catch (error: any) {
           if (
             error?.response?.data?.detail ===
-            "You've already reported this incident."
+            "You've already reported or verified this incident."
           ) {
             setLoading(false);
             const existingReport = error?.response?.data?.existing_report;
@@ -174,6 +174,7 @@ export default function PictureForm() {
   const handleDuplicateReport = async (existingReport: any, formData: any) => {
     const { location, type_of_report, report_description, report_date } =
       existingReport;
+
     return new Promise((resolve, reject) => {
       Alert.alert(
         "Duplicate Report Detected",
@@ -187,8 +188,11 @@ export default function PictureForm() {
           {
             text: "Submit Anyway",
             onPress: async () => {
+              // Append the flag for force submit
               formData.append("force_submit", "true");
+
               try {
+                // Perform the retry API request
                 const retryRes = await api.post(
                   "api/create-report/",
                   formData,
@@ -198,18 +202,27 @@ export default function PictureForm() {
                     },
                   }
                 );
+
+                // Retrieve user ID from SecureStore
                 const user_id = await SecureStore.getItemAsync("user_id");
                 if (!user_id) {
                   console.error("USER_ID is missing!");
-                  return;
+                  return reject(new Error("User ID is missing!"));
                 }
+
+                // Ensure selectedItem is available
                 if (!selectedItem) {
-                  console.error("USER_ID is missing!");
-                  return;
+                  console.error("selectedItem is missing!");
+                  return reject(new Error("Selected item is missing!"));
                 }
+
+                // Handle report success
                 handleReportSuccess(user_id, selectedItem);
+
+                // Resolve the promise with the response from the retry API call
                 resolve(retryRes);
               } catch (retryError: any) {
+                // Reject if the retry request fails
                 reject(
                   new Error(
                     `An error occurred during forced submission: ${retryError.message}`
@@ -363,7 +376,7 @@ export default function PictureForm() {
                 </Text>
               </View>
               <TextInput
-                className="w-full bg-white text-md px-4 py-3 rounded-lg items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                className="w-full bg-white text-md px-4 py-4 rounded-lg items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                 placeholderTextColor="#888"
                 placeholder="Description"
                 multiline={true}
@@ -371,6 +384,7 @@ export default function PictureForm() {
                 style={{
                   maxHeight: 150,
                   height: 150,
+                  textAlignVertical: "top",
                 }}
                 onChangeText={setDescription}
               />

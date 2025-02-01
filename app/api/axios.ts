@@ -4,7 +4,7 @@ import * as SecureStore from 'expo-secure-store'
 import Constants from 'expo-constants';
 
 const api = axios.create({
-    baseURL: Constants.expoConfig?.extra?.apiUrl,
+    baseURL: Constants.expoConfig?.extra?.apiDevUrl,
 })
 
 api.interceptors.request.use(
