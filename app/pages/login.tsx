@@ -56,24 +56,24 @@ export default function Login() {
       const result = await onLogin!(username, password);
       const is_email_verified =
         await SecureStore.getItemAsync(IS_EMAIL_VERIFIED);
+      const is_verified = await SecureStore.getItemAsync("is_verified");
       const account_type = await SecureStore.getItemAsync(ACCOUNT_TYPE);
 
       if (!result) {
         throw new Error("Error While Logging in!");
       }
-      // console.log(account_type);
-      // if (is_email_verified !== "true" && account_type === "citizen") {
-      //   router.push("/pages/verifyEmail");
-      //   return;
-      // }
-      // if (is_email_verified !== "true" && account_type === "worker") {
-      //   router.push("/pages/verifyEmail");
-      //   return;
-      // }
 
       // Redirect based on account type
       if (account_type === "citizen") {
-        router.push("/(tabs)/camera");
+        if (is_email_verified !== "true") {
+          router.push("/pages/verifyEmail");
+          return;
+        }
+        if(is_verified !== "true"){
+          router.push("/(tabs)/home");
+          return;
+        }
+        router.push("/(tabs)/home");
       } else if (account_type === "worker") {
         router.push("/(tabs)_employee/reports");
       } else {
