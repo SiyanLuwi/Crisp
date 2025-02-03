@@ -162,11 +162,13 @@ export default function CameraComp() {
  
    const resizeImage = async (uri: string): Promise<string> => {
      try {
-       const result = await manipulateAsync(
-         uri,
-         [{ resize: { width: 150, height: 150 } }], // Resize to fixed dimensions
-         { format: SaveFormat.JPEG }
-       );
+      const result = await manipulateAsync(
+        uri,
+        [{ resize: { width: 150, height: 150 } }], 
+        { 
+          format: SaveFormat.JPEG,
+        }
+      );
        return result.uri;
      } catch (error) {
        console.error("Error resizing image:", error);
@@ -176,19 +178,30 @@ export default function CameraComp() {
    
    const classifyImage = async (uri: string): Promise<{ class: string; isEmergency: string }> => {
      try {
-      //  Convert image to Base64
-       const base64image = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
+
+      const file = {
+        uri: uri,
+        name: 'image.jpg',
+        type: 'image/jpeg',
+      };
+      const formData = new FormData();
+      formData.append('file', file as any);
+
        const apiStart = Date.now();
        const { data } = await axios.post(
-         Constants.expoConfig?.extra?.ROBOFLOW_URL,
-         base64image,
-         {
-           params: { api_key: Constants.expoConfig?.extra?.ROBOFLOW_API_KEY },
-           headers: {'Content-Type': 'application/x-www-form-urlencoded'}
-         }
-       );
+        Constants.expoConfig?.extra?.ROBOFLOW_URL,
+        formData,
+        {
+          params: {
+            api_key: Constants.expoConfig?.extra?.ROBOFLOW_API_KEY,
+            confidence: 0.55, 
+          },
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'X-Requested-With': 'XMLHttpRequest'      
+          },
+        }
+      );
         const apiEnd = Date.now();
         console.log(`API call took ${apiEnd - apiStart} ms`);
        const modifiedName = data.top === 'fire' ? 'Fire Accident' : data.top === 'flood' ? 'Flood' : data.top === 'road_accident' ? 'Road Accident' : data.top === 'graphic_violence' ? 'Graphic Violence' : data.top === 'fallen_trees' ? 'Fallen Tree' : data.top === 'others' ? 'Others' : data.top === 'pot_holes' ? 'Pot Holes' : data.top === 'street_light' ? 'Street Light' : data.top;
