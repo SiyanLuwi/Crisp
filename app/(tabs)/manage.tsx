@@ -63,11 +63,12 @@ export default function ManageReports() {
 
   const categories = [
     "all",
-    "fires",
-    "street lights",
-    "potholes",
-    "floods",
+    "fire accident",
+    "street light",
+    "pothole",
+    "flood",
     "road accident",
+    "fallen tree",
     "others",
   ];
   const statuses = ["all", "Pending", "ongoing", "Under Review", "done"];
@@ -97,9 +98,9 @@ export default function ManageReports() {
       "street light",
       "pothole",
       "flood",
-      "others",
-      "fallen trees",
       "road accident",
+      "fallen tree",
+      "others",
     ];
 
     // Retrieve the user ID securely

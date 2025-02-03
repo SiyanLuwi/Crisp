@@ -172,8 +172,9 @@ export default function PictureForm() {
   };
 
   const handleDuplicateReport = async (existingReport: any, formData: any) => {
-    const { location, type_of_report, report_description, report_date } = existingReport;
-  
+    const { location, type_of_report, report_description, report_date } =
+      existingReport;
+
     return new Promise((resolve, reject) => {
       Alert.alert(
         "Duplicate Report Detected",
@@ -189,36 +190,44 @@ export default function PictureForm() {
             onPress: async () => {
               // Append the flag for force submit
               formData.append("force_submit", "true");
-  
+
               try {
                 // Perform the retry API request
-                const retryRes = await api.post("api/create-report/", formData, {
-                  headers: {
-                    "Content-Type": "multipart/form-data",
-                  },
-                });
-  
+                const retryRes = await api.post(
+                  "api/create-report/",
+                  formData,
+                  {
+                    headers: {
+                      "Content-Type": "multipart/form-data",
+                    },
+                  }
+                );
+
                 // Retrieve user ID from SecureStore
                 const user_id = await SecureStore.getItemAsync("user_id");
                 if (!user_id) {
                   console.error("USER_ID is missing!");
                   return reject(new Error("User ID is missing!"));
                 }
-  
+
                 // Ensure selectedItem is available
                 if (!selectedItem) {
                   console.error("selectedItem is missing!");
                   return reject(new Error("Selected item is missing!"));
                 }
-  
+
                 // Handle report success
                 handleReportSuccess(user_id, selectedItem);
-  
+
                 // Resolve the promise with the response from the retry API call
                 resolve(retryRes);
               } catch (retryError: any) {
                 // Reject if the retry request fails
-                reject(new Error(`An error occurred during forced submission: ${retryError.message}`));
+                reject(
+                  new Error(
+                    `An error occurred during forced submission: ${retryError.message}`
+                  )
+                );
               }
             },
           },
@@ -226,7 +235,6 @@ export default function PictureForm() {
       );
     });
   };
-  
 
   const fetchData = async () => {
     try {
@@ -368,7 +376,7 @@ export default function PictureForm() {
                 </Text>
               </View>
               <TextInput
-                className="w-full bg-white text-md px-4 py-3 rounded-lg items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                className="w-full bg-white text-md px-4 py-4 rounded-lg items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
                 placeholderTextColor="#888"
                 placeholder="Description"
                 multiline={true}
@@ -376,6 +384,7 @@ export default function PictureForm() {
                 style={{
                   maxHeight: 150,
                   height: 150,
+                  textAlignVertical: "top",
                 }}
                 onChangeText={setDescription}
               />

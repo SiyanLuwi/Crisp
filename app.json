@@ -60,7 +60,7 @@
       "AUTH_DOMAIN": "crisp-63736.firebaseapp.com",
       "DB_URL": "https://crisp-63736-default-rtdb.asia-southeast1.firebasedatabase.app",
       "PROJECT_ID": "crisp-63736",
-      "BACKEND_URL":"https://django-firebase-psql-onrender.com/",
+      "BACKEND_URL": "https://django-firebase-psql-onrender.com/",
       "STORAGE_BUCKET": "crisp-63736.appspot.com",
       "ID": "25886713465",
       "APP_ID": "1:25886713465:web:021f343b5785e55c1d96a8",
@@ -71,7 +71,7 @@
         "origin": false
       },
       "apiUrl": "https://django-firebase-psql.onrender.com/",
-      "apiDevUrl": "http://192.168.100.15:8000/",
+      "apiDevUrl": "http://192.168.1.13:8000/",
       "eas": {
         "projectId": "c7b9d51e-3b89-4da1-a947-b1d13c069826"
       }

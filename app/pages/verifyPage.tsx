@@ -422,7 +422,7 @@ export default function VerifyPage() {
                     className="bg-[#0C3B2D] border border-[#8BC34A] px-4 py-3 rounded-lg"
                   >
                     <Text className="text-white text-md font-normal">
-                      Take Selfie
+                      Take a Selfie
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -456,7 +456,7 @@ export default function VerifyPage() {
                     className="bg-[#0C3B2D] border border-[#8BC34A] px-4 py-3 rounded-lg"
                   >
                     <Text className="text-white text-md font-normal">
-                      Capture ID
+                      Take a Photo
                     </Text>
                   </TouchableOpacity>
                 </View>
