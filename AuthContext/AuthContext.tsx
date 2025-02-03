@@ -23,6 +23,8 @@ interface AuthProps {
   USERNAME?: string;
   setAuthState?: any;
   SET_USER_ID?: any;
+  setIsDone?:any;
+  isDone?:any;
   onRegister?: (
     username: string,
     email: string,
@@ -112,6 +114,7 @@ export const AuthProvider = ({ children }: any) => {
   const router = useRouter();
   const [location, setLocation] = useState<any>(null);
   const [reports, setReports] = useState<any>([]);
+  const [isDone, setIsDone] = useState(false);
   useEffect(() => {
     const startLocationMonitoring = async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -833,6 +836,8 @@ export const AuthProvider = ({ children }: any) => {
     peerConnection,
     setPeerConnection,
     isPending,
+    setIsDone,
+    isDone,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
