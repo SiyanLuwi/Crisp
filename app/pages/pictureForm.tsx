@@ -60,7 +60,7 @@ export default function PictureForm() {
   const [missingFieldsModalVisible, setMissingFieldsModalVisible] =
     useState(false);
   const [missingFieldsMessage, setMissingFieldsMessage] = useState("");
-  const { createReport } = useAuth();
+  const { createReport, isDone, setIsDone } = useAuth();
 
   const report = async () => {
     try {
@@ -246,11 +246,10 @@ export default function PictureForm() {
           SecureStore.getItemAsync("report_type"),
           SecureStore.getItemAsync("isEmergency"),
         ]);
-      console.log(locations, coordinates);
       setIsEmergency(isEmergency);
       setSelectedItem(report_type);
-      setCoordinates(coordinates as string);
       setLocation(locations);
+      setCoordinates(coordinates as string); 
       setImageUri(uri);
       setFetch(true);
     } catch (error) {
@@ -263,8 +262,9 @@ export default function PictureForm() {
     fetchData();
   }, []);
 
-  const confirmCancel = () => {
-    setCancelModalVisible(false);
+  const confirmCancel = async () => {
+      setCancelModalVisible(false);
+ 
   };
 
   // Function to convert coordinates to address

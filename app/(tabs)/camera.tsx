@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Platform
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -37,6 +38,7 @@ export default function CameraComp() {
   const [loading, setLoading] = useState(false);
   const [emergencyCall, setEmergencyCall] = useState(false);
   const cameraRef = React.useRef<CameraView>(null);
+  const { isDone, setIsDone } = useAuth();
   const [locationPermissionGranted, setLocationPermissionGranted] =
     useState(false);
 
@@ -52,7 +54,18 @@ export default function CameraComp() {
 
     fetchLocationPermission();
   }, []);
-
+  useEffect(() => {
+      const reset = async () => {
+        await Promise.all([
+          SecureStore.getItemAsync("imageUri"),
+          SecureStore.getItemAsync("currentLocation"),
+          SecureStore.getItemAsync("coordinates"),
+          SecureStore.getItemAsync("report_type"),
+          SecureStore.getItemAsync("isEmergency"),
+        ]);
+      }
+      reset();
+  }, [])
   useEffect(() => {
     console.log("Location permission granted:", locationPermissionGranted);
     const getCurrentLocation = async () => {
@@ -84,6 +97,7 @@ export default function CameraComp() {
     };
 
     getCurrentLocation();
+
   }, [locationPermissionGranted]);
 
   if (!permission) {
@@ -110,44 +124,36 @@ export default function CameraComp() {
   
     setLoading(true);
     const totalStartTime = Date.now();
-  
+
     try {
-      // Step 1: Capture photo
-      const captureStartTime = Date.now();
+      const startCapt = Date.now()
       const photo = await cameraRef.current.takePictureAsync({
         quality: 1,
         base64: false,
-        skipProcessing: true
+        skipProcessing: true,   
+
       });
-      const captureEndTime = Date.now();
-      console.log(`Photo capture took ${captureEndTime - captureStartTime} ms`);
-  
+      const endCapt = Date.now()
+      console.log(`Photo capture took ${endCapt - startCapt} ms`);
+
       if (!photo?.uri) {
         console.error("Photo capturing failed: photo is undefined.");
         Alert.alert("Error capturing photo. Please try again.");
         return;
       }
-  
-      // Step 2: Resize photo
-      const resizeStartTime = Date.now();
+      
+     const startResize = Date.now()
       const optimizedUri = await resizeImage(photo.uri);
-      const resizeEndTime = Date.now();
-      console.log(`Image resizing took ${resizeEndTime - resizeStartTime} ms`);
-  
-      // Step 3: Classify photo
-      const classifyStartTime = Date.now();
+      const endResize = Date.now()
+      console.log(`Image resizing took ${endResize - startResize} ms`);
+
+
       const classificationResult = await classifyImage(optimizedUri);
-      const classifyEndTime = Date.now();
-      console.log(`Image classification took ${classifyEndTime - classifyStartTime} ms`);
-  
-      // Step 4: Store results
-      const storeStartTime = Date.now();
+
       await storeClassificationResults(photo.uri, classificationResult);
-      const storeEndTime = Date.now();
-      console.log(`Storing results took ${storeEndTime - storeStartTime} ms`);
-  
-      // Navigate to the next page
       router.push("/pages/pictureForm");
+
+      setIsDone(true);
     } catch (error) {
       console.error("Error capturing photo:", error);
       Alert.alert("Error capturing photo. Please try again.");
@@ -162,11 +168,14 @@ export default function CameraComp() {
  
    const resizeImage = async (uri: string): Promise<string> => {
      try {
-       const result = await manipulateAsync(
-         uri,
-         [{ resize: { width: 150, height: 150 } }], // Resize to fixed dimensions
-         { format: SaveFormat.JPEG }
-       );
+      const result = await manipulateAsync(
+        uri,
+        [{ resize: { width: 150, height: 150 } }], 
+        { 
+          compress: 0.6,
+          format: SaveFormat.WEBP,
+        }
+      );
        return result.uri;
      } catch (error) {
        console.error("Error resizing image:", error);
@@ -176,19 +185,31 @@ export default function CameraComp() {
    
    const classifyImage = async (uri: string): Promise<{ class: string; isEmergency: string }> => {
      try {
-      //  Convert image to Base64
-       const base64image = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
+
+      const file = {
+        uri: uri,
+        name: `img_${Date.now()}.jpg`,
+        type: 'image/jpeg',
+      };
+      const formData = new FormData();
+      formData.append('file', file as any);
+
        const apiStart = Date.now();
        const { data } = await axios.post(
-         Constants.expoConfig?.extra?.ROBOFLOW_URL,
-         base64image,
-         {
-           params: { api_key: Constants.expoConfig?.extra?.ROBOFLOW_API_KEY },
-           headers: {'Content-Type': 'application/x-www-form-urlencoded'}
-         }
-       );
+        Constants.expoConfig?.extra?.ROBOFLOW_URL,
+        formData,
+        {
+          params: {
+            api_key: Constants.expoConfig?.extra?.ROBOFLOW_API_KEY,
+            confidence: 0.55,
+            overlap: 30
+          },
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'X-Requested-With': 'XMLHttpRequest'      
+          },
+        }
+      );
         const apiEnd = Date.now();
         console.log(`API call took ${apiEnd - apiStart} ms`);
        const modifiedName = data.top === 'fire' ? 'Fire Accident' : data.top === 'flood' ? 'Flood' : data.top === 'road_accident' ? 'Road Accident' : data.top === 'graphic_violence' ? 'Graphic Violence' : data.top === 'fallen_trees' ? 'Fallen Tree' : data.top === 'others' ? 'Others' : data.top === 'pot_holes' ? 'Pot Holes' : data.top === 'street_light' ? 'Street Light' : data.top;
@@ -230,7 +251,10 @@ export default function CameraComp() {
       <CameraView
         className="w-full h-full flex justify-center items-center"
         facing={facing}
+        autofocus="off"
         ref={cameraRef}
+        // ratio="16:9"
+        videoQuality="480p"
       >
         <View className="absolute top-[5%] w-full flex-row justify-between">
           <TouchableOpacity className="m-5 ml-8" onPress={toggleCameraFacing}>
@@ -238,6 +262,7 @@ export default function CameraComp() {
               name="camera-switch"
               size={width * 0.1}
               color="white"
+              
             />
           </TouchableOpacity>
           <TouchableOpacity
