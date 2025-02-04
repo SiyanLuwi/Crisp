@@ -72,7 +72,7 @@ const NotificationItem: React.FC<{
 
 export default function NotificationForm() {
   const [notifications, setNotifications] = useState<any[]>([]);
-  const { USER_ID } = useAuth();
+  const { USER_ID, near_by_reports } = useAuth();
   const navigation = useNavigation(); // Get the navigation object
   
   useEffect(() => {
@@ -86,7 +86,6 @@ export default function NotificationForm() {
         // Extract data with necessary fields
         const fetchedNotifications: Notification[] = snapshot.docs.map((doc) => {
           const data = doc.data();
-
           // Make sure that necessary fields exist in the document
           const notification: Notification = {
             id: doc.id,
@@ -97,10 +96,14 @@ export default function NotificationForm() {
           };
 
           return notification;
+        }).filter((notification) => {
+          // 3 Days
+          const threeDays = 3 * 24 * 60 * 60 * 1000;
+          const threeDaysAgo = Date.now() - threeDays;
+          return notification.createdAt.seconds * 1000 > threeDaysAgo;
         });
-
         // Set notifications to the state
-        setNotifications(fetchedNotifications);
+
 
         if (fetchedNotifications.length > 0) {
           // Schedule notifications based on the fetched data
@@ -119,7 +122,7 @@ export default function NotificationForm() {
     };
 
     fetchNotifications();
-  }, [USER_ID]);
+  }, [USER_ID, near_by_reports]);
 
   return (
     <ImageBackground

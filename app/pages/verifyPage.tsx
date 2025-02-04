@@ -146,6 +146,8 @@ export default function VerifyPage() {
       } else {
         alert(`Error: ${error.message}`);
       }
+    }finally{
+      setLoading(false);
     }
   };
 

@@ -25,6 +25,8 @@ interface AuthProps {
   SET_USER_ID?: any;
   setIsDone?:any;
   isDone?:any;
+  near_by_reports?: any;
+  set_near_by_reports?: any;
   onRegister?: (
     username: string,
     email: string,
@@ -115,6 +117,7 @@ export const AuthProvider = ({ children }: any) => {
   const [location, setLocation] = useState<any>(null);
   const [reports, setReports] = useState<any>([]);
   const [isDone, setIsDone] = useState(false);
+  const [near_by_reports, set_near_by_reports] = useState<any>([]);
   useEffect(() => {
     const startLocationMonitoring = async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -154,7 +157,7 @@ export const AuthProvider = ({ children }: any) => {
           console.log("Location not found");
           return;
         }
-        reports.filter( async (report: any) => {
+        for (const report of reports) {
           const distance = getDistance(
             { latitude: report.latitude, longitude: report.longitude },
             { latitude: location.latitude, longitude: location.longitude }
@@ -168,6 +171,7 @@ export const AuthProvider = ({ children }: any) => {
             console.log("Nearby notification ID:", nearbyNotificatioId);
             
             if(nearbyNotificatioId !== report.id.toString()){
+              console.log("Scheduling nearby notification...");
               scheduleNotification(
                 "Nearby Report",
                 `A ${report.type_of_report} report is nearby. Tap to view details.`,
@@ -176,7 +180,7 @@ export const AuthProvider = ({ children }: any) => {
             }
               await SecureStore.setItemAsync("nearbyNotificatioId", report.id.toString());
           }
-        });
+        };
       }catch(error:any){
         console.error("Error fetching nearby reports:", error.message);
       }
@@ -789,7 +793,7 @@ export const AuthProvider = ({ children }: any) => {
       const verifyAccountRef = collection(db, "verifyAccount");
       const q = query(
         verifyAccountRef,
-        where("user", "==", parseInt(userIdString))
+        where("user_id", "==", parseInt(userIdString))
       );
       console.log(userId);
       try {
@@ -798,6 +802,8 @@ export const AuthProvider = ({ children }: any) => {
           const data = querySnapshot.docs[0].data();
           if (!data.is_account_verified) {
             setIsPending(true);
+          }else{
+            setIsPending(false)
           }
           console.log(
             "Verification info exists:",

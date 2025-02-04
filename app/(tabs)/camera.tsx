@@ -42,7 +42,15 @@ export default function CameraComp() {
   const [locationPermissionGranted, setLocationPermissionGranted] =
     useState(false);
 
-  
+  useEffect(() => {
+   const permissionCheck = async () => {
+    const is_verified = await SecureStore.getItemAsync("is_verified");
+    if (is_verified=== 'false') {
+      router.push("/(tabs)/home");
+    }
+   }
+    permissionCheck();
+  }, [])
 
   // Inside your component
   useEffect(() => {
