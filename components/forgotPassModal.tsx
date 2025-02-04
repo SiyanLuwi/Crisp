@@ -1,3 +1,4 @@
+import api from "@/app/api/axios";
 import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
@@ -9,7 +10,8 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-
+import LoadingButton from "./loadingButton";
+import { router } from "expo-router";
 interface ForgotPasswordModalProps {
   visible: boolean;
   onClose: () => void;
@@ -29,7 +31,9 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
   const [timer, setTimer] = useState(60); // Timer for resend code
   const [timerActive, setTimerActive] = useState(false); // To check if the timer is active
   const [passwordUpdated, setPasswordUpdated] = useState(false); // Track if password is updated
-
+  const [loading, setLoading] = useState(false);
+  const [isSent, setIsSent] = useState(false);
+  const [isCodeVerified, setIsCodeVerified] = useState(false);
   // Timer countdown logic
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -58,55 +62,122 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
     return hasUpperCase && hasNumber && hasSymbol;
   };
 
-  const handleForgotPassword = () => {
-    if (!isValidEmail(email)) {
-      setMessage("Please enter a valid email address.");
-      setTimeout(() => {
-        setMessage("");
-      }, 2000);
-      return;
-    } else if (email) {
-      setMessage("CRISP has sent you an OTP to verify your email address.");
-      setEmailValid(true);
-      setEmail(""); // Clear email input
-      setTimer(60); // Reset timer
-      setTimerActive(true); // Start countdown
-      setTimeout(() => {
-        setMessage("");
-      }, 3000);
-    } else {
-      setMessage("Please enter your email address.");
-      setTimeout(() => {
-        setMessage("");
-      }, 2000);
+  const handleForgotPassword = async () => {
+    try {
+      if (!isValidEmail(email)) {
+        setMessage("Please enter a valid email address.");
+        setTimeout(() => {
+          setMessage("");
+        }, 2000);
+        return;
+      } else if (email) {
+        
+        setLoading(true);
+        const res = await api.post("api/forgot-password/", { email });
+        if (!res) {
+          setMessage("An error occurred. Please try again.");
+          setTimeout(() => {
+            setMessage("");
+          }, 2000);
+          return;
+        }
+        setIsSent(true)
+        setEmailValid(true);
+        setTimer(60); 
+        setTimerActive(true); 
+
+        setMessage("CRISP has sent you an OTP to verify your email address.");
+        setTimeout(() => {
+          setMessage("");
+        }, 3000);
+      
+      } else {
+        setMessage("Please enter your email address.");
+        setTimeout(() => {
+          setMessage("");
+        }, 2000);
+      }
+    } catch (error) {
+      console.error("Error sending email:", error);
+    }finally{
+      setLoading(false)
     }
   };
 
-  const handleCodeVerification = () => {
-    if (code === "1234") {
-      setCodeVerified(true);
-    } else {
-      setMessage("Invalid code. Please try again.");
-      setTimeout(() => {
-        setMessage("");
-      }, 2000);
+  const handleCodeVerification = async () => {
+    try {
+      if (code) {
+        setLoading(true);
+        const res = await api.post("api/verify-otp/", { otp: code, email });
+        if (!res) {
+          setMessage("An error occurred. Please try again.");
+          setTimeout(() => {
+            setMessage("");
+          }, 2000);
+          return;
+        }
+        setCodeVerified(true);
+        setIsCodeVerified(true);
+        setCode("");
+        setMessage("Code verified successfully!");
+        setLoading(false)
+        setTimeout(() => {
+          setMessage("");
+        }, 2000);
+      } else {
+        setMessage("Please enter the code.");
+        setTimeout(() => {
+          setMessage("");
+        }, 2000);
+      }
+    } catch (error) {
+      console.error("Error verifying code:", error);
     }
   };
 
-  const handleSubmitNewPassword = () => {
+  const handleSubmitNewPassword = async () => {
     if (newPassword !== reEnterNewPassword) {
       setMessage("Passwords do not match.");
-      setTimeout(() => {
-        setMessage("");
-      }, 2000);
-    } else {
-      setMessage("Your password has been successfully updated!");
-      setTimeout(() => {
-        setMessage("");
-        setPasswordUpdated(true); // Mark password as updated
-      }, 3000);
+      setTimeout(() => setMessage(""), 2000);
+      return;
+    }
+  
+    try {
+      setLoading(true);
+      
+      const res = await api.post("api/reset-password/", {
+        password: newPassword,
+        password_confirm: reEnterNewPassword,
+        email,
+      });
+  
+      if (res?.status === 200 || res?.status === 201) {
+        setPasswordUpdated(true);
+        setEmail("");
+        setMessage("Password updated successfully!");
+  
+        setTimeout(() => {
+          setMessage("");
+          onClose();
+        }, 2000);
+      } else {
+        throw new Error("Failed to update password.");
+      }
+  
+    } catch (error) {
+      console.error("Error updating password:", error);
+      setMessage("An error occurred. Please try again.");
+    } finally {
+      setLoading(false);
+      setIsSent(false);
+      setCodeVerified(false);
+      setIsCodeVerified(false);
+      setEmailValid(false);
+
+      onClose()
     }
   };
+  
 
   const handleClose = () => {
     setEmail("");
@@ -159,7 +230,7 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
               </>
             ) : (
               <>
-                {!emailValid && !codeVerified ? (
+                {!isSent ? (
                   <>
                     <TextInput
                       className="w-full h-auto bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
@@ -167,25 +238,28 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                       placeholderTextColor="#888"
                       value={email}
                       onChangeText={setEmail}
-                    />
-                    {message ? (
-                      <Text className="text-md text-red-800 font-semibold flex items-center w-full">
-                        {message}
-                      </Text>
-                    ) : null}
+                    />             
+                    <LoadingButton
+                      title="Send Email"
+                      onPress={handleForgotPassword}
+                      loading={loading}
+                      style="mt-5 w-full bg-[#0C3B2D] rounded-lg p-2 shadow-lg justify-center items-center"
+                    >
 
-                    <TouchableOpacity
+                    </LoadingButton>
+
+                    {/* <TouchableOpacity
                       className="mt-5 w-full bg-[#0C3B2D] rounded-lg p-2 shadow-lg justify-center items-center"
                       onPress={handleForgotPassword}
                     >
                       <Text className="text-md py-1 font-bold text-white">
                         Send Email
                       </Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                   </>
                 ) : null}
 
-                {emailValid && !codeVerified ? (
+                {emailValid && !isCodeVerified ? (
                   <>
                     <TextInput
                       className="w-full h-auto bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
@@ -213,19 +287,17 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                           : "Resend Code"}
                       </Text>
                     </TouchableOpacity>
-
-                    <TouchableOpacity
-                      className="mt-2 w-full bg-[#0C3B2D] rounded-lg p-2 shadow-lg justify-center items-center"
+             
+                    <LoadingButton
+                      title="Verify Code"
                       onPress={handleCodeVerification}
-                    >
-                      <Text className="text-md py-1 font-bold text-white">
-                        Verify Code
-                      </Text>
-                    </TouchableOpacity>
+                      loading={loading}
+                      style="mt-2 w-full bg-[#0C3B2D] rounded-lg p-2 shadow-lg justify-center items-center" 
+                    />
                   </>
                 ) : null}
 
-                {codeVerified && (
+                { isCodeVerified && (
                   <>
                     <TextInput
                       className="w-full h-auto bg-white text-md p-4 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
@@ -271,14 +343,13 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                         </Text>
                       )}
 
-                    <TouchableOpacity
-                      className="mt-5 w-full bg-[#0C3B2D] rounded-lg p-2 shadow-lg justify-center items-center"
+                    <LoadingButton
+                      title="Submit New Password"
                       onPress={handleSubmitNewPassword}
-                    >
-                      <Text className="text-md py-1 font-bold text-white">
-                        Submit New Password
-                      </Text>
-                    </TouchableOpacity>
+                      loading={loading}
+                      style="mt-5 w-full bg-[#0C3B2D] rounded-lg p-2 shadow-lg justify-center items-center"
+                    />
+
                   </>
                 )}
               </>
