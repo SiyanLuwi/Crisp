@@ -793,7 +793,7 @@ export const AuthProvider = ({ children }: any) => {
       const verifyAccountRef = collection(db, "verifyAccount");
       const q = query(
         verifyAccountRef,
-        where("user", "==", parseInt(userIdString))
+        where("user_id", "==", parseInt(userIdString))
       );
       console.log(userId);
       try {
@@ -802,6 +802,8 @@ export const AuthProvider = ({ children }: any) => {
           const data = querySnapshot.docs[0].data();
           if (!data.is_account_verified) {
             setIsPending(true);
+          }else{
+            setIsPending(false)
           }
           console.log(
             "Verification info exists:",
