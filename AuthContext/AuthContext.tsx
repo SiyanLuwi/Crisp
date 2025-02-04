@@ -793,7 +793,7 @@ export const AuthProvider = ({ children }: any) => {
       const verifyAccountRef = collection(db, "verifyAccount");
       const q = query(
         verifyAccountRef,
-        where("user_id", "==", parseInt(userIdString))
+        where("user", "==", parseInt(userIdString))
       );
       console.log(userId);
       try {
