@@ -27,11 +27,13 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
     if (email) {
       // Simulate sending email
       setMessage("Check your inbox for password reset instructions.");
-      setEmail(""); // Clear the input
+      setEmail(""); 
       setTimeout(() => {
         setMessage("");
-        onClose(); // Close the modal after 3 seconds
-      }, 3000); // Show for 3 seconds
+        onClose(); 
+        
+      }, 3000); 
+      
     } else {
       setMessage("Please enter your email address.");
       setTimeout(() => {
