@@ -258,8 +258,18 @@ export const AuthProvider = ({ children }: any) => {
               pathname: "/calls/incoming",
               params: { caller_id: data.caller_id, callId: data.callId, callerName: data.caller_name}
             })
+            setIncomingCall(data)
+          }      
+          if(data.callStatus === "answered"){
+            setIncomingCall(null)
           }
-          setIncomingCall(data)
+          if(data.callStatus === "declined"){
+            setIncomingCall(null)
+          }
+          if(data.callStatus === 'ended'){
+            setIncomingCall(null)
+          }
+  
         }
       });
      
