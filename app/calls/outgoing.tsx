@@ -1,5 +1,5 @@
 // PhoneCallScreen.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { View, Text, TouchableOpacity, Image, Alert } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -65,19 +65,18 @@ export default function Outgoing() {
   const [cachedLocalPC, setCacheLocalPC] = useState<any>(null);
   const [isAnswered, setAnswered] = useState(false); 
   const [timerInterval, setTimerInterval] = useState<number>(0);
+  const ringSoundRef = useRef<Audio.Sound | null>(null);
+
   let interval: number | NodeJS.Timer | undefined;
 
   // Load and play ringing sound
   const playRingingSound = async () => {
-    if (ringSound) {
-      console.log("A sound is already playing. Stop it first.");
-      return;
-    }
+    if (ringSoundRef.current) return;
     try {
       const { sound } = await Audio.Sound.createAsync(
         require("../../assets/ring.mp3")
       );
-      setRingSound(sound);
+      ringSoundRef.current = sound;
       await sound.setIsLoopingAsync(true);
       await sound.playAsync();
     } catch (error) {
@@ -88,20 +87,19 @@ export default function Outgoing() {
 
   const stopRingingSound = async () => {
     try {
-      if (ringSound) {
-        console.log("Stopping the ringing sound...");
-        await ringSound.stopAsync();
-        await ringSound.unloadAsync(); 
-      } else {
-        console.log("No sound is playing to stop.");
+      if (ringSoundRef.current) {
+        await ringSoundRef.current.stopAsync();
+        await ringSoundRef.current.unloadAsync();
+        ringSoundRef.current = null;
       }
     } catch (error) {
-      console.log("Error while stopping sound: ", error);
+      console.log("Error stopping sound:", error);
     }
   };
 
   useEffect(() => {
-     if(mode === 'calller'){
+     if(mode === 'caller'){
+        console.log("Playing sounds on outgoing call... with ID: ", USER_ID, " and mode: ", mode);
         playRingingSound(); 
      }
     return () => {
@@ -110,29 +108,13 @@ export default function Outgoing() {
   }, []);
 
   useEffect(() => {
-    if (!ringSound) return;
-    return () => {
-      ringSound.stopAsync().then(() => ringSound.unloadAsync());
-    };
-  }, [ringSound]);
-
-  useEffect(() => {
     const callRef = doc(db, "calls", callId as string);
     let localPC: RTCPeerConnection | null = new RTCPeerConnection(iceServersConfig);
     const unsubscribe = onSnapshot(callRef, async (doc) => {
       const data = doc.data();
       if (data?.callStatus === "answered") {
         console.log("Call has been answered, stopping ringing sound...");
-        if (ringSound) {
-          try {
-            await ringSound.stopAsync();
-            await ringSound.unloadAsync();
-          } catch (error) {
-            console.error("Error during sound cleanup:", error);
-          } finally {
-            setRingSound(null);
-          }
-        }        
+        stopRingingSound();       
         setAnswered(true);
         startTimer();
       } 
@@ -155,8 +137,10 @@ export default function Outgoing() {
     
         // Navigate based on the call status
         if (data.callStatus === "declined") {
+          stopRingingSound();
           router.push('/(tabs)_employee/reports');
         } else if (data.callStatus === "ended") {
+          stopRingingSound();
           mode === "caller" ? router.back() : router.push('/(tabs)/home');
         }
         unsubscribe();

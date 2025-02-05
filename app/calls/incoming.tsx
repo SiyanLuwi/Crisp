@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { View, Text, TouchableOpacity, Image, Alert } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -31,41 +31,38 @@ const iceServersConfig = {
   ],
 };
 export default function Incoming() {
-  const { incomingCall, USER_ID } = useAuth();
+  const { incomingCall, USER_ID, setIncomingCall } = useAuth();
   const { callerName } = useLocalSearchParams()
   const callerImage = "https://randomuser.me/api/portraits/men/1.jpg"; // Use a placeholder image
   const router = useRouter();
   const [sound, setSound] = useState<Audio.Sound | null>(null);
-
+  const soundRef = useRef<Audio.Sound | null>(null);
   useEffect(() => {
     if (incomingCall) {
-      console.log("Playing ring sound");
       playRingingSound();
     }
     return () => {
-      if (sound) {
-        console.log("Stopping ring sound");
-        sound.stopAsync();
+      if (soundRef.current) {
+        soundRef.current.stopAsync().catch(() => {});
+        soundRef.current.unloadAsync().catch(() => {});
+        soundRef.current = null;
       }
     };
   }, [incomingCall]);
 
-    const playRingingSound = async () => {
-      if (sound) {
-        console.log("A sound is already playing. Stop it first.");
-        return;
-      }
-      try {
-        const { sound } = await Audio.Sound.createAsync(
-          require("../../assets/ring.mp3")
-        );
-        setSound(sound);
-        await sound.setIsLoopingAsync(true);
-        await sound.playAsync();
-      } catch (error) {
-        console.error("Error playing sound:", error);
-      }
-    };
+  const playRingingSound = async () => {
+    if (soundRef.current) return;
+    try {
+      const { sound } = await Audio.Sound.createAsync(
+        require("../../assets/ring.mp3")
+      );
+      soundRef.current = sound;
+      await sound.setIsLoopingAsync(true);
+      await sound.playAsync();
+    } catch (error) {
+      console.error("Error playing sound:", error);
+    }
+  };
 
   const handleEndCall = async () => {
     try {
@@ -74,16 +71,10 @@ export default function Incoming() {
         return;
       }
       console.log("Incoming Call Sound: ", sound);
-      if (sound) {
-        try {
-          console.log("Stopping ring sound from decline");
-          await sound.stopAsync();
-          await sound.unloadAsync();
-        } catch (error) {
-          console.error("Error during sound cleanup:", error);
-        } finally {
-          setSound(null);
-        }
+      if (soundRef.current) {
+        await soundRef.current.stopAsync();
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
       }
       const callRef = doc(db, "calls", incomingCall.callId);
       const userRef = doc(db, "users", USER_ID);
@@ -109,25 +100,20 @@ export default function Incoming() {
           console.log("USER ID NOT FOUND ! AT INCOMING .TSX")
           return;
         }
-        console.log("Receiver CALLID: ", incomingCall.callId);
+
         await updateDoc(doc(db, "calls", incomingCall.callId), {
           callStatus: "answered",
         });
         await updateDoc(doc(db, "users", USER_ID), {
           callStatus: "in-call"
         })
-        if (sound) {
-          try {
-            await sound.stopAsync();
-            await sound.unloadAsync();
-          } catch (error) {
-            console.error("Error during sound cleanup:", error);
-          } finally {
-            setSound(null);
-          }
+        if (soundRef.current) {
+          await soundRef.current.stopAsync();
+          await soundRef.current.unloadAsync();
+          soundRef.current = null;
         }
-        
-        router.push({
+        setIncomingCall(null);
+        router.replace({
           pathname: "/calls/outgoing",
           params: {
             callId: incomingCall.callId,
