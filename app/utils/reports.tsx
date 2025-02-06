@@ -34,6 +34,7 @@ export interface Reports {
   userFeedback: Feedback[]; // Updated type
   workerFeedback: Feedback[];
   location: string;
+  imageUrl: string;
 }
 interface Feedback {
   description: string;
@@ -66,6 +67,7 @@ export class Report implements Reports {
   public userFeedback: Feedback[] = []; // Initialize as an empty array
   public workerFeedback: Feedback[] = []; // Initialize as an empty array
   public location: string;
+  public imageUrl: string;
 
   constructor(reportData: Reports) {
     this.id = reportData.id;
@@ -90,6 +92,7 @@ export class Report implements Reports {
     this.userFeedback = []; // Initialize as empty array
     this.workerFeedback = []; // Initialize as empty array
     this.location = reportData.location;
+    this.imageUrl = reportData.imageUrl;
   }
 
   public static async fetchReportsByCategory(

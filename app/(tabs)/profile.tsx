@@ -27,17 +27,23 @@ import { router } from "expo-router";
 const bgImage = require("@/assets/images/bgImage.png");
 import { useAuth } from "@/AuthContext/AuthContext";
 import * as SecureStore from "expo-secure-store";
+import { getDownloadURL, getStorage, ref, uploadBytes, uploadBytesResumable } from "firebase/storage";
 import {
+  addDoc,
   collection,
   doc,
   getDocs,
   getFirestore,
+  limit,
+  orderBy,
   query,
   where,
 } from "firebase/firestore";
 import { app } from "@/firebase/firebaseConfig";
+import { UploadTask } from "expo-file-system";
+import { create } from "react-test-renderer";
 const db = getFirestore(app);
-
+const storage = getStorage();
 const { width, height } = Dimensions.get("window");
 
 export default function Profile() {
@@ -45,7 +51,7 @@ export default function Profile() {
 }
 
 function App() {
-  const { getUserInfo, updateProfile, isPending } = useAuth();
+  const { getUserInfo, updateProfile, isPending, USER_ID } = useAuth();
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [changePasswordModalVisible, setChangePasswordModalVisible] =
     useState(false);
@@ -86,6 +92,29 @@ function App() {
 
     loadUserInfo();
   }, [getUserInfo]);
+
+  useEffect(() => {
+    const fetchLatestProfilePic = async () => {
+      try {
+        const profilePicRef = collection(db, "profilePics");
+        const q = query(
+          profilePicRef,
+          where("userId", "==", USER_ID),
+          orderBy("created", "desc"),
+          limit(1)
+        );
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+          console.log("Latest profile picture:", doc.data().imageUrl);
+          setSelectedImage(doc.data().imageUrl);
+        });
+      } catch (error) {
+        console.error("Error fetching latest profile picture:", error);
+      }
+    };
+
+    fetchLatestProfilePic();
+  }, [USER_ID]);
 
   // State to hold previous values
   const [prevValues, setPrevValues] = useState({
@@ -175,13 +204,55 @@ function App() {
     if (updateProfile) {
       // Ensure updateProfile is defined
       try {
-        const updatedUser = await updateProfile(
+        await updateProfile(
           name,
           address,
           contact,
           coordinates
         );
-        // console.log("Profile updated successfully:", updatedUser);
+        if(!selectedImage){
+          setPrevValues({ name, address, email, contact }); // Update previous values
+          setShowSaveConfirmation(false);
+          setIsEditing(false);
+          return;
+        }
+        const response = await fetch(selectedImage);
+        const blob = await response.blob();
+        const fileName = `profilePics/${USER_ID}_${Date.now()}.jpg`;
+        const storageRef = ref(storage, fileName);
+        const uploadTask = uploadBytesResumable(storageRef, blob);
+        if(!USER_ID){
+          console.log("USER ID NOT FOUND ! AT PROFILE .TSX")
+          return;
+        }
+        
+        uploadTask.on("state_changed", 
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log(`Upload is ${progress}% done`);
+            
+          }, 
+          (error) => console.error("Upload failed", error),
+          async () => {
+            
+              const path = uploadTask.snapshot.ref.fullPath;
+              console.log("File available at", path);
+              // Format the storage URL
+              const storageUrl = `https://firebasestorage.googleapis.com/v0/b/${storage.app.options.storageBucket}/o/${encodeURIComponent(path)}?alt=media`;
+              console.log("Formatted Image URL:", storageUrl);
+    
+              // Save the image URL in Firestore
+              const profilePicRef = collection(db, "profilePics"); // Reference to Firestore collection
+              await addDoc(profilePicRef, {
+                userId: USER_ID,
+                imageUrl: storageUrl,
+                created: new Date(),
+              });
+    
+              console.log("Profile picture URL saved to Firestore");
+            
+          },
+        );
         setPrevValues({ name, address, email, contact }); // Update previous values
         setShowSaveConfirmation(false);
         setIsEditing(false);
@@ -300,8 +371,7 @@ function App() {
 
     setRefreshing(false);
   };
-
-  return (
+ return (
     <ImageBackground
       source={bgImage}
       className="flex-1 justify-center items-center"
@@ -332,7 +402,7 @@ function App() {
                 <Image
                   source={{
                     uri:
-                      selectedImage ||
+                      selectedImage||
                       "https://static.vecteezy.com/system/resources/thumbnails/020/911/740/small_2x/user-profile-icon-profile-avatar-user-icon-male-icon-face-icon-profile-icon-free-png.png",
                   }}
                   className="w-48 h-48 rounded-full border-4 border-white mb-5 mt-8 bg-white"
