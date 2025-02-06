@@ -185,7 +185,7 @@ export default function Index() {
       await Notifications.setNotificationChannelAsync("default", {
         name: "default",
         importance: Notifications.AndroidImportance.MAX,
-        sound: "notification_sound.wav",
+        sound: "../assets/notification_sound.wav",
         vibrationPattern: [0, 250, 250, 250],
         lightColor: "#FF231F7C",
       });

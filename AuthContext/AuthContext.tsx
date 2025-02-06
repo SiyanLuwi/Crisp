@@ -195,6 +195,7 @@ export const AuthProvider = ({ children }: any) => {
                 1,
                 "/(tabs)/reports"
               );
+              set_near_by_reports((prev: any) => [...prev, report]);
               lastNotifiedReportRef.current = report.id.toString();
               await SecureStore.setItemAsync("nearbyNotificatioId", report.id.toString());
             }
