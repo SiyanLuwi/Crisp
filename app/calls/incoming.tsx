@@ -93,7 +93,7 @@ export default function Incoming() {
     }
   };
 
-  const handleAnswerCall = async () => {
+ const handleAnswerCall = async () => {
     try {
       if (incomingCall) {
         if(!USER_ID){

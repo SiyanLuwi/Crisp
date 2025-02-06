@@ -1,5 +1,5 @@
 import axios from "axios";
-import React, { useState, createContext, useEffect, useContext } from "react";
+import React, { useState, createContext, useEffect, useContext, useRef } from "react";
 import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
 import api from "@/app/api/axios";
@@ -118,38 +118,55 @@ export const AuthProvider = ({ children }: any) => {
   const [reports, setReports] = useState<any>([]);
   const [isDone, setIsDone] = useState(false);
   const [near_by_reports, set_near_by_reports] = useState<any>([]);
+  const lastNotifiedReportRef = useRef(null);
   useEffect(() => {
+    let subscription: any;
+
     const startLocationMonitoring = async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
         console.error("Location permission not granted!");
         return;
       }
-      Location.watchPositionAsync({
-        accuracy: Location.Accuracy.High,
-        timeInterval: 5000,
-        distanceInterval: 10,
-      }, async (location) => {
-         setLocation(location.coords);
-      });
-    }
+      subscription = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.High,
+          timeInterval: 5000,
+          distanceInterval: 10,
+        },
+        (locationUpdate) => {
+          setLocation(locationUpdate.coords);
+        }
+      );
+    };
+
     const fetchAllReports = async () => {
       try {
-        const reports = await Report.fetchAllReports();
-        const notDoneReports = reports.filter((report: any) => report.status !== "done" && report.user_id !== parseInt(USER_ID));
+        const reportsData = await Report.fetchAllReports();
+        const notDoneReports = reportsData.filter(
+          (report) =>
+            report.status !== "done" && report.user_id !== parseInt(USER_ID)
+        );
         setReports(notDoneReports);
       } catch (error: any) {
         console.error("Error fetching reports:", error.message);
-    }
-    }
+      }
+    };
+
     fetchAllReports();
     startLocationMonitoring();
-  }, [])
+
+    return () => {
+      if (subscription) {
+        subscription.remove();
+      }
+    };
+  }, []);
   useEffect(()=> {
      if(authState.authenticated){
       nearbyReports()
       }
-  }, [location, reports])
+  }, [location, reports, authState.authenticated])
 
   const nearbyReports = async () => {
       try{
@@ -162,23 +179,25 @@ export const AuthProvider = ({ children }: any) => {
             { latitude: report.latitude, longitude: report.longitude },
             { latitude: location.latitude, longitude: location.longitude }
           );
-          if(distance > 200){
+          if (distance > 200 && lastNotifiedReportRef.current === report.id.toString()) {
+            lastNotifiedReportRef.current = null;
             await SecureStore.setItemAsync("nearbyNotificatioId", "");
           }
-          if(distance <= 200){
-            console.log("Nearby report found:", report);
-            let nearbyNotificatioId = await SecureStore.getItemAsync("nearbyNotificatioId");
-            console.log("Nearby notification ID:", nearbyNotificatioId);
-            
-            if(nearbyNotificatioId !== report.id.toString()){
+          if (distance <= 200) {
+            let storedNotificationId = await SecureStore.getItemAsync("nearbyNotificatioId");
+            console.log("Nearby notification ID:", storedNotificationId);
+  
+            if (storedNotificationId !== report.id.toString() && lastNotifiedReportRef.current !== report.id.toString()) {
               console.log("Scheduling nearby notification...");
               scheduleNotification(
                 "Nearby Report",
                 `A ${report.type_of_report} report is nearby. Tap to view details.`,
                 1,
-                "/(tabs)/reports",)
-            }
+                "/(tabs)/reports"
+              );
+              lastNotifiedReportRef.current = report.id.toString();
               await SecureStore.setItemAsync("nearbyNotificatioId", report.id.toString());
+            }
           }
         };
       }catch(error:any){
@@ -253,7 +272,7 @@ export const AuthProvider = ({ children }: any) => {
         if (data) {
           console.log(data)
           if (data.callStatus === "calling") {   
-            callNotification(`${data.caller_name} - CRISP`, "Calling...", 1,  "/calls/incoming")     
+            callNotification(`${data.caller_name} - CRISP`, "Calling...",  "/calls/incoming")     
             router.push({
               pathname: "/calls/incoming",
               params: { caller_id: data.caller_id, callId: data.callId, callerName: data.caller_name}
@@ -278,15 +297,6 @@ export const AuthProvider = ({ children }: any) => {
     }
   }, [USER_ID]);
 
-
-  const receiveIncomingCall = (callData: any) => {
-    console.log("Receiving incoming call...");
-    setIncomingCall(callData); // Ensure callData contains the expected structure
-  };
-
-  const clearIncomingCall = () => {
-    setIncomingCall(null);
-  };
 
   useEffect(() => {
    const getUsername = async () => {
