@@ -151,10 +151,8 @@ export default function Index() {
   useEffect(() => {
     const subscription = Notifications.addNotificationResponseReceivedListener(
       response => {
-        // Get the notification id from the response
-        const notificationId = response.notification.request.identifier;
-        
-        // If there's no incoming call, dismiss the notification and exit.
+        const notificationId = response.notification.request.identifier;  
+    
         if (!incomingCall) {
           Notifications.dismissNotificationAsync(notificationId);
           return;
@@ -171,7 +169,7 @@ export default function Index() {
           console.log("Notification tapped without a specific action");
         }
         
-        // Dismiss the notification after processing the response
+
         Notifications.dismissNotificationAsync(notificationId);
       }
     );
