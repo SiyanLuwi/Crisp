@@ -110,6 +110,7 @@ export default function NotificationForm() {
           for (const notification of fetchedNotifications) {
             const { title, description, createdAt, screen } = notification;
             const delaySeconds = Math.max(0, Math.floor((new Date(createdAt.seconds * 1000).getTime() - Date.now()) / 1000));
+            setNotifications((prev) => [...prev, notification]);
             await scheduleNotification(title, description, delaySeconds, screen);
           }
           await SecureStore.setItemAsync('notificationsFetched', 'true');
@@ -122,7 +123,7 @@ export default function NotificationForm() {
     };
 
     fetchNotifications();
-  }, [USER_ID, near_by_reports]);
+  }, [USER_ID]);
 
   return (
     <ImageBackground

@@ -18,7 +18,9 @@ import * as Device from "expo-device";
 import Constants from "expo-constants";
 import * as Location from "expo-location";
 import { useAuth } from "@/AuthContext/AuthContext";
-
+import { doc, getFirestore, setDoc, updateDoc } from "firebase/firestore";
+const { app } = require("@/firebase/firebaseConfig");
+const db = getFirestore(app)
 const bgImage = require("@/assets/images/landing_page.png");
 
 // Get screen dimensions
@@ -33,8 +35,8 @@ const { width, height } = Dimensions.get("window");
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
   }),
 });
 
@@ -49,7 +51,56 @@ export default function Index() {
   const notificationListener = useRef<Notifications.Subscription>();
   const responseListener = useRef<Notifications.Subscription>();
   const [accountType, setAccountType] = useState<string | null>(null);
+  const { incomingCall, USER_ID } = useAuth();
 
+ const handleAnswerCall = async () => {
+    try {
+      if (incomingCall) {
+        if(!USER_ID) {
+          console.error("User ID not found");
+          return
+        }
+        await updateDoc(doc(db, "calls", incomingCall.callId), {
+          callStatus: "answered",
+        });
+        await updateDoc(doc(db, "users", USER_ID), {
+          callStatus: "in-call"
+        })
+        router.replace({
+          pathname: "/calls/outgoing",
+          params: {
+            callId: incomingCall.callId,
+            callerName: incomingCall.caller_name,
+            mode: "callee",
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Error answering the call", error);
+      Alert.alert("Error", "Could not answer the call.");
+    }
+  };
+ const handleEndCall = async () => {
+    try {
+      if(!USER_ID){
+        console.log("USER ID NOT FOUND ! AT INCOMING .TSX")
+        return;
+      }
+      const callRef = doc(db, "calls", incomingCall.callId);
+      const userRef = doc(db, "users", USER_ID);
+      await setDoc(
+        callRef,
+        { callStatus: "declined", offer: null },
+        { merge: true }
+      );
+      await updateDoc(userRef, {
+        callStatus: "ended"
+      })  
+      router.push("/(tabs)/home")
+    } catch (error) {
+      console.error("Incoming call handle end call: ", error);
+    }
+  };
   useEffect(() => {
     const locationPermission = async () => {
       const { status } = await Location.requestBackgroundPermissionsAsync();
@@ -97,6 +148,36 @@ export default function Index() {
     };
   }, []);
 
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(
+      response => {
+        const notificationId = response.notification.request.identifier;  
+    
+        if (!incomingCall) {
+          Notifications.dismissNotificationAsync(notificationId);
+          return;
+        }
+        
+        const actionIdentifier = response.actionIdentifier;
+
+        if (actionIdentifier === "answer") {
+          handleAnswerCall();
+        } else if (actionIdentifier === "decline") {
+          console.log("User tapped Decline");
+          handleEndCall();
+        } else {
+          console.log("Notification tapped without a specific action");
+        }
+        
+
+        Notifications.dismissNotificationAsync(notificationId);
+      }
+    );
+
+    return () => subscription.remove();
+  }, [incomingCall]);
+
+
   async function registerForPushNotificationsAsync() {
     let token;
 
@@ -104,9 +185,27 @@ export default function Index() {
       await Notifications.setNotificationChannelAsync("default", {
         name: "default",
         importance: Notifications.AndroidImportance.MAX,
+        sound: "../assets/notification_sound.wav",
         vibrationPattern: [0, 250, 250, 250],
         lightColor: "#FF231F7C",
       });
+      await Notifications.setNotificationCategoryAsync('call', [
+        {
+          identifier: 'answer',
+          buttonTitle: 'Answer',
+          options: {
+          
+            opensAppToForeground: true,
+          },
+        },
+        {
+          identifier: 'decline',
+          buttonTitle: 'Decline',
+          options: {
+            opensAppToForeground: false,
+          },
+        },
+      ]);
     }
 
     if (Device.isDevice) {

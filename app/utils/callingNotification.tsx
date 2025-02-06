@@ -1,17 +1,15 @@
 import * as Notifications from 'expo-notifications';
 
-// Function to schedule a notification
-export const callNotification = async (title: string, body: string, delaySeconds: number, screen: string) => {
+export const callNotification = async (title: string, body:string, screen: string) => {
   await Notifications.scheduleNotificationAsync({
-    content: {
-      title: title,
-      body: body,
-      data: { screen: screen },
-      categoryIdentifier: 'CALL_ACTIONS', 
-    },
-    trigger: { seconds: delaySeconds },
-  });
-};
+      content: {
+        title: 'Incoming Call',
+        body: 'Do you want to answer?',
+        categoryIdentifier: 'call', 
+      },
+      trigger: { seconds: 1 },
+    });      
+}
 
 // Define the actions for the notification
 export const registerNotificationActions = async () => {
