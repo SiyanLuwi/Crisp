@@ -82,7 +82,7 @@ export default function VerifyPage() {
       // if (!birthday) emptyFields.push("Birthday");
       if (!idNumber) emptyFields.push("ID Number");
       if (!selfie) emptyFields.push("Selfie");
-      if (!photo) emptyFields.push("Photo");
+      if (!photo) emptyFields.push("Picture");
       if (!idPicture) emptyFields.push("ID Picture");
 
       if (emptyFields.length > 0) {
@@ -125,8 +125,8 @@ export default function VerifyPage() {
       if (!res) {
         throw new Error("Cannot verify your account at the moment.");
       }
-      console.log("Account verified successfully.");
       setModalVisible(true);
+      console.log("Account verified successfully.");
       setFirstName("");
       setMiddleName("");
       setLastName("");
@@ -137,7 +137,7 @@ export default function VerifyPage() {
       setPhoto(null);
       setIdPicture(null);
       setLoading(false);
-      router.back();
+      // router.back();
     } catch (error: any) {
       console.error("Verification error:", error);
       if (error.response) {
@@ -146,7 +146,7 @@ export default function VerifyPage() {
       } else {
         alert(`Error: ${error.message}`);
       }
-    }finally{
+    } finally {
       setLoading(false);
     }
   };
@@ -371,12 +371,8 @@ export default function VerifyPage() {
                   </Text>
                 </View>
                 <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
-                  <TextInput
-                    className="w-3/5 text-md px-4 py-3 text-[#0C3B2D] font-semibold items-center justify-center"
-                    value={photo || ""}
-                    editable={false}
-                    placeholderTextColor="#888"
-                    placeholder="Choose a Photo"
+                  <TouchableOpacity
+                    className="w-3/5 text-md px-4 py-3 text-[#0C3B2D] font-semibold items-start justify-center"
                     onPress={() => {
                       if (photo) {
                         // Ensure there's a selfie to show
@@ -384,10 +380,18 @@ export default function VerifyPage() {
                         setFullImageModalVisible(true);
                       }
                     }}
-                  />
+                  >
+                    <TextInput
+                      className="text-[#0C3B2D] text-md font-bold"
+                      value={photo || ""}
+                      editable={false}
+                      placeholderTextColor="#888"
+                      placeholder="Choose a Photo "
+                    />
+                  </TouchableOpacity>
                   <TouchableOpacity
                     onPress={pickImage}
-                    className="bg-[#0C3B2D] border border-[#8BC34A] px-4 py-3 rounded-lg"
+                    className="bg-[#0C3B2D] border border-[#8BC34A] px-4 py-3 rounded-lg items-center justify-center"
                   >
                     <Text className="text-white text-md font-normal">
                       Choose Photo
@@ -405,12 +409,8 @@ export default function VerifyPage() {
                 </View>
                 {/* Selfie with ID Button */}
                 <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
-                  <TextInput
-                    className="w-3/5 text-md px-4 py-3 text-[#0C3B2D] font-semibold items-center justify-center"
-                    value={selfie || ""}
-                    editable={false}
-                    placeholderTextColor="#888"
-                    placeholder="Take a Selfie with ID"
+                  <TouchableOpacity
+                    className="w-3/5 text-md px-4 py-3 text-[#0C3B2D] font-semibold items-start justify-center"
                     onPress={() => {
                       if (selfie) {
                         // Ensure there's a selfie to show
@@ -418,10 +418,18 @@ export default function VerifyPage() {
                         setFullImageModalVisible(true);
                       }
                     }}
-                  />
+                  >
+                    <TextInput
+                      className="text-[#0C3B2D] text-md font-bold"
+                      value={selfie || ""}
+                      editable={false}
+                      placeholderTextColor="#888"
+                      placeholder="Take a Selfie with ID "
+                    />
+                  </TouchableOpacity>
                   <TouchableOpacity
                     onPress={takeSelfie}
-                    className="bg-[#0C3B2D] border border-[#8BC34A] px-4 py-3 rounded-lg"
+                    className="bg-[#0C3B2D] border border-[#8BC34A] px-4 py-3 rounded-lg items-center justify-center"
                   >
                     <Text className="text-white text-md font-normal">
                       Take a Selfie
@@ -439,12 +447,8 @@ export default function VerifyPage() {
                 </View>
                 {/* Take Picture of ID Button */}
                 <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
-                  <TextInput
-                    className="w-3/5 text-md px-4 py-3 text-[#0C3B2D] font-semibold items-center justify-center"
-                    value={idPicture || ""}
-                    editable={false}
-                    placeholderTextColor="#888"
-                    placeholder="Take a Picture of the ID"
+                  <TouchableOpacity
+                    className="w-3/5 text-md px-4 py-3 text-[#0C3B2D] font-semibold items-start justify-center"
                     onPress={() => {
                       if (idPicture) {
                         // Ensure there's a selfie to show
@@ -452,10 +456,18 @@ export default function VerifyPage() {
                         setFullImageModalVisible(true);
                       }
                     }}
-                  />
+                  >
+                    <TextInput
+                      className="text-[#0C3B2D] text-md font-bold"
+                      value={idPicture || ""}
+                      editable={false}
+                      placeholderTextColor="#888"
+                      placeholder="Take a Picture of the ID "
+                    />
+                  </TouchableOpacity>
                   <TouchableOpacity
                     onPress={takeIdPicture}
-                    className="bg-[#0C3B2D] border border-[#8BC34A] px-4 py-3 rounded-lg"
+                    className="bg-[#0C3B2D] border border-[#8BC34A] px-4 py-3 rounded-lg items-center justify-center"
                   >
                     <Text className="text-white text-md font-normal">
                       Take a Photo

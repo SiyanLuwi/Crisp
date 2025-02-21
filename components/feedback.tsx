@@ -112,7 +112,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
       // Update the report with the new status and elapsed time
       const updatedReportData = {
         update_date: localDateISOString, // Use the same timestamp for the update date
-        status: 'Under Review',
+        status: "Under Review",
         review_elapsed_time: formattedTime, // Store the formatted elapsed time
       };
 
@@ -214,6 +214,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
                       style={{
                         maxHeight: 150,
                         height: 150,
+                        textAlignVertical: "top",
                       }}
                     />
                     <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
@@ -226,7 +227,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
                       />
                       <TouchableOpacity
                         onPress={takeProof}
-                        className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg"
+                        className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg items-center justify-center"
                       >
                         <Text className="text-white text-md font-normal">
                           Take Photo

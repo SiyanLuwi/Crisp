@@ -31,6 +31,8 @@ import {
   setDoc,
   getDoc,
   getDocs,
+  query,
+  where,
 } from "firebase/firestore";
 import * as SecureStore from "expo-secure-store";
 import { Report, Reports } from "../utils/reports";
@@ -63,15 +65,14 @@ export default function ManageReports() {
 
   useEffect(() => {
     const loadUserInfo = async () => {
-          const userInfo = await (getUserInfo
-            ? getUserInfo()
-            : Promise.resolve({}));
-          setUsername(userInfo?.username || "");
-
+      const userInfo = await (getUserInfo
+        ? getUserInfo()
+        : Promise.resolve({}));
+      setUsername(userInfo?.username || "");
     };
-    
-        loadUserInfo();
-  }, [])
+
+    loadUserInfo();
+  }, []);
 
   const categories = [
     "all",
@@ -172,6 +173,19 @@ export default function ManageReports() {
                   submited_at: doc.data().submited_at, // assuming 'submitted_at' is a Firestore timestamp
                 }));
 
+              // Step 1: Fetch the profile picture for this report's userId
+              const profilePicRef = query(
+                collection(db, "profilePics"),
+                where("userId", "==", data.user_id.toString())
+              );
+              const profilePicSnapshot = await getDocs(profilePicRef);
+
+              let imageUrl = null;
+              if (!profilePicSnapshot.empty) {
+                imageUrl = profilePicSnapshot.docs[0].data().imageUrl;
+              }
+              console.log(imageUrl);
+
               // Only return the report if the user ID matches
               if (data.user_id?.toString() === users_id?.toString()) {
                 return {
@@ -182,6 +196,7 @@ export default function ManageReports() {
                   voted: voted,
                   userFeedback: userFeedbackDescriptions, // Add user feedback
                   workerFeedback: workerFeedbackDescriptions, // Add worker feedback
+                  imageUrl: imageUrl || "",
                 };
               }
               return null; // Exclude reports that don't match user_id
@@ -428,17 +443,23 @@ export default function ManageReports() {
       <View className="w-full px-3">
         <View className="bg-white w-full rounded-[20px] border-2 border-[#0C3B2D] p-4 my-2 mb-4">
           <View className="flex flex-row w-full items-center">
-            <MaterialCommunityIcons
-              name="account-circle"
-              size={RFPercentage(5)}
-              style={{ padding: 5, color: "#0C3B2D" }}
+            <Image
+              source={{
+                uri: item.imageUrl
+                  ? `${item.imageUrl}`
+                  : "https://static.vecteezy.com/system/resources/thumbnails/020/911/740/small_2x/user-profile-icon-profile-avatar-user-icon-male-icon-face-icon-profile-icon-free-png.png",
+              }}
+              style={{
+                width: RFPercentage(5),
+                height: RFPercentage(5),
+                borderRadius: RFPercentage(5), // Make it circular
+                padding: 5,
+              }}
             />
 
             <View className="flex flex-row w-full justify-between items-start">
               <View className="flex flex-col items-start ">
-                <Text className="pl-3 text-md font-bold">
-                  {username}
-                </Text>
+                <Text className="pl-3 text-md font-bold">{username}</Text>
 
                 <Text className="pl-3 text-xs font-bold text-slate-500">
                   {formattedDate} {"\n"}
@@ -482,7 +503,7 @@ export default function ManageReports() {
             <Text className="text-md text-left pr-2 font-semibold text-slate-500">
               Location:
               <Text className="text-md font-normal text-black ml-2">
-                {" " + item.location}
+                {" " + item.location.slice(0, 50) + "..."}
               </Text>
             </Text>
           </TouchableOpacity>

@@ -76,6 +76,16 @@ export default function PictureForm() {
       ) {
         setMissingFieldsMessage("Please fill in all required fields.");
         setMissingFieldsModalVisible(true);
+        console.log("Missing fields:");
+
+        // Check and log which fields are missing
+        if (!location) console.log("Location is missing.");
+        if (!coordinates) console.log("Coordinates are missing.");
+        if (!selectedItem) console.log("Selected item is missing.");
+        if (!description) console.log("Description is missing.");
+        if (!imageUri) console.log("Image URI is missing.");
+
+        setLoading(false);
         return;
       }
 

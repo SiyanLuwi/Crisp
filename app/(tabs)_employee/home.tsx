@@ -89,12 +89,13 @@ export default function Home() {
 
   const fetchAllDocuments = async () => {
     const categories = [
-      "fires",
-      "street lights",
-      "potholes",
-      "floods",
+      "fire accident",
+      "street light",
+      "pothole",
+      "flood",
       "others",
-      "road accident",
+      "fallen trees",
+      "road incident",
     ];
     const supervisor_id = await SecureStore.getItemAsync("supervisor_id");
     if (!supervisor_id) {
