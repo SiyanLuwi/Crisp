@@ -59,9 +59,9 @@ export default function Index() {
           "Please enable location permissions in settings to use the app"
         );
       }
-    }
+    };
     locationPermission();
-  },[])
+  }, []);
 
   useEffect(() => {
     registerForPushNotificationsAsync().then(

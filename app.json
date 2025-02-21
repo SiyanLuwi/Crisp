@@ -71,7 +71,7 @@
         "origin": false
       },
       "apiUrl": "https://django-firebase-psql.onrender.com/",
-      "apiDevUrl": "http://192.168.100.15:8000/",
+      "apiDevUrl": "http://192.168.1.13:8000/",
       "eas": {
         "projectId": "c7b9d51e-3b89-4da1-a947-b1d13c069826"
       }

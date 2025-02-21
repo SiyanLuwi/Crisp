@@ -69,7 +69,7 @@ export default function Login() {
           router.push("/pages/verifyEmail");
           return;
         }
-        if(is_verified !== "true"){
+        if (is_verified !== "true") {
           router.push("/(tabs)/home");
           return;
         }

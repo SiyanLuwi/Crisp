@@ -249,7 +249,7 @@ export default function PictureForm() {
       setIsEmergency(isEmergency);
       setSelectedItem(report_type);
       setLocation(locations);
-      setCoordinates(coordinates as string); 
+      setCoordinates(coordinates as string);
       setImageUri(uri);
       setFetch(true);
     } catch (error) {
@@ -263,8 +263,7 @@ export default function PictureForm() {
   }, []);
 
   const confirmCancel = async () => {
-      setCancelModalVisible(false);
- 
+    setCancelModalVisible(false);
   };
 
   // Function to convert coordinates to address
