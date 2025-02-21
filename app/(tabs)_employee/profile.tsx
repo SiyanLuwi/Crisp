@@ -26,7 +26,6 @@ import { router } from "expo-router";
 const bgImage = require("@/assets/images/bgImage.png");
 import { useAuth } from "@/AuthContext/AuthContext";
 import * as SecureStore from "expo-secure-store";
-import { getAddressFromCoordinates } from "../utils/convertCoordinatesToAddress";
 const { width, height } = Dimensions.get("window");
 
 export default function Profile() {
@@ -47,6 +46,7 @@ function App() {
   const [email, setEmail] = useState("");
   const [contact, setContact] = useState("");
   const [isVerified, setIsVerified] = useState(false);
+  const [coordinates, setCoordinates] = useState("");
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [fullImageModalVisible, setFullImageModalVisible] = useState(false);
 
@@ -178,13 +178,82 @@ function App() {
     setIsEditing(false); // Exit edit mode
   };
 
-  const handleLocationSelect = (location: {
+  const handleLocationSelect = async (location: {
     latitude: number;
     longitude: number;
   }) => {
+    const address: any = await getAddressFromCoordinates(
+      location.latitude,
+      location.longitude
+    );
     // Convert coordinates to address if needed
-    setAddress(`${location.latitude}, ${location.longitude}`);
+    setAddress(address);
+    setCoordinates(`${location.latitude}, ${location.longitude}`);
     setShowMapPicker(false); // Close the map picker
+  };
+
+  const getAddressFromCoordinates = async (
+    latitude: number,
+    longitude: number
+  ) => {
+    const url = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`;
+
+    try {
+      const response = await fetch(url, {
+        headers: {
+          "User-Agent": "CRISP/1.0.9 crisp.uccbscs@gmail.com", // Replace with your app name and contact email
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error fetching address:", errorText);
+        return null;
+      }
+
+      const data = await response.json();
+
+      if (data && data.address) {
+        // Try to extract all address components
+        const {
+          residential,
+          road,
+          neighbourhood,
+          suburb,
+          city_district,
+          city,
+          state_district,
+          region,
+          country,
+          postcode,
+        } = data.address;
+
+        // Include all parts to form a full address
+        const addressParts = [
+          residential,
+          road,
+          neighbourhood,
+          suburb,
+          city_district,
+          city,
+          state_district,
+          region,
+          postcode,
+          country,
+        ].filter(Boolean); // filter out null/undefined values
+
+        // Join all parts into a single string
+        const address = addressParts.join(", ") || "Address not found";
+        // console.log("Fetched address:", address);
+        return address;
+      } else {
+        console.error("Nominatim API error:", data);
+        return "Address not found";
+      }
+    } catch (error) {
+      console.error("Error fetching address:", error);
+      return null;
+    }
   };
 
   return (
@@ -266,7 +335,9 @@ function App() {
                 <Text className="text-md text-white mb-1">Email Address:</Text>
               </View>
               <TextInput
-                className="w-full bg-white text-md px-4 py-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D]"
+                className={`w-full text-md px-4 py-3 rounded-lg mb-4 items-center justify-center text-[#0C3B2D] font-semibold border border-[#0C3B2D] ${
+                  isEditing ? "bg-slate-300" : "bg-white"
+                }`}
                 value={email}
                 editable={false}
                 onChangeText={setEmail}
@@ -289,41 +360,35 @@ function App() {
                   Is User Verfied:
                 </Text>
               </View>
-              <View className="w-full flex flex-row justify-between items-center bg-white mx-3 mb-4 rounded-lg">
+              <View
+                className={`w-full flex flex-row justify-between items-center bg-white mx-3 mb-4 rounded-lg ${
+                  isEditing ? "bg-slate-300" : "bg-white"
+                }`}
+              >
                 {!isVerified ? (
                   <>
                     {isPending ? (
-                      <Text className="text-md px-4 py-3 font-bold text-[#0C3B2D]">
+                      <Text className="text-md p-4 font-bold text-[#0C3B2D]">
                         Verification is in Process..
                       </Text>
                     ) : (
-                      <Text className="text-md px-4 py-3 font-bold text-[#0C3B2D]">
-                        Not Yet Verified
-                      </Text>
-                    )}
-                    {isPending ? (
-                      <TouchableOpacity
-                        className="bg-[#0C3B2D] border border-[#8BC34A] px-4 py-3 rounded-lg"
-                        onPress={() => router.push("/pages/verifyPage")}
-                        disabled
-                      >
-                        <Text className="text-white text-md font-normal">
-                          Verify
+                      <>
+                        <Text className="text-md p-4 font-bold text-[#0C3B2D]">
+                          Not Yet Verified
                         </Text>
-                      </TouchableOpacity>
-                    ) : (
-                      <TouchableOpacity
-                        className="bg-[#0C3B2D] border border-[#8BC34A] px-4 py-3 rounded-lg"
-                        onPress={() => router.push("/pages/verifyPage")}
-                      >
-                        <Text className="text-white text-md font-normal">
-                          Verify
-                        </Text>
-                      </TouchableOpacity>
+                        <TouchableOpacity
+                          className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg"
+                          onPress={() => router.push("/pages/verifyPage")}
+                        >
+                          <Text className="text-white text-md font-normal">
+                            Verify
+                          </Text>
+                        </TouchableOpacity>
+                      </>
                     )}
                   </>
                 ) : (
-                  <Text className="text-md px-4 py-3 font-bold text-[#0C3B2D]">
+                  <Text className="text-md p-4 font-bold text-[#0C3B2D]">
                     Verified
                   </Text>
                 )}

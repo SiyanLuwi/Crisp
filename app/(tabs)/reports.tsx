@@ -126,12 +126,12 @@ export default function ReportPage() {
       "other",
       "road accident",
     ];
-  
+
     const categoriesToFetch =
       selectedCategory === "all" || selectedCategory === "Category"
         ? categories
         : [selectedCategory];
-  
+
     const unsubscribeFunctions = categoriesToFetch.map((category) => {
       return onSnapshot(
         collection(db, `reports/${category}/reports`),
@@ -153,7 +153,7 @@ export default function ReportPage() {
                 (vote) => vote.userId === userId
               );
               const voted = userVote ? userVote.vote : null;
-  
+
               const userFeedbackRef = collection(
                 db,
                 `reports/${category}/reports/${reportId}/userFeedback`
@@ -162,10 +162,10 @@ export default function ReportPage() {
                 db,
                 `reports/${category}/reports/${reportId}/workerFeedback`
               );
-  
+
               const userFeedbackSnapshot = await getDocs(userFeedbackRef);
               const workerFeedbackSnapshot = await getDocs(workerFeedbackRef);
-  
+
               const userFeedbackDescriptions = userFeedbackSnapshot.docs.map(
                 (doc) => ({
                   description: doc.data().description,
@@ -179,20 +179,20 @@ export default function ReportPage() {
                   proof: doc.data().proof,
                   submited_at: doc.data().submited_at,
                 }));
-  
+
               // Step 1: Fetch the profile picture for this report's userId
               const profilePicRef = query(
                 collection(db, "profilePics"),
                 where("userId", "==", data.user_id.toString())
               );
               const profilePicSnapshot = await getDocs(profilePicRef);
-  
+
               let imageUrl = null;
               if (!profilePicSnapshot.empty) {
                 imageUrl = profilePicSnapshot.docs[0].data().imageUrl;
               }
-              console.log(imageUrl)
-  
+              console.log(imageUrl);
+
               // Step 2: Return the report with the profile image URL
               return {
                 id: reportId,
@@ -206,7 +206,7 @@ export default function ReportPage() {
               };
             })
           );
-  
+
           // Filter reports based on selected status
           const filteredReports =
             selectedStatus === "all"
@@ -215,23 +215,24 @@ export default function ReportPage() {
                   (report) =>
                     report.status.toLowerCase() === selectedStatus.toLowerCase()
                 );
-  
+
           setReports((prevReports) => {
             // Filter out any duplicate reports based on report ID
             const newReports = filteredReports.filter(
               (report) => !prevReports.some((r) => r.id === report.id)
             );
-  
+
             // Combine previous reports with the new ones
             const combinedReports = [...prevReports, ...newReports];
-  
+
             // Sort the reports by date
             const sortedReports = combinedReports.sort((a, b) => {
               return (
-                new Date(b.report_date).getTime() - new Date(a.report_date).getTime()
+                new Date(b.report_date).getTime() -
+                new Date(a.report_date).getTime()
               );
             });
-  
+
             return sortedReports;
           });
         },
@@ -240,12 +241,12 @@ export default function ReportPage() {
         }
       );
     });
-  
+
     return () => {
       unsubscribeFunctions.forEach((unsubscribe) => unsubscribe());
     };
   };
-  
+
   useEffect(() => {
     const fetchData = async () => {
       if (!USER_ID) {
@@ -546,8 +547,12 @@ export default function ReportPage() {
       <View className="w-full px-3">
         <View className="bg-white w-full rounded-[20px] border-2 border-[#0C3B2D] p-4 my-2 mb-4">
           <View className="flex flex-row w-full items-center">
-          <Image
-              source={{ uri: item.imageUrl ? `${item.imageUrl}` : "https://static.vecteezy.com/system/resources/thumbnails/020/911/740/small_2x/user-profile-icon-profile-avatar-user-icon-male-icon-face-icon-profile-icon-free-png.png" }}
+            <Image
+              source={{
+                uri: item.imageUrl
+                  ? `${item.imageUrl}`
+                  : "https://static.vecteezy.com/system/resources/thumbnails/020/911/740/small_2x/user-profile-icon-profile-avatar-user-icon-male-icon-face-icon-profile-icon-free-png.png",
+              }}
               style={{
                 width: RFPercentage(5),
                 height: RFPercentage(5),
@@ -606,7 +611,7 @@ export default function ReportPage() {
             <Text className="text-md text-left pr-2 font-semibold text-slate-500">
               Location:
               <Text className="text-md font-normal text-black ml-2">
-                {" " + item.location}
+                {" " + item.location.slice(0, 50) + "..."}
               </Text>
             </Text>
           </TouchableOpacity>

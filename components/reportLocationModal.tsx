@@ -118,6 +118,7 @@ const ReportLocationModal: React.FC<ReportLocationModalProps> = ({
       transparent={true}
       onRequestClose={() => setModalVisible(false)}
     >
+      {/* Modal Background (TouchableWithoutFeedback) */}
       <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
         <View
           style={{
@@ -128,57 +129,56 @@ const ReportLocationModal: React.FC<ReportLocationModalProps> = ({
             padding: 10,
           }}
         >
-          <TouchableWithoutFeedback onPress={() => {}}>
-            <View
-              style={{
-                width: width * 0.9,
-                height: height * 0.55,
-                backgroundColor: "white",
-                borderRadius: 10,
-              }}
-            >
-              {selectedReport && (
-                <>
-                  <MapView
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      borderRadius: 10,
-                    }}
-                    initialRegion={{
+          {/* Modal Content */}
+          <View
+            style={{
+              width: width * 0.9,
+              height: height * 0.55,
+              backgroundColor: "white",
+              borderRadius: 10,
+            }}
+          >
+            {selectedReport && (
+              <>
+                <MapView
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    borderRadius: 10,
+                  }}
+                  initialRegion={{
+                    latitude: selectedReport.latitude,
+                    longitude: selectedReport.longitude,
+                    latitudeDelta: 0.01,
+                    longitudeDelta: 0.01,
+                  }}
+                >
+                  {/* User Location Marker */}
+                  {userLocation && (
+                    <Marker
+                      coordinate={userLocation}
+                      title="You are here"
+                      pinColor="blue"
+                    />
+                  )}
+
+                  {/* Report Location Marker */}
+                  <Marker
+                    coordinate={{
                       latitude: selectedReport.latitude,
                       longitude: selectedReport.longitude,
-                      latitudeDelta: 0.01,
-                      longitudeDelta: 0.01,
                     }}
-                  >
-                    {/* User Location Marker */}
-                    {userLocation && (
-                      <Marker
-                        coordinate={userLocation}
-                        title="You are here"
-                        pinColor="blue"
-                      />
-                    )}
+                    title={selectedReport.type_of_report}
+                  />
+                </MapView>
 
-                    {/* Report Location Marker */}
-                    <Marker
-                      coordinate={{
-                        latitude: selectedReport.latitude,
-                        longitude: selectedReport.longitude,
-                      }}
-                      title={selectedReport.type_of_report}
-                    />
-                  </MapView>
-
-                  {/* Display Distance */}
-                  <Text style={{ padding: 10, color: "white" }}>
-                    Distance from the Report: {calculateDistance()}
-                  </Text>
-                </>
-              )}
-            </View>
-          </TouchableWithoutFeedback>
+                {/* Display Distance */}
+                <Text style={{ padding: 10, color: "black" }}>
+                  Distance from the Report: {calculateDistance()}
+                </Text>
+              </>
+            )}
+          </View>
         </View>
       </TouchableWithoutFeedback>
     </Modal>
