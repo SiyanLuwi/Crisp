@@ -59,7 +59,19 @@ export default function ManageReports() {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [isStatusDropdownVisible, setIsStatusDropdownVisible] =
     useState<boolean>(false);
-  const { USER_ID } = useAuth();
+  const { USER_ID, getUserInfo } = useAuth();
+
+  useEffect(() => {
+    const loadUserInfo = async () => {
+          const userInfo = await (getUserInfo
+            ? getUserInfo()
+            : Promise.resolve({}));
+          setUsername(userInfo?.username || "");
+
+    };
+    
+        loadUserInfo();
+  }, [])
 
   const categories = [
     "all",
@@ -425,9 +437,7 @@ export default function ManageReports() {
             <View className="flex flex-row w-full justify-between items-start">
               <View className="flex flex-col items-start ">
                 <Text className="pl-3 text-md font-bold">
-                  {item.username.length > 18
-                    ? item.username.slice(0, 18) + "..."
-                    : item.username}
+                  {username}
                 </Text>
 
                 <Text className="pl-3 text-xs font-bold text-slate-500">
