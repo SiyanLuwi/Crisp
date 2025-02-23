@@ -28,7 +28,10 @@ export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
- const { setAuthState, SET_USER_ID } = useAuth();
+ const { setAuthState, SET_USER_ID, setIsLoggedIn } = useAuth();
+
+
+
   const refreshAccessToken = async (refreshToken: string) => {
     try {
       const { data } = await api.post("api/token/refresh/", {
@@ -104,9 +107,12 @@ export default function RootLayout() {
       }
     };
   const handleAuthentication = async () => {
+      await SecureStore.deleteItemAsync("isLoggedIn");
       const accessToken = await checkToken();
       if (accessToken) {
         const accountType = await SecureStore.getItemAsync(ACCOUNT_TYPE);
+        setIsLoggedIn(true);
+        await SecureStore.setItemAsync("isLoggedIn", "true");
         // Redirect based on account type
         if (accountType === "citizen") {
           router.push("/(tabs)/camera");
@@ -122,7 +128,7 @@ export default function RootLayout() {
     };
   
   useEffect(() => {
-    if (loaded) {
+    if (loaded) { 
       handleAuthentication();
       SplashScreen.hideAsync();
     }

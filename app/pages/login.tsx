@@ -73,7 +73,7 @@ export default function Login() {
           router.push("/(tabs)/home");
           return;
         }
-        router.push("/(tabs)/home");
+        router.push("/(tabs)/camera");
       } else if (account_type === "worker") {
         router.push("/(tabs)_employee/reports");
       } else {

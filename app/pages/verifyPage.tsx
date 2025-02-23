@@ -137,7 +137,7 @@ export default function VerifyPage() {
       setPhoto(null);
       setIdPicture(null);
       setLoading(false);
-      // router.back();
+      router.back();
     } catch (error: any) {
       console.error("Verification error:", error);
       if (error.response) {

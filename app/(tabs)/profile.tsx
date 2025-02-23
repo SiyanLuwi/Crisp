@@ -116,6 +116,16 @@ function App() {
     fetchLatestProfilePic();
   }, [USER_ID]);
 
+  useEffect(() => {
+   const fetchIfIsVerified = async () => {
+    const verify = await SecureStore.getItemAsync("is_verified");
+    if(verify === "true"){
+      setIsVerified(true);
+    }
+   }
+    fetchIfIsVerified();
+  }, [isPending])
+
   // State to hold previous values
   const [prevValues, setPrevValues] = useState({
     name,
