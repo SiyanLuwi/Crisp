@@ -21,6 +21,7 @@ interface AuthProps {
   setIncomingCall?: any;
   authState?: { token: string | null; authenticated: boolean | null };
   USERNAME?: string;
+  setIsLoggedIn?: any;
   setAuthState?: any;
   SET_USER_ID?: any;
   setIsDone?:any;
@@ -101,6 +102,7 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }: any) => {
   const [hasNewNotification, setHasNewNotification] = useState<boolean>(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [authState, setAuthState] = useState<{
     token: string | null;
     authenticated: boolean | null;
@@ -163,10 +165,12 @@ export const AuthProvider = ({ children }: any) => {
     };
   }, []);
   useEffect(()=> {
-     if(authState.authenticated){
+     if(isLoggedIn){
       nearbyReports()
       }
   }, [location, reports, authState.authenticated])
+
+
 
   const nearbyReports = async () => {
       try{
@@ -497,6 +501,8 @@ export const AuthProvider = ({ children }: any) => {
           }
         })
       );
+      await SecureStore.setItemAsync("isLoggedIn", "true");
+      setIsLoggedIn(true);
       return data;
     } catch (error: any) {
       // console.error("Login error occurred:", error);
@@ -529,6 +535,7 @@ export const AuthProvider = ({ children }: any) => {
       "is_email_verified",
       "is_verified",
       "supervisor_id",
+      "isLoggedIn",
     ];
 
     await Promise.all(
@@ -807,7 +814,9 @@ export const AuthProvider = ({ children }: any) => {
   };
 
   useEffect(() => {
-    const checkUserVerificationStatus = async () => {
+    let unsubscribe: any;
+  
+    const subscribeToVerificationStatus = async () => {
       const userId = await SecureStore.getItemAsync("user_id");
       if (!userId) return;
       const userIdString = userId.toString();
@@ -816,29 +825,38 @@ export const AuthProvider = ({ children }: any) => {
         verifyAccountRef,
         where("user", "==", parseInt(userIdString))
       );
-      console.log(userId);
-      try {
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-          const data = querySnapshot.docs[0].data();
-          if (!data.is_account_verified) {
-            setIsPending(true);
-          }else{
-            setIsPending(false)
+  
+      unsubscribe = onSnapshot(
+        q,
+        async (querySnapshot) => {
+          if (!querySnapshot.empty) {
+            const data = querySnapshot.docs[0].data();
+            if (!data.is_account_verified) {
+              setIsPending(true);
+              await SecureStore.setItemAsync("is_verified", "false");
+            } else {
+              await SecureStore.setItemAsync("is_verified", "true");
+              setIsPending(false);
+            }
+            console.log("Verification info exists:", data);
+          } else {
+            console.log("No verification info found for this user");
           }
-          console.log(
-            "Verification info exists:",
-            querySnapshot.docs[0].data()
-          );
-        } else {
-          console.log("No verification info found for this user");
+        },
+        (error) => {
+          console.error("Error fetching verification info:", error);
         }
-      } catch (error) {
-        console.error("Error fetching verification info:", error);
-      }
+      );
     };
-    checkUserVerificationStatus();
+  
+    subscribeToVerificationStatus();
+  
+    // Clean up the subscription when the component unmounts.
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
+  
 
   const value = {
     onRegister: register,
@@ -865,6 +883,7 @@ export const AuthProvider = ({ children }: any) => {
     isPending,
     setIsDone,
     isDone,
+    setIsLoggedIn
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
