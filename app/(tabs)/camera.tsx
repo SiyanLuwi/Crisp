@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  Platform
+  Platform,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -43,14 +43,14 @@ export default function CameraComp() {
     useState(false);
 
   useEffect(() => {
-   const permissionCheck = async () => {
-    const is_verified = await SecureStore.getItemAsync("is_verified");
-    if (is_verified=== 'false') {
-      router.push("/(tabs)/home");
-    }
-   }
+    const permissionCheck = async () => {
+      const is_verified = await SecureStore.getItemAsync("is_verified");
+      if (is_verified === "false") {
+        router.push("/(tabs)/home");
+      }
+    };
     permissionCheck();
-  }, [])
+  }, []);
 
   // Inside your component
   useEffect(() => {
@@ -63,19 +63,19 @@ export default function CameraComp() {
     fetchLocationPermission();
   }, []);
   useEffect(() => {
-      const reset = async () => {
-        await Promise.all([
-          SecureStore.getItemAsync("imageUri"),
-          SecureStore.getItemAsync("currentLocation"),
-          SecureStore.getItemAsync("coordinates"),
-          SecureStore.getItemAsync("report_type"),
-          SecureStore.getItemAsync("isEmergency"),
-        ]);
-      }
-      reset();
-  }, [])
+    const reset = async () => {
+      await Promise.all([
+        SecureStore.getItemAsync("imageUri"),
+        SecureStore.getItemAsync("currentLocation"),
+        SecureStore.getItemAsync("coordinates"),
+        SecureStore.getItemAsync("report_type"),
+        SecureStore.getItemAsync("isEmergency"),
+      ]);
+    };
+    reset();
+  }, []);
   useEffect(() => {
-    console.log("Location permission granted:", locationPermissionGranted);
+    // console.log("Location permission granted:", locationPermissionGranted);
     const getCurrentLocation = async () => {
       if (!locationPermissionGranted) return;
 
@@ -83,12 +83,12 @@ export default function CameraComp() {
         const location = await Location.getCurrentPositionAsync({});
         const { latitude, longitude } = location.coords;
 
-        console.log(`Current location: ${latitude}, ${longitude}`);
+        // console.log(`Current location: ${latitude}, ${longitude}`);
 
         // Await the address fetching
         const address = await getAddressFromCoordinates(latitude, longitude);
-        console.log("Fetched address:", address);
-        console.log("Fetched lat and long:", latitude, longitude);
+        // console.log("Fetched address:", address);
+        // console.log("Fetched lat and long:", latitude, longitude);
 
         // Store the current location as a string
         await SecureStore.setItemAsync("currentLocation", `${address}`);
@@ -105,7 +105,6 @@ export default function CameraComp() {
     };
 
     getCurrentLocation();
-
   }, [locationPermissionGranted]);
 
   if (!permission) {
@@ -129,19 +128,18 @@ export default function CameraComp() {
 
   const capturePhoto = async () => {
     if (!cameraRef.current) return;
-  
+
     setLoading(true);
     const totalStartTime = Date.now();
 
     try {
-      const startCapt = Date.now()
+      const startCapt = Date.now();
       const photo = await cameraRef.current.takePictureAsync({
         quality: 1,
         base64: false,
-        skipProcessing: true,   
-
+        skipProcessing: true,
       });
-      const endCapt = Date.now()
+      const endCapt = Date.now();
       console.log(`Photo capture took ${endCapt - startCapt} ms`);
 
       if (!photo?.uri) {
@@ -149,12 +147,11 @@ export default function CameraComp() {
         Alert.alert("Error capturing photo. Please try again.");
         return;
       }
-      
-     const startResize = Date.now()
-      const optimizedUri = await resizeImage(photo.uri);
-      const endResize = Date.now()
-      console.log(`Image resizing took ${endResize - startResize} ms`);
 
+      const startResize = Date.now();
+      const optimizedUri = await resizeImage(photo.uri);
+      const endResize = Date.now();
+      console.log(`Image resizing took ${endResize - startResize} ms`);
 
       const classificationResult = await classifyImage(optimizedUri);
 
@@ -168,90 +165,118 @@ export default function CameraComp() {
     } finally {
       setLoading(false);
       const totalEndTime = Date.now();
-      console.log(`capturePhoto completed in ${totalEndTime - totalStartTime} ms`);
+      console.log(
+        `capturePhoto completed in ${totalEndTime - totalStartTime} ms`
+      );
     }
   };
-  
 
- 
-   const resizeImage = async (uri: string): Promise<string> => {
-     try {
+  const resizeImage = async (uri: string): Promise<string> => {
+    try {
       const result = await manipulateAsync(
         uri,
-        [{ resize: { width: 150, height: 150 } }], 
-        { 
+        [{ resize: { width: 150, height: 150 } }],
+        {
           compress: 0.6,
           format: SaveFormat.WEBP,
         }
       );
-       return result.uri;
-     } catch (error) {
-       console.error("Error resizing image:", error);
-       return uri; // Return original URI as a fallback
-     }
-   };
-   
-   const classifyImage = async (uri: string): Promise<{ class: string; isEmergency: string }> => {
-     try {
+      return result.uri;
+    } catch (error) {
+      console.error("Error resizing image:", error);
+      return uri; // Return original URI as a fallback
+    }
+  };
 
+  const classifyImage = async (
+    uri: string
+  ): Promise<{ class: string; isEmergency: string }> => {
+    try {
       const file = {
         uri: uri,
         name: `img_${Date.now()}.jpg`,
-        type: 'image/jpeg',
+        type: "image/jpeg",
       };
       const formData = new FormData();
-      formData.append('file', file as any);
+      formData.append("file", file as any);
 
-       const apiStart = Date.now();
-       const { data } = await axios.post(
+      const apiStart = Date.now();
+      const { data } = await axios.post(
         Constants.expoConfig?.extra?.ROBOFLOW_URL,
         formData,
         {
           params: {
             api_key: Constants.expoConfig?.extra?.ROBOFLOW_API_KEY,
             confidence: 0.55,
-            overlap: 30
+            overlap: 30,
           },
           headers: {
-            'Content-Type': 'multipart/form-data',
-            'X-Requested-With': 'XMLHttpRequest'      
+            "Content-Type": "multipart/form-data",
+            "X-Requested-With": "XMLHttpRequest",
           },
         }
       );
-        const apiEnd = Date.now();
-        console.log(`API call took ${apiEnd - apiStart} ms`);
-       const modifiedName = data.top === 'fire' ? 'Fire Accident' : data.top === 'flood' ? 'Flood' : data.top === 'road_accident' ? 'Road Accident' : data.top === 'graphic_violence' ? 'Graphic Violence' : data.top === 'fallen_trees' ? 'Fallen Tree' : data.top === 'others' ? 'Others' : data.top === 'pot_holes' ? 'Pot Holes' : data.top === 'street_light' ? 'Street Light' : data.top;
-       const isEmergency = (() => {
-         if (data.top === "nudity") {
-           Alert.alert("Warning", "Nudity detected. Operation cannot proceed.");
-           throw new Error("Nudity detected, stopping process.");
-         }
-         return ["Fire Accident", "Flood", "Road Accident", "Graphic Violence", "Fallen Tree"].includes(
-          modifiedName
-         )
-           ? "Yes"
-           : "No";
-       })();
-    
-       const classification = { class: modifiedName, isEmergency };
-       console.log("Classification:", classification);
-       return classification;
-     } catch (error: any) {
-       console.error("Error during classification:", error.message);
-       Alert.alert("Error classifying image. Please try again.");
-       return { class: "Unknown", isEmergency: "No" }; // Fallback classification
-     }
-   };
+      const apiEnd = Date.now();
+      console.log(`API call took ${apiEnd - apiStart} ms`);
+      const modifiedName =
+        data.top === "fire"
+          ? "Fire Accident"
+          : data.top === "flood"
+            ? "Flood"
+            : data.top === "road_accident"
+              ? "Road Accident"
+              : data.top === "graphic_violence"
+                ? "Graphic Violence"
+                : data.top === "fallen_trees"
+                  ? "Fallen Tree"
+                  : data.top === "others"
+                    ? "Others"
+                    : data.top === "pot_holes"
+                      ? "Pot Holes"
+                      : data.top === "street_light"
+                        ? "Street Light"
+                        : data.top;
+      const isEmergency = (() => {
+        if (data.top === "nudity") {
+          Alert.alert("Warning", "Nudity detected. Operation cannot proceed.");
+          throw new Error("Nudity detected, stopping process.");
+        }
+        return [
+          "Fire Accident",
+          "Flood",
+          "Road Accident",
+          "Graphic Violence",
+          "Fallen Tree",
+        ].includes(modifiedName)
+          ? "Yes"
+          : "No";
+      })();
 
-  const storeClassificationResults = async (imageUri: string, classificationResult: any) => {
+      const classification = { class: modifiedName, isEmergency };
+      console.log("Classification:", classification);
+      return classification;
+    } catch (error: any) {
+      console.error("Error during classification:", error.message);
+      Alert.alert("Error classifying image. Please try again.");
+      return { class: "Unknown", isEmergency: "No" }; // Fallback classification
+    }
+  };
+
+  const storeClassificationResults = async (
+    imageUri: string,
+    classificationResult: any
+  ) => {
     try {
-      await SecureStore.setItemAsync("isEmergency", classificationResult.isEmergency);
+      await SecureStore.setItemAsync(
+        "isEmergency",
+        classificationResult.isEmergency
+      );
       await SecureStore.setItemAsync("imageUri", imageUri);
       await SecureStore.setItemAsync("report_type", classificationResult.class);
     } catch (error) {
       console.error("Error storing classification results:", error);
       Alert.alert("Error storing results. Please try again.");
-    } 
+    }
   };
 
   return (
@@ -270,7 +295,6 @@ export default function CameraComp() {
               name="camera-switch"
               size={width * 0.1}
               color="white"
-              
             />
           </TouchableOpacity>
           <TouchableOpacity

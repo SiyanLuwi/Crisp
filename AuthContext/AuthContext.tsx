@@ -1,15 +1,20 @@
 import axios from "axios";
-import React, { useState, createContext, useEffect, useContext, useRef } from "react";
+import React, {
+  useState,
+  createContext,
+  useEffect,
+  useContext,
+  useRef,
+} from "react";
 import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
 import api from "@/app/api/axios";
 import * as FileSystem from "expo-file-system";
 import { app } from "@/firebase/firebaseConfig";
-import { addDoc, doc, getDocs, getFirestore  } from "firebase/firestore";
+import { addDoc, doc, getDocs, getFirestore } from "firebase/firestore";
 import * as BackgroundFetch from "expo-background-fetch";
 import * as TaskManager from "expo-task-manager";
 const db = getFirestore(app);
-
 
 interface AuthProps {
   USER_ID?: string;
@@ -24,8 +29,8 @@ interface AuthProps {
   setIsLoggedIn?: any;
   setAuthState?: any;
   SET_USER_ID?: any;
-  setIsDone?:any;
-  isDone?:any;
+  setIsDone?: any;
+  isDone?: any;
   near_by_reports?: any;
   set_near_by_reports?: any;
   onRegister?: (
@@ -114,7 +119,7 @@ export const AuthProvider = ({ children }: any) => {
   const [USER_ID, SET_USER_ID] = useState("");
   const [peerConnection, setPeerConnection] = useState(null);
   const [isPending, setIsPending] = useState(false);
-  const [username, setUsername] = useState("")
+  const [username, setUsername] = useState("");
   const router = useRouter();
   const [location, setLocation] = useState<any>(null);
   const [reports, setReports] = useState<any>([]);
@@ -164,52 +169,61 @@ export const AuthProvider = ({ children }: any) => {
       }
     };
   }, []);
-  useEffect(()=> {
-     if(isLoggedIn){
-      nearbyReports()
-      }
-  }, [location, reports, authState.authenticated])
-
-
+  useEffect(() => {
+    if (isLoggedIn) {
+      nearbyReports();
+    }
+  }, [location, reports, authState.authenticated]);
 
   const nearbyReports = async () => {
-      try{
-        if(!location){
-          console.log("Location not found");
-          return;
-        }
-        for (const report of reports) {
-          const distance = getDistance(
-            { latitude: report.latitude, longitude: report.longitude },
-            { latitude: location.latitude, longitude: location.longitude }
-          );
-          if (distance > 200 && lastNotifiedReportRef.current === report.id.toString()) {
-            lastNotifiedReportRef.current = null;
-            await SecureStore.setItemAsync("nearbyNotificatioId", "");
-          }
-          if (distance <= 200) {
-            let storedNotificationId = await SecureStore.getItemAsync("nearbyNotificatioId");
-            console.log("Nearby notification ID:", storedNotificationId);
-  
-            if (storedNotificationId !== report.id.toString() && lastNotifiedReportRef.current !== report.id.toString()) {
-              console.log("Scheduling nearby notification...");
-              scheduleNotification(
-                "Nearby Report",
-                `A ${report.type_of_report} report is nearby. Tap to view details.`,
-                1,
-                "/(tabs)/reports"
-              );
-              set_near_by_reports((prev: any) => [...prev, report]);
-              lastNotifiedReportRef.current = report.id.toString();
-              await SecureStore.setItemAsync("nearbyNotificatioId", report.id.toString());
-            }
-          }
-        };
-      }catch(error:any){
-        console.error("Error fetching nearby reports:", error.message);
+    try {
+      if (!location) {
+        console.log("Location not found");
+        return;
       }
-  }
- 
+      for (const report of reports) {
+        const distance = getDistance(
+          { latitude: report.latitude, longitude: report.longitude },
+          { latitude: location.latitude, longitude: location.longitude }
+        );
+        if (
+          distance > 200 &&
+          lastNotifiedReportRef.current === report.id.toString()
+        ) {
+          lastNotifiedReportRef.current = null;
+          await SecureStore.setItemAsync("nearbyNotificatioId", "");
+        }
+        if (distance <= 200) {
+          let storedNotificationId = await SecureStore.getItemAsync(
+            "nearbyNotificatioId"
+          );
+          // console.log("Nearby notification ID:", storedNotificationId);
+
+          if (
+            storedNotificationId !== report.id.toString() &&
+            lastNotifiedReportRef.current !== report.id.toString()
+          ) {
+            // console.log("Scheduling nearby notification...");
+            scheduleNotification(
+              "Nearby Report",
+              `A ${report.type_of_report} report is nearby. Tap to view details.`,
+              1,
+              "/(tabs)/reports"
+            );
+            set_near_by_reports((prev: any) => [...prev, report]);
+            lastNotifiedReportRef.current = report.id.toString();
+            await SecureStore.setItemAsync(
+              "nearbyNotificatioId",
+              report.id.toString()
+            );
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error("Error fetching nearby reports:", error.message);
+    }
+  };
+
   const fetchNotifications = () => {
     try {
       const notificationsRef = collection(db, "globalNotification");
@@ -221,11 +235,20 @@ export const AuthProvider = ({ children }: any) => {
             console.log("No notifications found.");
             return;
           }
-          const data = querySnapshot.docs.map((doc) => ({id:doc.id, ...doc.data(), createdAt: doc.data().createdAt.toDate()}));
+          const data = querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+            createdAt: doc.data().createdAt.toDate(),
+          }));
           const latestNotification = getLatestNotification(data);
-          const lastNotifiedReportId = await SecureStore.getItemAsync("lastNotifiedReportId");
+          const lastNotifiedReportId = await SecureStore.getItemAsync(
+            "lastNotifiedReportId"
+          );
           console.log("Last notified report ID:", lastNotifiedReportId);
-          if (latestNotification && lastNotifiedReportId !== latestNotification.id) {
+          if (
+            latestNotification &&
+            lastNotifiedReportId !== latestNotification.id
+          ) {
             console.log("Latest notification:", latestNotification);
             scheduleNotification(
               latestNotification.title,
@@ -234,7 +257,10 @@ export const AuthProvider = ({ children }: any) => {
               "/(tabs)/home"
             );
             // setHasNewNotification(true);
-            await SecureStore.setItemAsync("lastNotifiedReportId", latestNotification.id);
+            await SecureStore.setItemAsync(
+              "lastNotifiedReportId",
+              latestNotification.id
+            );
           }
         },
         (error) => {
@@ -251,10 +277,10 @@ export const AuthProvider = ({ children }: any) => {
     const sortedNotifications = notifications.sort(
       (a: any, b: any) => b.createdAt.getTime() - a.createdAt.getTime()
     );
-    
+
     return sortedNotifications[0];
   };
-  
+
   useEffect(() => {
     const fetchAndSubscribe = async () => {
       const unsubscribe = await fetchNotifications();
@@ -266,56 +292,61 @@ export const AuthProvider = ({ children }: any) => {
         if (unsubscribe) unsubscribe();
       });
     };
-  }, [])
-  
+  }, []);
+
   useEffect(() => {
     if (USER_ID) {
       const userRef = doc(db, "users", USER_ID);
       const unsubscribe = onSnapshot(userRef, (doc) => {
         const data = doc.data();
-  
+
         if (data) {
-          console.log(data)
-          if (data.callStatus === "calling") {   
-            callNotification(`${data.caller_name} - CRISP`, "Calling...",  "/calls/incoming")     
+          console.log(data);
+          if (data.callStatus === "calling") {
+            callNotification(
+              `${data.caller_name} - CRISP`,
+              "Calling...",
+              "/calls/incoming"
+            );
             router.push({
               pathname: "/calls/incoming",
-              params: { caller_id: data.caller_id, callId: data.callId, callerName: data.caller_name}
-            })
-            setIncomingCall(data)
-          }      
-          if(data.callStatus === "answered"){
-            setIncomingCall(null)
+              params: {
+                caller_id: data.caller_id,
+                callId: data.callId,
+                callerName: data.caller_name,
+              },
+            });
+            setIncomingCall(data);
           }
-          if(data.callStatus === "declined"){
-            setIncomingCall(null)
+          if (data.callStatus === "answered") {
+            setIncomingCall(null);
           }
-          if(data.callStatus === 'ended'){
-            setIncomingCall(null)
+          if (data.callStatus === "declined") {
+            setIncomingCall(null);
           }
-  
+          if (data.callStatus === "ended") {
+            setIncomingCall(null);
+          }
         }
       });
-     
-  
+
       return () => unsubscribe();
     }
   }, [USER_ID]);
 
-
   useEffect(() => {
-   const getUsername = async () => {
-    const username = await SecureStore.getItemAsync("username")
-    if(username){
-      setUsername(username)
-    }
-   }
-   getUsername()
-  } ,[username])
+    const getUsername = async () => {
+      const username = await SecureStore.getItemAsync("username");
+      if (username) {
+        setUsername(username);
+      }
+    };
+    getUsername();
+  }, [username]);
   useEffect(() => {
     const loadToken = async () => {
       const token = await SecureStore.getItemAsync(TOKEN_KEY);
-      
+
       console.log("stored: ", token);
       if (token) {
         axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -324,7 +355,6 @@ export const AuthProvider = ({ children }: any) => {
           authenticated: true,
         });
       }
-   
     };
     const loadId = async () => {
       const user_id = await SecureStore.getItemAsync("user_id");
@@ -387,7 +417,6 @@ export const AuthProvider = ({ children }: any) => {
   ) => {
     const ipv = await Network.getIpAddressAsync();
     try {
- 
       const res = await api.post("api/citizen/registration/", {
         username,
         email,
@@ -398,18 +427,17 @@ export const AuthProvider = ({ children }: any) => {
         contact_number: contact_no,
         ipv,
       });
-      
-      
+
       await SecureStore.setItemAsync("email", email.toString());
 
       return res; // Return successful response
     } catch (error: any) {
       console.error("Error during registration:", error);
-  
+
       // Handle server error responses
       if (error.response && error.response.data) {
         const serverErrors = error.response.data;
-  
+
         // Aggregate all possible error fields into a readable message
         const errorMessage = [
           serverErrors.username?.join(" ") || "",
@@ -419,13 +447,13 @@ export const AuthProvider = ({ children }: any) => {
         ]
           .filter((msg) => msg.trim()) // Remove empty fields
           .join(" ");
-  
+
         return {
           error: true,
           msg: errorMessage || "Unknown error occurred from the server.",
         };
       }
-  
+
       // Handle network or unexpected errors
       return {
         error: true,
@@ -433,7 +461,6 @@ export const AuthProvider = ({ children }: any) => {
       };
     }
   };
-  
 
   //Login function
   const login = async (username: string, password: string) => {
@@ -445,7 +472,7 @@ export const AuthProvider = ({ children }: any) => {
         password,
       });
 
-      if(!data.is_email_verified){
+      if (!data.is_email_verified) {
         router.push("/pages/verifyEmail");
         return;
       }
@@ -548,7 +575,7 @@ export const AuthProvider = ({ children }: any) => {
       authenticated: null,
     });
     console.log("Logging out...");
-   router.replace("/pages/login");
+    router.replace("/pages/login");
   };
 
   const onVerifyEmail = async (email: string, otp: string) => {
@@ -815,7 +842,7 @@ export const AuthProvider = ({ children }: any) => {
 
   useEffect(() => {
     let unsubscribe: any;
-  
+
     const subscribeToVerificationStatus = async () => {
       const userId = await SecureStore.getItemAsync("user_id");
       if (!userId) return;
@@ -825,7 +852,7 @@ export const AuthProvider = ({ children }: any) => {
         verifyAccountRef,
         where("user", "==", parseInt(userIdString))
       );
-  
+
       unsubscribe = onSnapshot(
         q,
         async (querySnapshot) => {
@@ -848,15 +875,14 @@ export const AuthProvider = ({ children }: any) => {
         }
       );
     };
-  
+
     subscribeToVerificationStatus();
-  
+
     // Clean up the subscription when the component unmounts.
     return () => {
       if (unsubscribe) unsubscribe();
     };
   }, []);
-  
 
   const value = {
     onRegister: register,
@@ -883,7 +909,7 @@ export const AuthProvider = ({ children }: any) => {
     isPending,
     setIsDone,
     isDone,
-    setIsLoggedIn
+    setIsLoggedIn,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

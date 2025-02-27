@@ -184,7 +184,7 @@ export default function ManageReports() {
               if (!profilePicSnapshot.empty) {
                 imageUrl = profilePicSnapshot.docs[0].data().imageUrl;
               }
-              console.log(imageUrl);
+              // console.log(imageUrl);
 
               // Only return the report if the user ID matches
               if (data.user_id?.toString() === users_id?.toString()) {

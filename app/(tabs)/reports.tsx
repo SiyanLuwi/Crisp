@@ -191,7 +191,7 @@ export default function ReportPage() {
               if (!profilePicSnapshot.empty) {
                 imageUrl = profilePicSnapshot.docs[0].data().imageUrl;
               }
-              console.log(imageUrl);
+              // console.log(imageUrl);
 
               // Step 2: Return the report with the profile image URL
               return {
@@ -296,12 +296,12 @@ export default function ReportPage() {
       // Fetch and log the document to confirm
       const docSnap = await getDoc(reportRef);
       if (docSnap.exists()) {
-        console.log("Document data after submit:", docSnap.data());
+        // console.log("Document data after submit:", docSnap.data());
       } else {
         console.log("No such document!");
       }
 
-      console.log("Report submited successfully");
+      // console.log("Report submited successfully");
     } catch (error) {
       console.error("Error reporting the post:", error);
     }
