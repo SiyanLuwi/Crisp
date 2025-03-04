@@ -216,6 +216,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
                       style={{
                         maxHeight: 150,
                         height: 150,
+                        textAlignVertical: "top",
                       }}
                     />
                     <View className="w-full bg-white mb-4 rounded-lg flex flex-row justify-between border border-[#0C3B2D]">
@@ -224,14 +225,14 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({
                         value={proof || ""}
                         editable={false}
                         placeholderTextColor="#888"
-                        placeholder="Take a Photo"
+                        placeholder="Proof"
                       />
                       <TouchableOpacity
                         onPress={takeProof}
-                        className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg"
+                        className="bg-[#0C3B2D] border border-[#8BC34A] p-4 rounded-lg items-center justify-center"
                       >
                         <Text className="text-white text-md font-normal">
-                          Take Proof
+                          Take Photo
                         </Text>
                       </TouchableOpacity>
                     </View>

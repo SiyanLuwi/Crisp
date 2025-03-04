@@ -173,7 +173,7 @@ const ReportLocationModal: React.FC<ReportLocationModalProps> = ({
                 </MapView>
 
                 {/* Display Distance */}
-                <Text style={{ padding: 10, color: "black" }}>
+                <Text style={{ padding: 10, color: "white" }}>
                   Distance from the Report: {calculateDistance()}
                 </Text>
               </>
