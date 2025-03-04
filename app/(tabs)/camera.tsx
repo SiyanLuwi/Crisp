@@ -159,9 +159,9 @@ export default function CameraComp() {
       router.push("/pages/pictureForm");
 
       setIsDone(true);
-    } catch (error) {
-      console.error("Error capturing photo:", error);
-      Alert.alert("Error capturing photo. Please try again.");
+    } catch (error: any) {
+      console.error("Error capturing photo:", error.message);
+      Alert.alert(error.message);
     } finally {
       setLoading(false);
       const totalEndTime = Date.now();
@@ -205,11 +205,6 @@ export default function CameraComp() {
         Constants.expoConfig?.extra?.ROBOFLOW_URL,
         formData,
         {
-          params: {
-            api_key: Constants.expoConfig?.extra?.ROBOFLOW_API_KEY,
-            confidence: 0.55,
-            overlap: 30,
-          },
           headers: {
             "Content-Type": "multipart/form-data",
             "X-Requested-With": "XMLHttpRequest",
@@ -219,11 +214,14 @@ export default function CameraComp() {
       console.log(data);
       const apiEnd = Date.now();
       console.log(`API call took ${apiEnd - apiStart} ms`);
+
+      if (data.class === "Nudity") {
+        Alert.alert("Warning", "Nudity detected. Operation cannot proceed.");
+        throw new Error("Nudity detected, stopping process.");
+        
+      }
+
       const isEmergency = (() => {
-        if (data.class === "nudity") {
-          Alert.alert("Warning", "Nudity detected. Operation cannot proceed.");
-          throw new Error("Nudity detected, stopping process.");
-        }
         return [
           "Fire Accident",
           "Flood",
@@ -238,10 +236,8 @@ export default function CameraComp() {
       const classification = { class: data.class, isEmergency };
       console.log("Classification:", classification);
       return classification;
-    } catch (error: any) {
-      console.error("Error during classification:", error.message);
-      Alert.alert("Error classifying image. Please try again.");
-      return { class: "Unknown", isEmergency: "No" }; // Fallback classification
+    } catch (error: any){
+        throw error
     }
   };
 
