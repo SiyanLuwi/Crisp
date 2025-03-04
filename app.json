@@ -72,7 +72,7 @@
       "APP_ID": "1:25886713465:web:021f343b5785e55c1d96a8",
       "MEASUREMENT_ID": "G-NSBZMHRT4X",
       "ROBOFLOW_API_KEY": "5P7dtdzXPf6Y9WZ4cTug",
-      "ROBOFLOW_URL": "https://detect.roboflow.com/image_classification-zi6pw/1",
+      "ROBOFLOW_URL": "http://192.168.1.13:8000/api/image/",
       "router": {
         "origin": false
       },

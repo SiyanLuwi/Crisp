@@ -175,7 +175,7 @@ export default function CameraComp() {
     try {
       const result = await manipulateAsync(
         uri,
-        [{ resize: { width: 150, height: 150 } }],
+        [{ resize: { width: 224, height: 224 } }],
         {
           compress: 0.6,
           format: SaveFormat.WEBP,
@@ -198,7 +198,7 @@ export default function CameraComp() {
         type: "image/jpeg",
       };
       const formData = new FormData();
-      formData.append("file", file as any);
+      formData.append("image", file as any);
 
       const apiStart = Date.now();
       const { data } = await axios.post(
@@ -216,28 +216,11 @@ export default function CameraComp() {
           },
         }
       );
+      console.log(data);
       const apiEnd = Date.now();
       console.log(`API call took ${apiEnd - apiStart} ms`);
-      const modifiedName =
-        data.top === "fire"
-          ? "Fire Accident"
-          : data.top === "flood"
-            ? "Flood"
-            : data.top === "road_accident"
-              ? "Road Accident"
-              : data.top === "graphic_violence"
-                ? "Graphic Violence"
-                : data.top === "fallen_trees"
-                  ? "Fallen Tree"
-                  : data.top === "others"
-                    ? "Others"
-                    : data.top === "pot_holes"
-                      ? "Pot Holes"
-                      : data.top === "street_light"
-                        ? "Street Light"
-                        : data.top;
       const isEmergency = (() => {
-        if (data.top === "nudity") {
+        if (data.class === "nudity") {
           Alert.alert("Warning", "Nudity detected. Operation cannot proceed.");
           throw new Error("Nudity detected, stopping process.");
         }
@@ -247,12 +230,12 @@ export default function CameraComp() {
           "Road Accident",
           "Graphic Violence",
           "Fallen Tree",
-        ].includes(modifiedName)
+        ].includes(data.class)
           ? "Yes"
           : "No";
       })();
 
-      const classification = { class: modifiedName, isEmergency };
+      const classification = { class: data.class, isEmergency };
       console.log("Classification:", classification);
       return classification;
     } catch (error: any) {

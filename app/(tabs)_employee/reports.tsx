@@ -94,7 +94,7 @@ export default function Reports() {
       "pothole",
       "flood",
       "others",
-      "fallen trees",
+      "fallen tree",
       "road incident",
     ];
 
