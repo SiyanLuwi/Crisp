@@ -16,6 +16,7 @@ import {
   query,
   where,
   getFirestore,
+  Timestamp,
 } from "firebase/firestore";
 import { app } from "@/firebase/firebaseConfig";
 import { useAuth } from "@/AuthContext/AuthContext"; // Import your Auth context to get USER_ID
@@ -75,55 +76,82 @@ export default function NotificationForm() {
   const { USER_ID, near_by_reports } = useAuth();
   const navigation = useNavigation(); // Get the navigation object
   
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      if (!USER_ID) return;
-
-      const notificationsRef = collection(db, "notifications");
-      const q = query(notificationsRef, where("userId", "==", USER_ID));
-
-      const unsubscribe = onSnapshot(q, async (snapshot) => {
-        // Extract data with necessary fields
-        const fetchedNotifications: Notification[] = snapshot.docs.map((doc) => {
+   // Fetch and schedule user notifications
+   useEffect(() => {
+    if (!USER_ID) return;
+  
+    const notificationsRef = collection(db, "notifications");
+    const userQuery = query(notificationsRef, where("userId", "==", USER_ID));
+  
+    const globalNotificationsRef = collection(db, "globalNotification");
+    
+    // Calculate the start and end of today as Firebase Timestamps
+    const now = new Date();
+    const startOfToday = Timestamp.fromDate(new Date(now.setHours(0, 0, 0, 0)));
+    const endOfToday = Timestamp.fromDate(new Date(now.setHours(23, 59, 59, 999)));
+    
+    const q = query(
+      globalNotificationsRef,
+      where("read", "==", false),
+      where("createdAt", ">=", startOfToday),
+      where("createdAt", "<=", endOfToday)
+    );
+    const unsubscribeUser = onSnapshot(userQuery, async (userSnapshot) => {
+      const userNotifications = userSnapshot.docs
+        .map((doc) => {
           const data = doc.data();
-          // Make sure that necessary fields exist in the document
-          const notification: Notification = {
+          return {
             id: doc.id,
-            title: data.title || "",  // Provide default empty string if field is missing
-            description: data.description || "",  // Default empty string
-            screen: data.screen || "",  // Default empty string
-            createdAt: data.createdAt || { seconds: 0 },  // Default timestamp if missing
+            title: data.title || "",
+            description: data.description || "",
+            screen: data.screen || "",
+            createdAt: data.createdAt || { seconds: 0 },
           };
-
+        })
+        .filter((notification) => {
+          const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
           return notification;
-        }).filter((notification) => {
-          // 3 Days
-          const threeDays = 3 * 24 * 60 * 60 * 1000;
-          const threeDaysAgo = Date.now() - threeDays;
-          return notification.createdAt.seconds * 1000 > threeDaysAgo;
         });
-        // Set notifications to the state
-
-
-        if (fetchedNotifications.length > 0) {
-          // Schedule notifications based on the fetched data
-          for (const notification of fetchedNotifications) {
-            const { title, description, createdAt, screen } = notification;
-            const delaySeconds = Math.max(0, Math.floor((new Date(createdAt.seconds * 1000).getTime() - Date.now()) / 1000));
-            setNotifications((prev) => [...prev, notification]);
-            await scheduleNotification(title, description, delaySeconds, screen);
-          }
-          await SecureStore.setItemAsync('notificationsFetched', 'true');
-        } else {
-          await SecureStore.setItemAsync('notificationsFetched', 'false');
+  
+      if (userNotifications.length > 0) {
+        for (const notification of userNotifications) {
+          const { title, description, createdAt, screen } = notification;
+          const delaySeconds = Math.max(
+            0,
+            Math.floor(new Date(createdAt.seconds * 1000).getTime() - Date.now()) /
+              1000
+          );
+          await scheduleNotification(title, description, delaySeconds, screen);
         }
+        await SecureStore.setItemAsync("notificationsFetched", "true");
+      } else {
+        await SecureStore.setItemAsync("notificationsFetched", "false");
+      }
+  
+      setNotifications((prev) => [...prev, ...userNotifications]);
+    });
+  
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedGlobalNotifications = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          title: data.title || "",
+          description: data.description || "",
+          screen: data.screen || "",
+          createdAt: data.createdAt || { seconds: 0 },
+          read: data.read ?? false,
+        };
       });
-
-      return () => unsubscribe();
+      setNotifications((prev) => [...prev, ...fetchedGlobalNotifications]);
+    });
+  
+    return () => {
+      unsubscribeUser();
+      unsubscribe();
     };
-
-    fetchNotifications();
   }, [USER_ID]);
+  
 
   return (
     <ImageBackground

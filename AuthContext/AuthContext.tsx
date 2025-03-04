@@ -125,104 +125,95 @@ export const AuthProvider = ({ children }: any) => {
   const [reports, setReports] = useState<any>([]);
   const [isDone, setIsDone] = useState(false);
   const [near_by_reports, set_near_by_reports] = useState<any>([]);
-  const lastNotifiedReportRef = useRef(null);
-  useEffect(() => {
-    let subscription: any;
+  // const lastNotifiedReportRef = useRef(null);
+  const notifiedReportsRef = useRef<any>({});
+ // Use a ref to keep track of notified reports
 
-    const startLocationMonitoring = async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        console.error("Location permission not granted!");
-        return;
-      }
-      subscription = await Location.watchPositionAsync(
-        {
-          accuracy: Location.Accuracy.High,
-          timeInterval: 5000,
-          distanceInterval: 10,
-        },
-        (locationUpdate) => {
-          setLocation(locationUpdate.coords);
-        }
-      );
-    };
 
-    const fetchAllReports = async () => {
-      try {
-        const reportsData = await Report.fetchAllReports();
-        const notDoneReports = reportsData.filter(
-          (report) =>
-            report.status !== "done" && report.user_id !== parseInt(USER_ID)
-        );
-        setReports(notDoneReports);
-      } catch (error: any) {
-        console.error("Error fetching reports:", error.message);
-      }
-    };
+useEffect(() => {
+  let subscription: any;
 
-    fetchAllReports();
-    startLocationMonitoring();
-
-    return () => {
-      if (subscription) {
-        subscription.remove();
-      }
-    };
-  }, []);
-  useEffect(() => {
-    if (isLoggedIn) {
-      nearbyReports();
+  const startLocationMonitoring = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      console.error("Location permission not granted!");
+      return;
     }
-  }, [location, reports, authState.authenticated]);
+    subscription = await Location.watchPositionAsync(
+      {
+        accuracy: Location.Accuracy.High,
+        timeInterval: 5000,
+        distanceInterval: 10,
+      },
+      (locationUpdate) => {
+        setLocation(locationUpdate.coords);
+      }
+    );
+  };
 
-  const nearbyReports = async () => {
+  const fetchAllReports = async () => {
     try {
-      if (!location) {
-        console.log("Location not found");
-        return;
-      }
-      for (const report of reports) {
-        const distance = getDistance(
-          { latitude: report.latitude, longitude: report.longitude },
-          { latitude: location.latitude, longitude: location.longitude }
-        );
-        if (
-          distance > 200 &&
-          lastNotifiedReportRef.current === report.id.toString()
-        ) {
-          lastNotifiedReportRef.current = null;
-          await SecureStore.setItemAsync("nearbyNotificatioId", "");
-        }
-        if (distance <= 200) {
-          let storedNotificationId = await SecureStore.getItemAsync(
-            "nearbyNotificatioId"
-          );
-          // console.log("Nearby notification ID:", storedNotificationId);
-
-          if (
-            storedNotificationId !== report.id.toString() &&
-            lastNotifiedReportRef.current !== report.id.toString()
-          ) {
-            // console.log("Scheduling nearby notification...");
-            scheduleNotification(
-              "Nearby Report",
-              `A ${report.type_of_report} report is nearby. Tap to view details.`,
-              1,
-              "/(tabs)/reports"
-            );
-            set_near_by_reports((prev: any) => [...prev, report]);
-            lastNotifiedReportRef.current = report.id.toString();
-            await SecureStore.setItemAsync(
-              "nearbyNotificatioId",
-              report.id.toString()
-            );
-          }
-        }
-      }
+      const reportsData = await Report.fetchAllReports();
+      const notDoneReports = reportsData.filter(
+        (report) =>
+          report.status !== "done" && report.user_id !== parseInt(USER_ID)
+      );
+      setReports(notDoneReports);
     } catch (error: any) {
-      console.error("Error fetching nearby reports:", error.message);
+      console.error("Error fetching reports:", error.message);
     }
   };
+
+  fetchAllReports();
+  startLocationMonitoring();
+
+  return () => {
+    if (subscription) {
+      subscription.remove();
+    }
+  };
+}, []);
+
+useEffect(() => {
+  if (isLoggedIn) {
+    nearbyReports();
+  }
+}, [location, reports, authState.authenticated]);
+
+const nearbyReports = async () => {
+  try {
+    if (!location) {
+      console.log("Location not found");
+      return;
+    }
+    for (const report of reports) {
+      const distance = getDistance(
+        { latitude: report.latitude, longitude: report.longitude },
+        { latitude: location.latitude, longitude: location.longitude }
+      );
+
+      // Reset the notification flag if the user is far enough away (e.g., >1000m)
+      if (distance > 1000 && notifiedReportsRef.current[report.id]) {
+        notifiedReportsRef.current[report.id] = false;
+      }
+
+      // If the user is within the notification radius (e.g., <=200m or change to 150m as needed)
+      // and has not been notified for this report, trigger a notification.
+      if (distance <= 200 && !notifiedReportsRef.current[report.id]) {
+        scheduleNotification(
+          "Nearby Report",
+          `A ${report.type_of_report} report is nearby. Tap to view details.`,
+          1,
+          "/(tabs)/reports"
+        );
+        set_near_by_reports((prev: any) => [...prev, report]);
+        notifiedReportsRef.current[report.id] = true;
+      }
+    }
+  } catch (error: any) {
+    console.error("Error fetching nearby reports:", error.message);
+  }
+};
 
   const fetchNotifications = () => {
     try {
