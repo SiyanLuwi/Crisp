@@ -9,7 +9,7 @@ import {
 import React, { useEffect, useState } from "react";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
-import * as SecureStore from 'expo-secure-store'
+import * as SecureStore from "expo-secure-store";
 import {
   collection,
   onSnapshot,
@@ -31,12 +31,12 @@ interface Notification {
   id: string;
   title: string;
   description: string;
-  screen: string;  // Add other fields you expect to use
+  screen: string; // Add other fields you expect to use
   createdAt: { seconds: number };
 }
 
 const NotificationItem: React.FC<{
-  id: string,
+  id: string;
   content: string;
   type: string;
   time: string;
@@ -75,21 +75,23 @@ export default function NotificationForm() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const { USER_ID, near_by_reports } = useAuth();
   const navigation = useNavigation(); // Get the navigation object
-  
-   // Fetch and schedule user notifications
-   useEffect(() => {
+
+  // Fetch and schedule user notifications
+  useEffect(() => {
     if (!USER_ID) return;
-  
+
     const notificationsRef = collection(db, "notifications");
     const userQuery = query(notificationsRef, where("userId", "==", USER_ID));
-  
+
     const globalNotificationsRef = collection(db, "globalNotification");
-    
+
     // Calculate the start and end of today as Firebase Timestamps
     const now = new Date();
     const startOfToday = Timestamp.fromDate(new Date(now.setHours(0, 0, 0, 0)));
-    const endOfToday = Timestamp.fromDate(new Date(now.setHours(23, 59, 59, 999)));
-    
+    const endOfToday = Timestamp.fromDate(
+      new Date(now.setHours(23, 59, 59, 999))
+    );
+
     const q = query(
       globalNotificationsRef,
       where("read", "==", false),
@@ -112,14 +114,15 @@ export default function NotificationForm() {
           const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
           return notification;
         });
-  
+
       if (userNotifications.length > 0) {
         for (const notification of userNotifications) {
           const { title, description, createdAt, screen } = notification;
           const delaySeconds = Math.max(
             0,
-            Math.floor(new Date(createdAt.seconds * 1000).getTime() - Date.now()) /
-              1000
+            Math.floor(
+              new Date(createdAt.seconds * 1000).getTime() - Date.now()
+            ) / 1000
           );
           await scheduleNotification(title, description, delaySeconds, screen);
         }
@@ -127,10 +130,10 @@ export default function NotificationForm() {
       } else {
         await SecureStore.setItemAsync("notificationsFetched", "false");
       }
-  
+
       setNotifications((prev) => [...prev, ...userNotifications]);
     });
-  
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedGlobalNotifications = snapshot.docs.map((doc) => {
         const data = doc.data();
@@ -145,13 +148,12 @@ export default function NotificationForm() {
       });
       setNotifications((prev) => [...prev, ...fetchedGlobalNotifications]);
     });
-  
+
     return () => {
       unsubscribeUser();
       unsubscribe();
     };
   }, [USER_ID]);
-  
 
   return (
     <ImageBackground

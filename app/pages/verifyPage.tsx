@@ -125,7 +125,6 @@ export default function VerifyPage() {
       if (!res) {
         throw new Error("Cannot verify your account at the moment.");
       }
-      setModalVisible(true);
       console.log("Account verified successfully.");
       setFirstName("");
       setMiddleName("");
@@ -137,7 +136,7 @@ export default function VerifyPage() {
       setPhoto(null);
       setIdPicture(null);
       setLoading(false);
-      router.back();
+      setModalVisible(true);
     } catch (error: any) {
       console.error("Verification error:", error);
       if (error.response) {
@@ -540,7 +539,10 @@ export default function VerifyPage() {
                 <View className="flex flex-row justify-end w-full">
                   <TouchableOpacity
                     className="bg-[#0C3B2D] p-2 rounded-lg h-auto items-center justify-center"
-                    onPress={() => setModalVisible(false)}
+                    onPress={() => {
+                      setModalVisible(false); // Close the modal
+                      router.back(); // Navigate back
+                    }}
                   >
                     <Text className="text-lg font-semibold text-white px-2">
                       Close
