@@ -123,7 +123,7 @@ export default function ReportPage() {
       "pothole",
       "flood",
       "fallen tree",
-      "other",
+      "others",
       "road accident",
     ];
 

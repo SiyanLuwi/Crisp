@@ -439,7 +439,7 @@ export default function Register() {
                   onPress={() => router.navigate(`/pages/login`)}
                 >
                   <Text className="text-lg text-[#7e9778] mr-3 mt-1 mb-8 font-semibold flex">
-                    Already an account?
+                    Already have an account?
                   </Text>
                   <Text className="text-lg text-[#0C3B2D] mt-1 mb-8 font-bold flex">
                     Login

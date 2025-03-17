@@ -95,7 +95,7 @@ export default function Reports() {
       "flood",
       "others",
       "fallen tree",
-      "road incident",
+      "road accident",
     ];
 
     // Fetch the supervisor_id asynchronously
