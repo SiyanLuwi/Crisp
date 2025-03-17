@@ -72,12 +72,12 @@
       "APP_ID": "1:25886713465:web:021f343b5785e55c1d96a8",
       "MEASUREMENT_ID": "G-NSBZMHRT4X",
       "ROBOFLOW_API_KEY": "5P7dtdzXPf6Y9WZ4cTug",
-      "ROBOFLOW_URL": "http://192.168.1.13:8000/api/image/",
+      "ROBOFLOW_URL": "http://192.168.1.88:8000/api/image/",
       "router": {
         "origin": false
       },
       "apiUrl": "https://django-firebase-psql.onrender.com/",
-      "apiDevUrl": "http://192.168.1.13:8000/",
+      "apiDevUrl": "http://192.168.1.88:8000/",
       "eas": {
         "projectId": "c7b9d51e-3b89-4da1-a947-b1d13c069826"
       }

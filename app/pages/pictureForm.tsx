@@ -170,13 +170,23 @@ export default function PictureForm() {
       "/(tabs)/manage"
     );
 
-    await addDoc(collection(db, "notifications"), {
-      userId: user_id,
-      title: "Your Report Has Been Submitted!",
-      description: `Thank you for caring! Your report about the ${selectedItem} has been submitted.`,
-      screen: "/(tabs)/manage",
-      createdAt: new Date(),
-    });
+    // Firestore operations (async)
+    await Promise.all([
+      addDoc(collection(db, "notifications"), {
+        userId: user_id,
+        title: "Your Report Has Been Submitted!",
+        description: `Thank you for caring! Your report about the ${selectedItem} has been submitted.`,
+        screen: "/(tabs)/manage",
+        createdAt: new Date(),
+      }),
+      addDoc(collection(db, "notifications"), {
+        title: `Citizen has submitted a report for ${selectedItem}`,
+        description: `A citizen has submitted a report for ${selectedItem}. Please take action.`,
+        for_superadmin: true,
+        createdAt: new Date(),
+        user_id: user_id,
+      }),
+    ]);
     setLoading(false);
     setSuccessModalVisible(true);
   };
